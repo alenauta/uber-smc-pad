@@ -18,3 +18,6 @@ __pycache__/
 !docs/captures/*.log
 /build/
 /scratch/
+
+# --- SDK build outputs (reproducible via firmware/builder/build_ufw.sh) ---
+/firmware/builds/
