@@ -1,0 +1,206 @@
+#!/usr/bin/env python3
+"""Golden-vector test for gen_jl_profile.py (Python stdlib only; runs on the Mac).
+
+The expected bytes are copied from the SDK's vendor-generated
+apps/spp_and_le/examples/trans_data/ble_trans_profile.h (AC63 SDK v2.4.0), including its
+'#if 0' 128-bit UUID sample, so the generator is checked against gatt_inc_generator.exe output.
+
+    python3 tools/gatt/test_gen_jl_profile.py
+"""
+import os
+import sys
+import unittest
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gen_jl_profile as g  # noqa: E402
+
+WNR_DYN = ["WRITE_WITHOUT_RESPONSE", "DYNAMIC"]
+
+# trans_profile_data, as the SDK spells it (vendor cfg: trans_data_cfg)
+TRANS_SPEC = {"name": "trans_profile_data", "services": [
+    {"uuid": "1800", "chars": [{"uuid": "2a00", "props": ["READ", "WRITE", "DYNAMIC"]}]},
+    {"uuid": "1801", "chars": [{"uuid": "2a05", "props": ["INDICATE"]}]},
+    {"uuid": "ae30", "chars": [
+        {"uuid": "ae01", "props": WNR_DYN},
+        {"uuid": "ae02", "props": ["NOTIFY"]},
+        {"uuid": "ae03", "props": WNR_DYN},
+        {"uuid": "ae04", "props": ["NOTIFY"]},
+        {"uuid": "ae05", "props": ["INDICATE"]},
+        {"uuid": "ae10", "props": ["READ", "WRITE", "DYNAMIC"]}]},
+    {"uuid": "180a", "if": "CONFIG_BT_SM_SUPPORT_ENABLE", "chars": [
+        {"uuid": "2a50", "props": ["READ", "AUTHENTICATION_REQUIRED", "DYNAMIC"]}]},
+    {"uuid": "ae3a", "start_handle": 0x40, "chars": [
+        {"uuid": "ae3b", "props": WNR_DYN},
+        {"uuid": "ae3c", "props": ["NOTIFY"]}]},
+    {"uuid": "ae00", "if": "RCSP_BTMATE_EN", "start_handle": 0x80, "chars": [
+        {"uuid": "ae01", "props": WNR_DYN},
+        {"uuid": "ae02", "props": ["NOTIFY"]}]},
+]}
+
+TRANS_BYTES = bytes([
+    0x0a, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x28, 0x00, 0x18,
+    0x0d, 0x00, 0x02, 0x00, 0x02, 0x00, 0x03, 0x28, 0x0a, 0x03, 0x00, 0x00, 0x2a,
+    0x08, 0x00, 0x0a, 0x01, 0x03, 0x00, 0x00, 0x2a,
+    0x0a, 0x00, 0x02, 0x00, 0x04, 0x00, 0x00, 0x28, 0x01, 0x18,
+    0x0d, 0x00, 0x02, 0x00, 0x05, 0x00, 0x03, 0x28, 0x20, 0x06, 0x00, 0x05, 0x2a,
+    0x08, 0x00, 0x20, 0x00, 0x06, 0x00, 0x05, 0x2a,
+    0x0a, 0x00, 0x0a, 0x01, 0x07, 0x00, 0x02, 0x29, 0x00, 0x00,
+    0x0a, 0x00, 0x02, 0x00, 0x08, 0x00, 0x00, 0x28, 0x30, 0xae,
+    0x0d, 0x00, 0x02, 0x00, 0x09, 0x00, 0x03, 0x28, 0x04, 0x0a, 0x00, 0x01, 0xae,
+    0x08, 0x00, 0x04, 0x01, 0x0a, 0x00, 0x01, 0xae,
+    0x0d, 0x00, 0x02, 0x00, 0x0b, 0x00, 0x03, 0x28, 0x10, 0x0c, 0x00, 0x02, 0xae,
+    0x08, 0x00, 0x10, 0x00, 0x0c, 0x00, 0x02, 0xae,
+    0x0a, 0x00, 0x0a, 0x01, 0x0d, 0x00, 0x02, 0x29, 0x00, 0x00,
+    0x0d, 0x00, 0x02, 0x00, 0x0e, 0x00, 0x03, 0x28, 0x04, 0x0f, 0x00, 0x03, 0xae,
+    0x08, 0x00, 0x04, 0x01, 0x0f, 0x00, 0x03, 0xae,
+    0x0d, 0x00, 0x02, 0x00, 0x10, 0x00, 0x03, 0x28, 0x10, 0x11, 0x00, 0x04, 0xae,
+    0x08, 0x00, 0x10, 0x00, 0x11, 0x00, 0x04, 0xae,
+    0x0a, 0x00, 0x0a, 0x01, 0x12, 0x00, 0x02, 0x29, 0x00, 0x00,
+    0x0d, 0x00, 0x02, 0x00, 0x13, 0x00, 0x03, 0x28, 0x20, 0x14, 0x00, 0x05, 0xae,
+    0x08, 0x00, 0x20, 0x00, 0x14, 0x00, 0x05, 0xae,
+    0x0a, 0x00, 0x0a, 0x01, 0x15, 0x00, 0x02, 0x29, 0x00, 0x00,
+    0x0d, 0x00, 0x02, 0x00, 0x16, 0x00, 0x03, 0x28, 0x0a, 0x17, 0x00, 0x10, 0xae,
+    0x08, 0x00, 0x0a, 0x01, 0x17, 0x00, 0x10, 0xae,
+    # if CONFIG_BT_SM_SUPPORT_ENABLE
+    0x0a, 0x00, 0x02, 0x00, 0x18, 0x00, 0x00, 0x28, 0x0a, 0x18,
+    0x0d, 0x00, 0x02, 0x00, 0x19, 0x00, 0x03, 0x28, 0x02, 0x1a, 0x00, 0x50, 0x2a,
+    0x08, 0x00, 0x02, 0x05, 0x1a, 0x00, 0x50, 0x2a,
+    # endif
+    0x0a, 0x00, 0x02, 0x00, 0x40, 0x00, 0x00, 0x28, 0x3a, 0xae,
+    0x0d, 0x00, 0x02, 0x00, 0x41, 0x00, 0x03, 0x28, 0x04, 0x42, 0x00, 0x3b, 0xae,
+    0x08, 0x00, 0x04, 0x01, 0x42, 0x00, 0x3b, 0xae,
+    0x0d, 0x00, 0x02, 0x00, 0x43, 0x00, 0x03, 0x28, 0x10, 0x44, 0x00, 0x3c, 0xae,
+    0x08, 0x00, 0x10, 0x00, 0x44, 0x00, 0x3c, 0xae,
+    0x0a, 0x00, 0x0a, 0x01, 0x45, 0x00, 0x02, 0x29, 0x00, 0x00,
+    # if RCSP_BTMATE_EN
+    0x0a, 0x00, 0x02, 0x00, 0x80, 0x00, 0x00, 0x28, 0x00, 0xae,
+    0x0d, 0x00, 0x02, 0x00, 0x81, 0x00, 0x03, 0x28, 0x04, 0x82, 0x00, 0x01, 0xae,
+    0x08, 0x00, 0x04, 0x01, 0x82, 0x00, 0x01, 0xae,
+    0x0d, 0x00, 0x02, 0x00, 0x83, 0x00, 0x03, 0x28, 0x10, 0x84, 0x00, 0x02, 0xae,
+    0x08, 0x00, 0x10, 0x00, 0x84, 0x00, 0x02, 0xae,
+    0x0a, 0x00, 0x0a, 0x01, 0x85, 0x00, 0x02, 0x29, 0x00, 0x00,
+    # endif
+    0x00, 0x00,
+])
+SM_BLOCK = (0x0a + 0x0d + 0x08)
+RCSP_BLOCK = (0x0a + 0x0d + 0x08 + 0x0d + 0x08 + 0x0a)
+
+TRANS_DEFINES = {
+    "ATT_CHARACTERISTIC_2a00_01_VALUE_HANDLE": 0x0003,
+    "ATT_CHARACTERISTIC_2a05_01_VALUE_HANDLE": 0x0006,
+    "ATT_CHARACTERISTIC_2a05_01_CLIENT_CONFIGURATION_HANDLE": 0x0007,
+    "ATT_CHARACTERISTIC_ae01_01_VALUE_HANDLE": 0x000a,
+    "ATT_CHARACTERISTIC_ae02_01_VALUE_HANDLE": 0x000c,
+    "ATT_CHARACTERISTIC_ae02_01_CLIENT_CONFIGURATION_HANDLE": 0x000d,
+    "ATT_CHARACTERISTIC_ae03_01_VALUE_HANDLE": 0x000f,
+    "ATT_CHARACTERISTIC_ae04_01_VALUE_HANDLE": 0x0011,
+    "ATT_CHARACTERISTIC_ae04_01_CLIENT_CONFIGURATION_HANDLE": 0x0012,
+    "ATT_CHARACTERISTIC_ae05_01_VALUE_HANDLE": 0x0014,
+    "ATT_CHARACTERISTIC_ae05_01_CLIENT_CONFIGURATION_HANDLE": 0x0015,
+    "ATT_CHARACTERISTIC_ae10_01_VALUE_HANDLE": 0x0017,
+    "ATT_CHARACTERISTIC_2a50_01_VALUE_HANDLE": 0x001a,
+    "ATT_CHARACTERISTIC_ae3b_01_VALUE_HANDLE": 0x0042,
+    "ATT_CHARACTERISTIC_ae3c_01_VALUE_HANDLE": 0x0044,
+    "ATT_CHARACTERISTIC_ae3c_01_CLIENT_CONFIGURATION_HANDLE": 0x0045,
+    "ATT_CHARACTERISTIC_ae01_02_VALUE_HANDLE": 0x0082,
+    "ATT_CHARACTERISTIC_ae02_02_VALUE_HANDLE": 0x0084,
+    "ATT_CHARACTERISTIC_ae02_02_CLIENT_CONFIGURATION_HANDLE": 0x0085,
+}
+
+# the '#if 0' uuid128 sample of the same header (starts at handle 0x14)
+F53 = "-1212-EFDE-1523-785FEABCD123"
+U128_SPEC = {"services": [{"uuid": "0000F530" + F53, "start_handle": 0x14, "chars": [
+    {"uuid": "0000F531" + F53, "props": ["NOTIFY"]},
+    {"uuid": "0000F532" + F53, "props": WNR_DYN}]}]}
+_T = [0x23, 0xd1, 0xbc, 0xea, 0x5f, 0x78, 0x23, 0x15, 0xde, 0xef, 0x12, 0x12]
+U128_BYTES = bytes(
+    [0x18, 0x00, 0x02, 0x00, 0x14, 0x00, 0x00, 0x28] + _T + [0x30, 0xf5, 0x00, 0x00] +
+    [0x1b, 0x00, 0x02, 0x00, 0x15, 0x00, 0x03, 0x28, 0x10, 0x16, 0x00] + _T + [0x31, 0xf5, 0x00, 0x00] +
+    [0x16, 0x00, 0x10, 0x02, 0x16, 0x00] + _T + [0x31, 0xf5, 0x00, 0x00] +
+    [0x0a, 0x00, 0x0a, 0x01, 0x17, 0x00, 0x02, 0x29, 0x00, 0x00] +
+    [0x1b, 0x00, 0x02, 0x00, 0x18, 0x00, 0x03, 0x28, 0x04, 0x19, 0x00] + _T + [0x32, 0xf5, 0x00, 0x00] +
+    [0x16, 0x00, 0x04, 0x03, 0x19, 0x00] + _T + [0x32, 0xf5, 0x00, 0x00] +
+    [0x00, 0x00])
+
+
+def define_map(defines):
+    return {name: h for _, name, h in defines}
+
+
+class TestGolden(unittest.TestCase):
+    def test_trans_profile_all_enabled(self):
+        blocks, _ = g.build(TRANS_SPEC)
+        got = g.flat_bytes(blocks, {"CONFIG_BT_SM_SUPPORT_ENABLE", "RCSP_BTMATE_EN"})
+        self.assertEqual(got.hex(" "), TRANS_BYTES.hex(" "))
+
+    def test_trans_profile_conditions_off(self):
+        blocks, _ = g.build(TRANS_SPEC)
+        got = g.flat_bytes(blocks)
+        self.assertEqual(len(got), len(TRANS_BYTES) - SM_BLOCK - RCSP_BLOCK)
+
+    def test_trans_defines(self):
+        _, defines = g.build(TRANS_SPEC)
+        self.assertEqual(define_map(defines), TRANS_DEFINES)
+        conds = {name: c for c, name, _ in defines}
+        self.assertEqual(conds["ATT_CHARACTERISTIC_ae02_02_CLIENT_CONFIGURATION_HANDLE"], "RCSP_BTMATE_EN")
+
+    def test_uuid128(self):
+        blocks, defines = g.build(U128_SPEC)
+        self.assertEqual(g.flat_bytes(blocks).hex(" "), U128_BYTES.hex(" "))
+        self.assertEqual(define_map(defines), {
+            "ATT_CHARACTERISTIC_0000F531_1212_EFDE_1523_785FEABCD123_01_VALUE_HANDLE": 0x16,
+            "ATT_CHARACTERISTIC_0000F531_1212_EFDE_1523_785FEABCD123_01_CLIENT_CONFIGURATION_HANDLE": 0x17,
+            "ATT_CHARACTERISTIC_0000F532_1212_EFDE_1523_785FEABCD123_01_VALUE_HANDLE": 0x19,
+        })
+
+    def test_render_parses_back(self):
+        """The rendered C array (all #if blocks taken) holds exactly the flat bytes."""
+        text = g.render(TRANS_SPEC)
+        body = text.split("[] = {", 1)[1].split("};", 1)[0]
+        vals = []
+        for line in body.splitlines():
+            line = line.strip()
+            if line.startswith("0x"):
+                vals += [int(v, 16) for v in line.rstrip(",").split(", ")]
+        self.assertEqual(bytes(vals), TRANS_BYTES)
+        self.assertIn("#define ATT_CHARACTERISTIC_ae3c_01_CLIENT_CONFIGURATION_HANDLE 0x0045", text)
+
+    def test_static_value(self):
+        blocks, _ = g.build({"services": [{"uuid": "180a", "chars": [
+            {"uuid": "2a29", "props": ["READ"], "value": "M-VAVE"}]}]})
+        b = g.flat_bytes(blocks)
+        # value entry: size 8+6, flags 0x0002, handle 3, uuid 2a29, "M-VAVE"
+        self.assertIn(bytes([0x0e, 0x00, 0x02, 0x00, 0x03, 0x00, 0x29, 0x2a]) + b"M-VAVE", b)
+
+    def test_errors(self):
+        with self.assertRaises(ValueError):
+            g.build({"services": [{"uuid": "180a", "chars": [
+                {"uuid": "2a29", "props": ["READ", "DYNAMIC"], "value": "x"}]}]})
+        with self.assertRaises(ValueError):
+            g.build({"services": [{"uuid": "1800"}, {"uuid": "1801", "start_handle": 1}]})
+        with self.assertRaises(ValueError):
+            g.uuid_bytes("12345")
+
+
+class TestSmcpadProfile(unittest.TestCase):
+    """firmware/sdk_overlay/ble/ble_smcpad_profile.h must be the render of its JSON spec."""
+    BLE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "firmware", "sdk_overlay", "ble")
+
+    def test_header_up_to_date(self):
+        import json
+        with open(os.path.join(self.BLE, "ble_smcpad_profile.json"), encoding="utf-8") as f:
+            spec = json.load(f)
+        with open(os.path.join(self.BLE, "ble_smcpad_profile.h"), encoding="utf-8") as f:
+            committed = f.read()
+        self.assertEqual(committed, g.render(spec, "ble_smcpad_profile.json"),
+                         "regenerate: python3 tools/gatt/gen_jl_profile.py <json> <h>")
+        _, defines = g.build(spec)
+        d = define_map(defines)
+        # the RCSP block sits at 0x80 like the SDK's; in our table ae01/ae02 occur once, so _01
+        self.assertEqual(d["ATT_CHARACTERISTIC_ae01_01_VALUE_HANDLE"], 0x82)
+        self.assertEqual(d["ATT_CHARACTERISTIC_ae02_01_CLIENT_CONFIGURATION_HANDLE"], 0x85)
+        self.assertLess(max(h for c, _, h in defines if c is None), 0x80)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

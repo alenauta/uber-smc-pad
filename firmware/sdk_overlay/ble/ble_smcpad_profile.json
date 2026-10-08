@@ -1,0 +1,24 @@
+{
+  "name": "smcpad_profile_data",
+  "_comment": "SMC-PAD GATT table (docs/ble_config.md). Regenerate with: python3 tools/gatt/gen_jl_profile.py firmware/sdk_overlay/ble/ble_smcpad_profile.json firmware/sdk_overlay/ble/ble_smcpad_profile.h",
+  "services": [
+    {"uuid": "1800", "chars": [
+      {"uuid": "2a00", "props": ["READ", "DYNAMIC"]}]},
+    {"uuid": "1801", "chars": [
+      {"uuid": "2a05", "props": ["INDICATE"]}]},
+    {"uuid": "180a", "chars": [
+      {"uuid": "2a29", "props": ["READ"], "value": "SMC-PAD Project"},
+      {"uuid": "2a24", "props": ["READ"], "value": "SMC-PAD"}]},
+    {"uuid": "180f", "chars": [
+      {"uuid": "2a19", "props": ["READ", "NOTIFY", "DYNAMIC"]}]},
+    {"uuid": "ae40", "chars": [
+      {"uuid": "ae41", "props": ["WRITE_WITHOUT_RESPONSE", "DYNAMIC"]},
+      {"uuid": "ae42", "props": ["NOTIFY"]}]},
+    {"uuid": "03B80E5A-EDE8-4B33-A751-6CE34EC4C700", "chars": [
+      {"uuid": "7772E5DB-3868-4112-A1A9-F2669D106BF3",
+       "props": ["READ", "WRITE_WITHOUT_RESPONSE", "NOTIFY", "DYNAMIC"]}]},
+    {"uuid": "ae00", "if": "RCSP_BTMATE_EN", "start_handle": 128, "chars": [
+      {"uuid": "ae01", "props": ["WRITE_WITHOUT_RESPONSE", "DYNAMIC"]},
+      {"uuid": "ae02", "props": ["NOTIFY"]}]}
+  ]
+}
