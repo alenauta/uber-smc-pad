@@ -1,0 +1,20 @@
+# --- vendor material (copyrighted, never committed) ---
+/Midi Suite.app/
+/SincoOTA.apk
+/SMC-PAD_ZE.pdf
+
+# --- firmware images & device dumps (vendor code / device-unique data) ---
+/firmware/original/
+/firmware/unpacked_*/
+/firmware/backup/*.bin
+*.fwsc
+*.ufw
+
+# --- generic ---
+.DS_Store
+__pycache__/
+*.pyc
+*.log
+!docs/captures/*.log
+/build/
+/scratch/
