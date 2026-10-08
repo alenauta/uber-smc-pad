@@ -31,10 +31,13 @@ BANK_B_GROUP = 7                  # records 112..127 = PAD BANK B
 PRESET_NAMES = {1: "Performance", 2: "DAW"}
 BTN_NAMES = ["btn1", "btn2", "btn3", "btn4", "btn5"]
 
-# Type codes. '?' marks inferences that have not been confirmed by a capture yet.
-PAD_TYPES = {0: "Note", 1: "CC-toggle?", 2: "CC", 3: "PgmChg?", 4: "MCU-note"}
-BTN_TYPES = {2: "CC", 5: "MCU-note"}
-ENC_MODES = {0: "CC-abs", 2: "MCU/PB?"}
+# Type codes recovered from Midi Suite's Dart code (docs/midisuite_protocol.md).
+PAD_TYPES = {0: "Note", 1: "CC-Toggle", 2: "CC-Momentary", 3: "Program", 4: "MCP", 5: "SysEx",
+             6: "Comb-MCP"}
+BTN_TYPES = {0: "CC-Single", 1: "CC-Toggle", 2: "CC-Push", 3: "Program", 4: "SysEx", 5: "Note"}
+ENC_TYPES = {0: "CC", 1: "Aftertouch", 2: "Note", 3: "CC-Relative"}
+ENC_SPEEDS = {0: "lowest", 1: "low", 2: "normal", 3: "fast", 4: "fastest"}
+ENC_MODES = ENC_TYPES  # backwards-compatible alias
 
 NOTE_NAMES = "C C# D D# E F F# G G# A A# B".split()
 
@@ -73,14 +76,14 @@ def decode_button(r):
 
 
 def decode_encoder(r):
-    mode, t, ch, num, lo, hi = r
-    return dict(mode=mode, type=t, ch=ch + 1, num=num, min=lo, max=hi)
+    t, speed, ch, num, lo, hi = r
+    return dict(type=t, speed=speed, ch=ch + 1, num=num, min=lo, max=hi)
 
 
 def decode_pad(r):
-    t, ch, num, lo, hi, R, G, B, fbk = r[0:9]
-    return dict(type=t, ch=ch + 1, num=num, min=lo, max=hi, rgb=(R, G, B), feedback=fbk,
-                extra=r[9:])
+    t, ch, num, lo, hi, R, G, B, led, sxlen = r[0:10]
+    return dict(type=t, ch=ch + 1, num=num, min=lo, max=hi, rgb=(R, G, B), feedback=led,
+                sysex=r[10:10 + min(sxlen, 16)], sysex_len=sxlen, sysex_pad=r[10 + min(sxlen, 16):26])
 
 
 def fmt_pad(p):
@@ -90,10 +93,12 @@ def fmt_pad(p):
         what += " %-4s" % note_name(p["num"])
     else:
         what += "     "
-    s = "%-10s ch%-2d %s %3d-%-3d #%02x%02x%02x fb=%s" % (
+    s = "%-12s ch%-2d %s %3d-%-3d #%02x%02x%02x led=%s" % (
         t, p["ch"], what, p["min"], p["max"], *p["rgb"], fb(p["feedback"]))
-    if any(p["extra"]):
-        s += " extra=" + hx(p["extra"])
+    if p["sysex"]:
+        s += " sysex=" + hx(p["sysex"])
+    if any(p["sysex_pad"]):
+        s += " pad=" + hx(p["sysex_pad"])
     return s
 
 
@@ -104,14 +109,15 @@ def print_preset(idx, p, all_pads=False):
         b = decode_button(p[BTN_OFF + i * BTN_SIZE:BTN_OFF + (i + 1) * BTN_SIZE])
         t = BTN_TYPES.get(b["type"], "type%d" % b["type"])
         sx = (" sysex=" + hx(b["sysex"])) if b["sysex"] else ""
-        print("  %-5s %-8s ch%-2d num %-3d %3d-%-3d fb=%s%s" % (
+        print("  %-5s %-9s ch%-2d num %-3d %3d-%-3d led=%s%s" % (
             BTN_NAMES[i], t, b["ch"], b["num"], b["min"], b["max"], fb(b["feedback"]), sx))
     for bank in range(2):
         cells = []
         for i in range(8):
             e = decode_encoder(p[ENC_OFF + (bank * 8 + i) * ENC_SIZE:][:ENC_SIZE])
-            m = ENC_MODES.get(e["mode"], "m%d" % e["mode"])
-            cells.append("K%d %s ch%d cc%d" % (i + 1, m, e["ch"], e["num"]))
+            m = ENC_TYPES.get(e["type"], "t%d" % e["type"])
+            sp = "" if e["speed"] == 2 else "/" + ENC_SPEEDS.get(e["speed"], str(e["speed"]))
+            cells.append("K%d %s%s ch%d #%d" % (i + 1, m, sp, e["ch"], e["num"]))
         print("  knobs bank %d: %s" % (bank + 1, " | ".join(cells)))
     recs = [decode_pad(p[PAD_OFF + i * PAD_SIZE:][:PAD_SIZE]) for i in range(N_PADREC)]
     groups = range(8) if all_pads else (DEFAULT_OCTAVE_GROUP, BANK_B_GROUP)
@@ -159,21 +165,30 @@ def print_diff(blob, ref):
 
 
 # ---- persisted global state (VM journal at 0x27000) -------------------------------------------
-# 18-byte entries: 00 a3 3a | 12-byte payload | chk | 2 bytes. The payload equals the first 12
-# bytes returned by a BLE type-4 read. Field names below are hypotheses (see preset_format.md).
+# 18-byte entries: 00 a3 3a | 12-byte payload | chk | 2 bytes. The payload equals the 12-byte
+# BLE/USB type-4 read. Field map from Midi Suite's code (docs/midisuite_protocol.md).
+# Factory reset values written by Midi Suite: [120,0,50,4,0,0,2,0,1,1,0,0].
+NOTE_RATES = ["1/4", "1/4T", "1/8", "1/8T", "1/16", "1/16T", "1/32", "1/32T"]
 GLOB_FIELDS = [
-    (0, 2, "tempo? (u16 LE, BPM)"),
-    (2, 1, "swing? (%)"),
-    (3, 1, "b3 (rate/curve?)"),
-    (4, 1, "b4 (latch?)"),
-    (5, 1, "b5 (sync?)"),
-    (6, 1, "b6"),
-    (7, 1, "b7 (transpose?)"),
-    (8, 1, "octave group? (default 2)"),
-    (9, 1, "b9"),
-    (10, 1, "active preset? (0-based)"),
-    (11, 1, "pad bank? (0=A 1=B)"),
+    (0, 2, "tempo (BPM 30-300)"),
+    (2, 1, "swing (50-75 %)"),
+    (3, 1, "note_repeat_rate (0-7)"),
+    (4, 1, "sync (0/1)"),
+    (5, 1, "latch (0/1)"),
+    (6, 1, "octave (0-6, default 2)"),
+    (7, 1, "transpose (signed, -16..+16)"),
+    (8, 1, "velocity_curve (0-3)"),
+    (9, 1, "aftertouch (0/1)"),
+    (10, 1, "active_preset (0-7)"),
+    (11, 1, "pad_bank (0=A 1=B)"),
 ]
+
+
+def glob_value(payload, off, n):
+    v = int.from_bytes(payload[off:off + n], "little")
+    if off == 7 and v >= 128:
+        v -= 256
+    return v
 
 
 def vm_journal(flash):
@@ -187,7 +202,7 @@ def vm_journal(flash):
 def decode_glob(payload):
     parts = []
     for off, n, name in GLOB_FIELDS:
-        v = int.from_bytes(payload[off:off + n], "little")
+        v = glob_value(payload, off, n)
         parts.append("%s=%d" % (name.split(" ")[0], v))
     return " ".join(parts)
 
@@ -200,7 +215,13 @@ def print_globals(flash):
     if j:
         print("current (last entry):")
         for off, n, name in GLOB_FIELDS:
-            print("  %-28s %d" % (name, int.from_bytes(j[-1][1][off:off + n], "little")))
+            v = glob_value(j[-1][1], off, n)
+            extra = ""
+            if off == 3 and v < len(NOTE_RATES):
+                extra = "  (%s)" % NOTE_RATES[v]
+            elif off == 10:
+                extra = "  (preset %d)" % (v + 1)
+            print("  %-30s %d%s" % (name, v, extra))
 
 
 def main():

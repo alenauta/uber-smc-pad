@@ -50,7 +50,7 @@ def export_preset(slot, p):
         n = min(sxlen, 16)
         btn = {"type": r[0], "type_name": dp.BTN_TYPES.get(r[0], "?"), "ch": r[1] + 1,
                "num": r[2], "min": r[3], "max": r[4], "sysex": hexs(r[6:6 + n]),
-               "feedback": fbv(r[22])}
+               "led": fbv(r[22])}
         if sxlen > 16:
             btn["sysex_len"] = sxlen
         if any(r[6 + n:22]):
@@ -58,18 +58,23 @@ def export_preset(slot, p):
         out["buttons"].append(btn)
     for i in range(dp.N_ENC):
         r = p[dp.ENC_OFF + i * dp.ENC_SIZE:][:dp.ENC_SIZE]
-        out["knobs"].append({"bank": i // 8 + 1, "knob": i % 8 + 1, "mode": r[0],
-                             "mode_name": dp.ENC_MODES.get(r[0], "?"), "type": r[1],
-                             "ch": r[2] + 1, "cc": r[3], "min": r[4], "max": r[5]})
+        out["knobs"].append({"bank": i // 8 + 1, "knob": i % 8 + 1, "type": r[0],
+                             "type_name": dp.ENC_TYPES.get(r[0], "?"), "speed": r[1],
+                             "ch": r[2] + 1, "num": r[3], "min": r[4], "max": r[5]})
     for g, label in enumerate(GROUP_LABELS):
         pads = []
         for i in range(16):
             r = p[dp.PAD_OFF + (g * 16 + i) * dp.PAD_SIZE:][:dp.PAD_SIZE]
+            sxlen = r[9]
+            n = min(sxlen, 16)
             pad = {"pad": i + 1, "type": r[0], "type_name": dp.PAD_TYPES.get(r[0], "?"),
                    "ch": r[1] + 1, "num": r[2], "min": r[3], "max": r[4],
-                   "rgb": "#%02x%02x%02x" % (r[5], r[6], r[7]), "feedback": fbv(r[8])}
-            if any(r[9:]):
-                pad["extra"] = hexs(r[9:])
+                   "rgb": "#%02x%02x%02x" % (r[5], r[6], r[7]), "led": fbv(r[8]),
+                   "sysex": hexs(r[10:10 + n])}
+            if sxlen > 16:
+                pad["sysex_len"] = sxlen
+            if any(r[10 + n:26]):
+                pad["sysex_pad"] = hexs(r[10 + n:26])
             pads.append(pad)
         out["pads"][label] = pads
     return out
@@ -115,12 +120,12 @@ def build_preset(obj):
         rec = bytes([u8(b["type"], w + " type"), chan(b["ch"], w + " ch"), u7(b["num"], w + " num"),
                      u7(b["min"], w + " min"), u7(b["max"], w + " max"),
                      u8(b.get("sysex_len", len(sx)), w + " sysex_len")]) + body + \
-            bytes([u8(fbb(b.get("feedback")), w + " feedback")])
+            bytes([u8(fbb(b.get("led")), w + " led")])
         p[dp.BTN_OFF + i * dp.BTN_SIZE:dp.BTN_OFF + (i + 1) * dp.BTN_SIZE] = rec
     for i, k in enumerate(obj["knobs"]):
         w = "%s knob %d" % (s, i + 1)
-        rec = bytes([u8(k["mode"], w + " mode"), u8(k["type"], w + " type"), chan(k["ch"], w + " ch"),
-                     u7(k["cc"], w + " cc"), u7(k["min"], w + " min"), u7(k["max"], w + " max")])
+        rec = bytes([u8(k["type"], w + " type"), u8(k["speed"], w + " speed"), chan(k["ch"], w + " ch"),
+                     u7(k["num"], w + " num"), u7(k["min"], w + " min"), u7(k["max"], w + " max")])
         p[dp.ENC_OFF + i * dp.ENC_SIZE:dp.ENC_OFF + (i + 1) * dp.ENC_SIZE] = rec
     for g, label in enumerate(GROUP_LABELS):
         pads = obj["pads"][label]
@@ -131,12 +136,14 @@ def build_preset(obj):
             rgb = q["rgb"].lstrip("#")
             if len(rgb) != 6:
                 raise BuildError("%s: rgb must be #rrggbb" % w)
-            extra = unhex(q.get("extra", "")).ljust(17, b"\0")
-            if len(extra) != 17:
-                raise BuildError("%s: extra must be <= 17 bytes" % w)
+            sx = unhex(q.get("sysex", ""))
+            body = (sx + unhex(q.get("sysex_pad", ""))).ljust(16, b"\0")
+            if len(sx) > 16 or len(body) != 16:
+                raise BuildError("%s: sysex + sysex_pad must fit in 16 bytes" % w)
             rec = bytes([u8(q["type"], w + " type"), chan(q["ch"], w + " ch"), u7(q["num"], w + " num"),
                          u7(q["min"], w + " min"), u7(q["max"], w + " max")]) + bytes.fromhex(rgb) + \
-                bytes([u8(fbb(q.get("feedback")), w + " feedback")]) + extra
+                bytes([u8(fbb(q.get("led")), w + " led"),
+                       u8(q.get("sysex_len", len(sx)), w + " sysex_len")]) + body
             o = dp.PAD_OFF + (g * 16 + i) * dp.PAD_SIZE
             p[o:o + dp.PAD_SIZE] = rec
     return bytes(p)
