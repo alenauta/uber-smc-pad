@@ -3,7 +3,10 @@
  * (with TCFG_SMCPAD_BLE_ENABLE) serves the Sinco config protocol (Midi Suite / SincoOTA)
  * over USB SysEx and BLE AE41/AE42 with the stock storage model (sinco_store.c).
  *
- * Default mapping = the stock factory preset (docs/stock_midi_map.md):
+ * With TCFG_SMCPAD_BLE_ENABLE the mapping is the active stock preset (smcpad_preset.c: the
+ * records Midi Suite edits, globals octave / transpose / curve / aftertouch / preset / bank);
+ * blank flash gets the factory Performance preset (= the mapping below).
+ * Without it, the hard-coded stock factory mapping (docs/stock_midi_map.md):
  *   pads    Note On/Off ch10, notes 36..51 (pad index order, to be confirmed), velocity;
  *           channel aftertouch (D9) from the strongest held pad, at most every 10 ms
  *   knobs   CC 30..37 ch1, endless knob kept as an absolute 0..127 value
@@ -31,6 +34,10 @@
 #include "ble_midi.h"
 #include "ble_smcpad.h"
 #include "smcpad_store_port.h"
+#include "smcpad_preset.h"
+#define APP_PRESETS         1                   /* preset interpreter (needs the store) */
+#else
+#define APP_PRESETS         0
 #endif
 
 #define LOG_TAG_CONST       BOARD
@@ -46,6 +53,8 @@
 #define APP_HOST_RGB        0x0040ff            /* colour for host-lit pads, scaled by vel */
 #define APP_TASK_PRIO       2
 #define APP_TASK_STACK      512                 /* u32 words */
+#define APP_KNOB_PERIOD_MS  50                  /* stock: encoder deltas every 50 ms */
+#define APP_KNOB_TICK_MS    10                  /* knob value walker */
 
 static OS_SEM app_sem;
 
@@ -59,6 +68,8 @@ static struct {
     u32 last_at_ms;
     u32 last_rgb_ms;
     u32 host_rgb[SMCPAD_NUM_PADS];
+    u32 last_knob_ms;
+    u32 last_knob_tick_ms;
 } app;
 
 /* IRQ context, called from the RAM ISRs: keep it in RAM too (os_sem_post is in mask ROM) */
@@ -86,8 +97,26 @@ static u16 ble_pkt_len;
 static u32 ble_conn_gen;
 static u32 ble_midi_drops;
 static u32 globals_gen_seen, globals_change_ms;
+static struct smcpad_preset preset;
+static u32 led_presets_gen, led_globals_gen;
 
 static void host_midi_in(const u8 *msg, u32 len);
+static void midi_out(const u8 *m, u32 n);
+
+static void preset_midi(void *ctx, const u8 *m, u32 n)
+{
+    (void)ctx;
+    midi_out(m, n);
+}
+
+static void preset_globals_changed(void *ctx)  /* pad-bank button: persist like a Sinco write */
+{
+    (void)ctx;
+    store.globals_dirty = 1;
+    store.globals_gen++;
+}
+
+static const struct smcpad_preset_io preset_io = {NULL, preset_midi, preset_globals_changed};
 
 static void sinco_midi_in(void *ctx, const u8 *b, u32 n)  /* cmd 0x15: raw MIDI bytes */
 {
@@ -217,8 +246,16 @@ static void service_ble(u32 now)
 static void sinco_start(void)
 {
     sinco_store_init(&store, smcpad_store_port(), presets_ram, SMCPAD_PRESETS_FLASH, SMCPAD_CALIB_FLASH);
+    if (!store.presets_from_flash) {            /* blank USRFLASH: factory presets in RAM only */
+        for (u8 i = 0; i < SMCPAD_PRESET_COUNT; i++) {
+            smcpad_preset_factory(presets_ram + (u32)i * SMCPAD_PRESET_SIZE);
+        }
+    }
+    smcpad_preset_init(&preset, &preset_io, presets_ram, store.globals);
+    led_presets_gen = store.presets_gen;
+    led_globals_gen = store.globals_gen;
     globals_gen_seen = store.globals_gen;
-    log_info("presets %s, globals preset %d", store.presets_from_flash ? "loaded" : "blank",
+    log_info("presets %s, globals preset %d", store.presets_from_flash ? "loaded" : "factory",
              store.globals[GLOB_PRESET]);
     sinco_sx_reset(&usb_sx);
     sinco_rx_reset(&ble_sx);
@@ -241,23 +278,57 @@ static void midi_out(const u8 *m, u32 n)
 #endif
 }
 
+#if !APP_PRESETS
 static void midi3(u8 st, u8 d1, u8 d2)
 {
     u8 m[3] = {st, (u8)(d1 & 0x7f), (u8)(d2 & 0x7f)};
     midi_out(m, 3);
 }
+#endif
 
 static void pad_led_update(u8 pad)
 {
+#if APP_PRESETS
+    (void)pad;
+    preset.led_dirty = 1;                           /* refresh_leds() recomputes all pads */
+#else
     smcpad_hw_rgb_set(pad, (app.held & BIT(pad)) ? APP_PAD_HELD_RGB : app.host_rgb[pad]);
     app.rgb_dirty = 1;
+#endif
 }
+
+#if APP_PRESETS
+/* pad colours + button LEDs from the interpreter, when its state, a preset or the globals changed */
+static void refresh_leds(void)
+{
+    if (!preset.led_dirty && led_presets_gen == store.presets_gen && led_globals_gen == store.globals_gen) {
+        return;
+    }
+    preset.led_dirty = 0;
+    led_presets_gen = store.presets_gen;
+    led_globals_gen = store.globals_gen;
+    for (u8 i = 0; i < SMCPAD_NUM_PADS; i++) {
+        smcpad_hw_rgb_set(i, smcpad_preset_pad_rgb(&preset, i));
+    }
+    app.rgb_dirty = 1;
+    smcpad_hw_button_leds(smcpad_preset_button_leds(&preset, app.buttons));
+}
+#endif
 
 /* ---- input -> MIDI ------------------------------------------------------------------ */
 static void service_pads(u32 now)
 {
     struct smcpad_pad_ev e;
     while (smcpad_hw_pad_pop(&e)) {
+#if APP_PRESETS
+        if (e.type == SMCPAD_EV_PAD_ON) {
+            app.held |= (u16)BIT(e.pad);
+            smcpad_preset_pad(&preset, e.pad, 1, e.velocity ? e.velocity : 1);
+        } else if (e.type == SMCPAD_EV_PAD_OFF) {
+            app.held &= (u16)~BIT(e.pad);
+            smcpad_preset_pad(&preset, e.pad, 0, 0);    /* sends AT 0 before the last Note Off */
+        }
+#else
         u8 note = (u8)(SMCPAD_MIDI_PAD_NOTE0 + e.pad);
         if (e.type == SMCPAD_EV_PAD_ON) {
             app.held |= (u16)BIT(e.pad);
@@ -271,30 +342,52 @@ static void service_pads(u32 now)
             }
             midi3(0x80 | SMCPAD_MIDI_PAD_CH, note, 64);
         }
+#endif
         pad_led_update(e.pad);
     }
 
     if (app.held && now - app.last_at_ms >= APP_AT_PERIOD_MS) {
         u16 p = 0;
+        u8 strongest = 0;
         for (u8 i = 0; i < SMCPAD_NUM_PADS; i++) {
             if (app.held & BIT(i)) {
                 u16 v = smcpad_hw_pad_pressure(i);
-                p = v > p ? v : p;
+                if (v >= p) {
+                    p = v;
+                    strongest = i;
+                }
             }
         }
         u32 at = (u32)p * 127u / smcpad_pad_cfg_default.vel_full;
         u8 v = (u8)(at > 127 ? 127 : at);
+#if APP_PRESETS
+        smcpad_preset_pressure(&preset, strongest, v);  /* Note pads, globals AT on, [min, max] */
+#else
+        (void)strongest;
         if (v != app.last_at) {
             u8 m[2] = {0xD0 | SMCPAD_MIDI_PAD_CH, v};
             midi_out(m, 2);
             app.last_at = v;
         }
+#endif
         app.last_at_ms = now;
     }
 }
 
-static void service_knobs(void)
+static void service_knobs(u32 now)
 {
+#if APP_PRESETS
+    if (now - app.last_knob_tick_ms >= APP_KNOB_TICK_MS) {
+        smcpad_preset_tick(&preset, now);           /* walks values, Mackie touch release */
+        app.last_knob_tick_ms = now;
+    }
+    if (now - app.last_knob_ms < APP_KNOB_PERIOD_MS) {
+        return;                                     /* stock: deltas per 50 ms -> speed table */
+    }
+    app.last_knob_ms = now;
+#else
+    (void)now;
+#endif
     for (u8 k = 0; k < SMCPAD_NUM_KNOBS; k++) {
         s32 diff = smcpad_hw_knob_count(k) - app.knob_rep[k];
         s32 steps = diff / 2;                       /* stock: count >> 1 per step */
@@ -302,11 +395,15 @@ static void service_knobs(void)
             continue;
         }
         app.knob_rep[k] += steps * 2;
+#if APP_PRESETS
+        smcpad_preset_knob(&preset, k, steps);
+#else
         u8 v = smcpad_knob_value(app.knob_val[k], steps);
         if (v != app.knob_val[k]) {
             app.knob_val[k] = v;
             midi3(0xB0 | SMCPAD_MIDI_KNOB_CH, (u8)(SMCPAD_MIDI_KNOB_CC0 + k), v);
         }
+#endif
     }
 }
 
@@ -319,11 +416,19 @@ static void service_buttons(void)
     }
     for (u8 b = 0; b < SMCPAD_NUM_BUTTONS; b++) {
         if (changed & BIT(b)) {
+#if APP_PRESETS
+            smcpad_preset_button(&preset, b, (now & BIT(b)) ? 1 : 0);
+#else
             midi3(0xB0 | SMCPAD_MIDI_BTN_CH, (u8)(SMCPAD_MIDI_BTN_CC0 + b), (now & BIT(b)) ? 127 : 0);
+#endif
         }
     }
     app.buttons = now;
+#if APP_PRESETS
+    preset.led_dirty = 1;                           /* refresh_leds(): held + toggle + host state */
+#else
     smcpad_hw_button_leds(now);                     /* local feedback for now */
+#endif
 }
 
 /* ---- USB MIDI in ----------------------------------------------------------------------- */
@@ -370,9 +475,12 @@ static void diag_reply(u8 cmd)
 #endif
 }
 
-/* MIDI from the host (USB short messages, BLE-MIDI, Sinco 0x15): pad LEDs */
+/* MIDI from the host (USB short messages, BLE-MIDI, Sinco 0x15): LED / knob feedback */
 static void host_midi_in(const u8 *msg, u32 len)
 {
+#if APP_PRESETS
+    smcpad_preset_midi_in(&preset, msg, len);      /* Led bytes, 9F 7F 7F, knob values */
+#else
     if (len == 3 && (msg[0] & 0x0f) == SMCPAD_MIDI_PAD_CH &&
         ((msg[0] & 0xf0) == 0x90 || (msg[0] & 0xf0) == 0x80)) {
         u8 pad = (u8)(msg[1] - SMCPAD_MIDI_PAD_NOTE0);
@@ -384,6 +492,7 @@ static void host_midi_in(const u8 *msg, u32 len)
             pad_led_update(pad);
         }
     }
+#endif
 }
 
 #if TCFG_USB_SLAVE_MIDI_ENABLE
@@ -431,13 +540,16 @@ static void smcpad_task(void *p)
             pads_started = 1;
         }
         service_pads(now);
-        service_knobs();
+        service_knobs(now);
         service_buttons();
 #if TCFG_USB_SLAVE_MIDI_ENABLE
         usb_midi_poll(on_usb_midi);
 #endif
 #if TCFG_SMCPAD_BLE_ENABLE
         service_ble(now);
+#endif
+#if APP_PRESETS
+        refresh_leds();
 #endif
         if (app.rgb_dirty && now - app.last_rgb_ms >= APP_RGB_PERIOD_MS) {
             if (smcpad_hw_rgb_show()) {

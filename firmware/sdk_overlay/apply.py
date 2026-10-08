@@ -21,7 +21,7 @@
     descriptor.c, user_setup.c, the board Makefile, board_smcpad_cfg.h and trans_data's
     app_spp_and_le.c (see README.md, "USB-MIDI")
   - SMC-PAD BLE (default on with the SMC-PAD hardware; --no-ble-smcpad to skip): copies
-    ble/, sinco/, midi/ and board/smcpad_store_port.[ch] into the board dir, compiles
+    ble/, sinco/, midi/ and board/smcpad_store_port.[ch] + smcpad_preset.[ch] into the board dir, compiles
     ble_smcpad.c instead of trans_data/ble_trans.c (stock GATT: BLE-MIDI, Sinco AE40, RCSP
     AE00, battery, device info), turns Classic Bluetooth off (TCFG_USER_EDR_ENABLE 0) and
     pairing on ("Just Works": CONFIG_BT_SM_SUPPORT_ENABLE 1 in app_config.h)
@@ -158,7 +158,8 @@ BLE_FILES = [("ble", "ble_smcpad.c"), ("ble", "ble_smcpad.h"), ("ble", "ble_smcp
              ("sinco", "sinco_proto.c"), ("sinco", "sinco_proto.h"),
              ("sinco", "sinco_store.c"), ("sinco", "sinco_store.h"),
              ("midi", "ble_midi.c"), ("midi", "ble_midi.h"),
-             ("board", "smcpad_store_port.c"), ("board", "smcpad_store_port.h")]
+             ("board", "smcpad_store_port.c"), ("board", "smcpad_store_port.h"),
+             ("board", "smcpad_preset.c"), ("board", "smcpad_preset.h")]
 BLE_TRANS_LINE = "\t../../../../apps/spp_and_le/examples/trans_data/ble_trans.c \\\n"
 BLE_BOARD_EDITS = [
     # BLE only, like stock: frees ~70 KB of code and the EDR heap (RCSP OTA runs over BLE)
