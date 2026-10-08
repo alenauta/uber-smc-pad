@@ -8,7 +8,11 @@
 * Every run regenerates our files from the pristine sources, so it is idempotent:
   - apps/spp_and_le/board/br25/board_smcpad.c / board_smcpad_cfg.h
       = the AC636N demo board with CONFIG_BOARD_AC636N_DEMO -> CONFIG_BOARD_SMCPAD
-        (pins/peripherals are still the DEMO ones: NOT for flashing until the pin map is known)
+  - SMC-PAD hardware (default on; --no-smcpad-hw to skip): copies board/smcpad_*.[ch] into the
+    board dir, frees the demo peripherals that clash with docs/pinmap.md (UART0 on PC4, ADKEY on
+    PB1, SDK SPI1/SPI2 drivers, AT UART pins), adds adc_ext_set_value() to cpu/br25/adc_api.c
+    and calls smcpad_start() from trans_data after usb_start().
+    Pins are the real ones but the drivers are UNTESTED on hardware: still NOT for flashing.
   - board_smcpad_global_build_cfg.h  = ours (stock-compatible flash layout), from this directory
   - board_config.h selects CONFIG_BOARD_SMCPAD; the board Makefile compiles board_smcpad.c
   - cpu/br25/tools/isd_config_rule.c: CONFIG_NO_UBOOT_DEBUG_PIN suppresses the PA05 UTTX default
@@ -67,6 +71,71 @@ USB_MIDI_BOARD_EDITS = [
     ("#define TCFG_LOWPOWER_LOWPOWER_SEL\t\t\tSLEEP_EN",
      "#define TCFG_LOWPOWER_LOWPOWER_SEL\t\t\t0 /* sdk_overlay: was SLEEP_EN, see README */ //"),
 ]
+
+
+SMCPAD_FILES = ("smcpad_logic.h", "smcpad_logic.c", "smcpad_board.h", "smcpad_hw.c", "smcpad_app.c")
+SMCPAD_BOARD_EDITS = [
+    # PC4 is free on the SMC-PAD but nothing listens there; PC5 (TRS) is UART1, see smcpad_hw.c
+    ("#define TCFG_UART0_ENABLE\t\t\t\t\tENABLE_THIS_MOUDLE ",
+     "#define TCFG_UART0_ENABLE\t\t\t\t\tDISABLE_THIS_MOUDLE /* sdk_overlay: no debug UART on the SMC-PAD */ "),
+    # AT-command UART pins (PC1 = key-matrix row 1, PA6 = mux B ADC): not used by trans_data
+    ("#define UART_DB_TX_PIN                      IO_PORTC_01 ",
+     "#define UART_DB_TX_PIN                      NO_CONFIG_PORT /* sdk_overlay: was IO_PORTC_01 */ "),
+    ("#define UART_DB_RX_PIN                      IO_PORTC_02\n",
+     "#define UART_DB_RX_PIN                      NO_CONFIG_PORT /* sdk_overlay: was IO_PORTC_02 */\n"),
+    ("#define UART_DB_RTS_PIN                     IO_PORTA_06\n",
+     "#define UART_DB_RTS_PIN                     NO_CONFIG_PORT /* sdk_overlay: was IO_PORTA_06 */\n"),
+    ("#define UART_DB_CTS_PIN                     IO_PORTA_05\n",
+     "#define UART_DB_CTS_PIN                     NO_CONFIG_PORT /* sdk_overlay: was IO_PORTA_05 */\n"),
+    # SPI1 (WS2812) and SPI2 (key matrix) are driven directly by smcpad_hw.c
+    ("#define\tTCFG_HW_SPI1_ENABLE\t\tENABLE_THIS_MOUDLE",
+     "#define\tTCFG_HW_SPI1_ENABLE\t\tDISABLE_THIS_MOUDLE /* sdk_overlay: smcpad_hw.c */"),
+    ("#define\tTCFG_HW_SPI2_ENABLE\t\tENABLE_THIS_MOUDLE",
+     "#define\tTCFG_HW_SPI2_ENABLE\t\tDISABLE_THIS_MOUDLE /* sdk_overlay: smcpad_hw.c */"),
+    # PB1 is the WS2812 data line, not an AD key (also drops the PB1 wakeup port in board_smcpad.c)
+    ("#define TCFG_ADKEY_ENABLE                   ENABLE_THIS_MOUDLE ",
+     "#define TCFG_ADKEY_ENABLE                   DISABLE_THIS_MOUDLE /* sdk_overlay: PB1 = WS2812 */ "),
+    # (TCFG_SYS_LVD_EN is forced to 0 by app_config.h for spp_and_le anyway)
+    ("#define TCFG_SYS_LVD_EN\t\t\t\t\t\t      1   //电量检测使能\n",
+     "#define TCFG_SYS_LVD_EN\t\t\t\t\t\t      1   //电量检测使能\n"
+     "#define TCFG_SMCPAD_HW_ENABLE                     1   // sdk_overlay: pads/keys/LEDs/TRS, smcpad_hw.c\n"),
+]
+# board_smcpad.c (on top of the demo -> smcpad renames)
+SMCPAD_BOARD_C_EDITS = [
+    ("    gpio_longpress_pin0_reset_config(IO_PORTB_01, 0, 0);\n",
+     "    /* sdk_overlay: PB1 is the WS2812 data line; long-press reset stays disabled (time 0) */\n"
+     "    gpio_longpress_pin0_reset_config(IO_PORTB_01, 0, 0);\n"),
+]
+ADC_API = "cpu/br25/adc_api.c"
+# smcpad_hw.c owns the SARADC; it hands VBAT / LDOREF / DTEMP results back through this
+ADC_API_EDITS = [
+    ("u32 adc_value_to_voltage(u32 adc_vbg, u32 adc_ch_val)\n",
+     "/* sdk_overlay: results of conversions made by a board driver that owns the SARADC */\n"
+     "void adc_ext_set_value(u32 ch, u32 value)\n"
+     "{\n"
+     "    if (ch == AD_CH_LDOREF) {\n"
+     "        vbg_adc_value = value;\n"
+     "    }\n"
+     "    if (ch == AD_CH_VBAT) {\n"
+     "        vbat_adc_value = value;\n"
+     "    }\n"
+     "    for (int i = 0; i < ADC_MAX_CH; i++) {\n"
+     "        if (adc_queue[i].ch == ch) {\n"
+     "            adc_queue[i].value = value;\n"
+     "        }\n"
+     "    }\n"
+     "}\n\n"
+     "u32 adc_value_to_voltage(u32 adc_vbg, u32 adc_ch_val)\n"),
+]
+APP_TD = "apps/spp_and_le/examples/trans_data/app_spp_and_le.c"
+APP_TD_USB_EDIT = ("#if TCFG_USB_SLAVE_CDC_ENABLE\n    extern void usb_start();\n",
+                   "#if TCFG_USB_SLAVE_CDC_ENABLE || TCFG_USB_SLAVE_MIDI_ENABLE\n    extern void usb_start();\n")
+APP_TD_SMCPAD_EDIT = ("    usb_start();\n#endif\n}\n",
+                      "    usb_start();\n#endif\n"
+                      "#if TCFG_SMCPAD_HW_ENABLE\n"
+                      "    extern void smcpad_start(void);\n"
+                      "    smcpad_start();     // sdk_overlay: pads / keys / LEDs / TRS\n"
+                      "#endif\n}\n")
 
 
 def apply_usb_midi():
@@ -162,16 +231,12 @@ def apply_usb_midi():
          "            switch (LOBYTE(req->wValue)) {\n"),
     ])
 
-    patch_file("apps/spp_and_le/examples/trans_data/app_spp_and_le.c", [
-        ("#if TCFG_USB_SLAVE_CDC_ENABLE\n    extern void usb_start();\n",
-         "#if TCFG_USB_SLAVE_CDC_ENABLE || TCFG_USB_SLAVE_MIDI_ENABLE\n    extern void usb_start();\n"),
-    ])
-
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--fresh", action="store_true", help="delete and recreate the working copy")
     ap.add_argument("--no-usb-midi", action="store_true", help="leave the SDK USB stack untouched")
+    ap.add_argument("--no-smcpad-hw", action="store_true", help="demo-board peripherals, no SMC-PAD drivers")
     a = ap.parse_args()
 
     if not os.path.isdir(PRISTINE):
@@ -191,11 +256,19 @@ def main():
         t = rd(os.path.join(src_b, s))
         t = t.replace("board_ac636n_demo_global_build_cfg.h", "board_smcpad_global_build_cfg.h")
         t = t.replace("CONFIG_BOARD_AC636N_DEMO", "CONFIG_BOARD_SMCPAD")
-        hdr = ("/* GENERATED by firmware/sdk_overlay/apply.py from %s (SDK v2.4.0).\n"
-               " * Peripherals/pins are still the AC636N DEMO board's: do NOT flash. */\n" % s)
-        if d == "board_smcpad_cfg.h" and not a.no_usb_midi:
-            for old, new in USB_MIDI_BOARD_EDITS:
-                t = replace_once(t, old, new, d)
+        if a.no_smcpad_hw:
+            note = " * Peripherals/pins are still the AC636N DEMO board's: do NOT flash. */\n"
+        else:
+            note = " * SMC-PAD pins (docs/pinmap.md), drivers untested on hardware: do NOT flash. */\n"
+        hdr = "/* GENERATED by firmware/sdk_overlay/apply.py from %s (SDK v2.4.0).\n" % s + note
+        edits = []
+        if d == "board_smcpad_cfg.h":
+            edits += [] if a.no_usb_midi else USB_MIDI_BOARD_EDITS
+            edits += [] if a.no_smcpad_hw else SMCPAD_BOARD_EDITS
+        elif not a.no_smcpad_hw:
+            edits += SMCPAD_BOARD_C_EDITS
+        for old, new in edits:
+            t = replace_once(t, old, new, d)
         wr(os.path.join(dst_b, d), hdr + t)
 
     # 2. our build cfg
@@ -219,6 +292,11 @@ def main():
     if not a.no_usb_midi:
         line = "\t../../../../apps/common/device/usb/device/usb_device.c \\\n"
         t = replace_once(t, line, line + line.replace("usb_device.c", "usb_midi.c"), "board Makefile")
+    if not a.no_smcpad_hw:
+        line = "\t../../../../apps/spp_and_le/board/br25/board_smcpad.c \\\n"
+        t = replace_once(t, line, line + "".join(line.replace("board_smcpad.c", f)
+                                                 for f in SMCPAD_FILES if f.endswith(".c")),
+                         "board Makefile")
     wr(os.path.join(dst_b, "Makefile"), t)
 
     # 5. allow "no uboot debug UART" (stock image has no UTTX)
@@ -230,8 +308,7 @@ def main():
 
     # 6. USB-MIDI device class (or restore the pristine USB files)
     usb_files = [USB + "/usb_common_def.h", USB + "/usb_config.c", USB + "/device/usb_device.c",
-                 USB + "/device/descriptor.c", USB + "/device/user_setup.c",
-                 "apps/spp_and_le/examples/trans_data/app_spp_and_le.c"]
+                 USB + "/device/descriptor.c", USB + "/device/user_setup.c"]
     if a.no_usb_midi:
         for rel in usb_files:
             shutil.copyfile(os.path.join(PRISTINE, rel), os.path.join(WORK, rel))
@@ -242,6 +319,25 @@ def main():
         print("  USB stack: pristine (no USB-MIDI)")
     else:
         apply_usb_midi()
+
+    # 7. SMC-PAD hardware drivers (or remove them)
+    for f in SMCPAD_FILES:
+        p = os.path.join(dst_b, f)
+        if a.no_smcpad_hw:
+            if os.path.exists(p):
+                os.remove(p)
+        else:
+            shutil.copyfile(os.path.join(HERE, "board", f), p)
+            print("  wrote", os.path.join(BOARD, f))
+    if a.no_smcpad_hw:
+        shutil.copyfile(os.path.join(PRISTINE, ADC_API), os.path.join(WORK, ADC_API))
+    else:
+        patch_file(ADC_API, ADC_API_EDITS)
+
+    # 8. trans_data start hook: usb_start() for MIDI, smcpad_start()
+    edits = [] if a.no_usb_midi else [APP_TD_USB_EDIT]
+    edits += [] if a.no_smcpad_hw else [APP_TD_SMCPAD_EDIT]
+    patch_file(APP_TD, edits)
 
     print("OK. Build: bash firmware/builder/build_ufw.sh ac636n_spp_and_le", WORK)
 
