@@ -12,6 +12,10 @@
   - board_smcpad_global_build_cfg.h  = ours (stock-compatible flash layout), from this directory
   - board_config.h selects CONFIG_BOARD_SMCPAD; the board Makefile compiles board_smcpad.c
   - cpu/br25/tools/isd_config_rule.c: CONFIG_NO_UBOOT_DEBUG_PIN suppresses the PA05 UTTX default
+  - USB-MIDI device class (default on; --no-usb-midi to skip): copies usb/usb_midi.[ch] into
+    apps/common/device/usb/device/ and patches usb_common_def.h, usb_device.c, usb_config.c,
+    descriptor.c, user_setup.c, the board Makefile, board_smcpad_cfg.h and trans_data's
+    app_spp_and_le.c (see README.md, "USB-MIDI")
 Then build with:  bash firmware/builder/build_ufw.sh ac636n_spp_and_le /workspace/work/sdk-smcpad
 """
 import argparse
@@ -44,9 +48,130 @@ def replace_once(text, old, new, what):
     return text.replace(old, new)
 
 
+def patch_file(rel, edits):
+    """Regenerate WORK/rel from PRISTINE/rel with exact-match (old, new) edits."""
+    t = rd(os.path.join(PRISTINE, rel))
+    for old, new in edits:
+        t = replace_once(t, old, new, rel)
+    wr(os.path.join(WORK, rel), t)
+
+
+USB = "apps/common/device/usb"
+USB_MIDI_BOARD_EDITS = [
+    ("#define TCFG_PC_ENABLE\t\t\t\t\t\tDISABLE_THIS_MOUDLE//PC模块使能\n",
+     "#define TCFG_PC_ENABLE\t\t\t\t\t\tENABLE_THIS_MOUDLE//PC模块使能 (sdk_overlay: USB-MIDI)\n"
+     "#define USB_MEM_NO_USE_OVERLAY_EN\t       1   // USB buffers in .bss, not in overlay_pc\n"),
+    ("#define     USB_DEVICE_CLASS_CONFIG (SPEAKER_CLASS|MIC_CLASS|HID_CLASS)\n",
+     "#define     USB_DEVICE_CLASS_CONFIG (MIDI_CLASS)   // sdk_overlay: USB-MIDI only\n"),
+    # no powerdown while USB runs; the real power plan (charger/VBUS detect) comes with the pin map
+    ("#define TCFG_LOWPOWER_LOWPOWER_SEL\t\t\tSLEEP_EN",
+     "#define TCFG_LOWPOWER_LOWPOWER_SEL\t\t\t0 /* sdk_overlay: was SLEEP_EN, see README */ //"),
+]
+
+
+def apply_usb_midi():
+    dst = os.path.join(WORK, USB, "device")
+    for f in ("usb_midi.c", "usb_midi.h"):
+        shutil.copyfile(os.path.join(HERE, "usb", f), os.path.join(dst, f))
+        print("  wrote", os.path.join(USB, "device", f))
+
+    patch_file(USB + "/usb_common_def.h", [
+        ("#define     CUSTOM_HID_CLASS    0x00000020\n",
+         "#define     CUSTOM_HID_CLASS    0x00000020\n"
+         "#define     MIDI_CLASS          0x00000040   // sdk_overlay: USB-MIDI 1.0\n"),
+        ("#if (USB_DEVICE_CLASS_CONFIG & CDC_CLASS)\n"
+         "#define TCFG_USB_SLAVE_CDC_ENABLE           1\n"
+         "#else\n"
+         "#define TCFG_USB_SLAVE_CDC_ENABLE           0\n"
+         "#endif\n",
+         "#if (USB_DEVICE_CLASS_CONFIG & CDC_CLASS)\n"
+         "#define TCFG_USB_SLAVE_CDC_ENABLE           1\n"
+         "#else\n"
+         "#define TCFG_USB_SLAVE_CDC_ENABLE           0\n"
+         "#endif\n"
+         "\n"
+         "#if (USB_DEVICE_CLASS_CONFIG & MIDI_CLASS)\n"
+         "#define TCFG_USB_SLAVE_MIDI_ENABLE          1\n"
+         "#else\n"
+         "#define TCFG_USB_SLAVE_MIDI_ENABLE          0\n"
+         "#endif\n"),
+        ("#define TCFG_USB_SLAVE_HID_ENABLE           0\n#define TCFG_USB_SLAVE_CDC_ENABLE           0\n",
+         "#define TCFG_USB_SLAVE_HID_ENABLE           0\n#define TCFG_USB_SLAVE_CDC_ENABLE           0\n"
+         "#define TCFG_USB_SLAVE_MIDI_ENABLE          0\n"),
+    ])
+
+    patch_file(USB + "/device/usb_device.c", [
+        ('#include "usb/device/cdc.h"\n',
+         '#include "usb/device/cdc.h"\n#include "usb_midi.h"\n'),
+        ("        cdc_release(usb_id);\n#endif\n",
+         "        cdc_release(usb_id);\n#endif\n"
+         "#if TCFG_USB_SLAVE_MIDI_ENABLE\n        usb_midi_release(usb_id);\n#endif\n"),
+        ("        cdc_register(usb_id);\n    }\n#endif\n",
+         "        cdc_register(usb_id);\n    }\n#endif\n"
+         "\n#if TCFG_USB_SLAVE_MIDI_ENABLE\n"
+         "    if ((class & MIDI_CLASS) == MIDI_CLASS) {\n"
+         "        log_info(\"add desc midi\");\n"
+         "        usb_midi_register(usb_id);\n"
+         "        usb_add_desc_config(usb_id, class_index++, usb_midi_desc_config);\n"
+         "    }\n#endif\n"),
+    ])
+
+    patch_file(USB + "/usb_config.c", [
+        ("#define     CDC_DMA_SIZE    0\n#endif\n",
+         "#define     CDC_DMA_SIZE    0\n#endif\n\n"
+         "#if TCFG_USB_SLAVE_MIDI_ENABLE\n#define     MIDI_DMA_SIZE   (64*2)\n#else\n"
+         "#define     MIDI_DMA_SIZE   0\n#endif\n"),
+        ("+ CUSTOM_HID_DMA_SIZE + USB_DMA_BUF_ALIGN+ 100)",
+         "+ CUSTOM_HID_DMA_SIZE + USB_DMA_BUF_ALIGN + MIDI_DMA_SIZE + USB_DMA_BUF_ALIGN + 100)"),
+    ])
+
+    patch_file(USB + "/device/descriptor.c", [
+        ('#include "usb/device/uac_audio.h"\n',
+         '#include "usb/device/uac_audio.h"\n#include "usb_midi.h"\n'),
+        ("    memcpy(ptr, sDeviceDescriptor, USB_DT_DEVICE_SIZE);\n",
+         "    memcpy(ptr, sDeviceDescriptor, USB_DT_DEVICE_SIZE);\n"
+         "#if TCFG_USB_SLAVE_MIDI_ENABLE\n    usb_midi_patch_device_descriptor(ptr);\n#endif\n"),
+        ("    memcpy(ptr, MANUFACTURE_STR, MANUFACTURE_STR[0]);\n",
+         "#if TCFG_USB_SLAVE_MIDI_ENABLE\n    usb_midi_get_manufacturer_str(ptr);\n#else\n"
+         "    memcpy(ptr, MANUFACTURE_STR, MANUFACTURE_STR[0]);\n#endif\n"),
+        ("    memcpy(ptr, product_string, product_string[0]);\n",
+         "#if TCFG_USB_SLAVE_MIDI_ENABLE\n    usb_midi_get_product_str(ptr);\n#else\n"
+         "    memcpy(ptr, product_string, product_string[0]);\n#endif\n"),
+        # uac_get_string() only exists with the audio class compiled in
+        ("    const u8 *pstr = uac_get_string(id);\n    if (pstr != NULL) {\n        return pstr;\n    }\n",
+         "#if TCFG_USB_SLAVE_AUDIO_ENABLE\n"
+         "    const u8 *pstr = uac_get_string(id);\n    if (pstr != NULL) {\n        return pstr;\n    }\n"
+         "#endif\n"),
+    ])
+
+    patch_file(USB + "/device/user_setup.c", [
+        ('#include "usb/device/uac_audio.h"\n',
+         '#include "usb/device/uac_audio.h"\n#include "usb_midi.h"\n'),
+        # CLEAR_FEATURE(ENDPOINT_HALT) etc. on the MIDI endpoints must not stall
+        ("    case 4:\n        break;\n    }\n    return en;\n",
+         "    case 4:\n        break;\n    }\n"
+         "#if TCFG_USB_SLAVE_MIDI_ENABLE\n"
+         "    if (ep == USB_MIDI_EP_IN || ep == USB_MIDI_EP_OUT) {\n        en = 1;\n    }\n#endif\n"
+         "    return en;\n"),
+        # jack-name strings
+        ("        case USB_DT_STRING:\n            switch (LOBYTE(req->wValue)) {\n",
+         "        case USB_DT_STRING:\n"
+         "#if TCFG_USB_SLAVE_MIDI_ENABLE\n"
+         "            if (usb_midi_string_request(usb_device, req)) {\n"
+         "                ret = 1;\n                break;\n            }\n#endif\n"
+         "            switch (LOBYTE(req->wValue)) {\n"),
+    ])
+
+    patch_file("apps/spp_and_le/examples/trans_data/app_spp_and_le.c", [
+        ("#if TCFG_USB_SLAVE_CDC_ENABLE\n    extern void usb_start();\n",
+         "#if TCFG_USB_SLAVE_CDC_ENABLE || TCFG_USB_SLAVE_MIDI_ENABLE\n    extern void usb_start();\n"),
+    ])
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--fresh", action="store_true", help="delete and recreate the working copy")
+    ap.add_argument("--no-usb-midi", action="store_true", help="leave the SDK USB stack untouched")
     a = ap.parse_args()
 
     if not os.path.isdir(PRISTINE):
@@ -68,6 +193,9 @@ def main():
         t = t.replace("CONFIG_BOARD_AC636N_DEMO", "CONFIG_BOARD_SMCPAD")
         hdr = ("/* GENERATED by firmware/sdk_overlay/apply.py from %s (SDK v2.4.0).\n"
                " * Peripherals/pins are still the AC636N DEMO board's: do NOT flash. */\n" % s)
+        if d == "board_smcpad_cfg.h" and not a.no_usb_midi:
+            for old, new in USB_MIDI_BOARD_EDITS:
+                t = replace_once(t, old, new, d)
         wr(os.path.join(dst_b, d), hdr + t)
 
     # 2. our build cfg
@@ -88,6 +216,9 @@ def main():
     t = rd(os.path.join(src_b, "Makefile"))
     line = "\t../../../../apps/spp_and_le/board/br25/board_ac636n_demo.c \\\n"
     t = replace_once(t, line, line + line.replace("board_ac636n_demo.c", "board_smcpad.c"), "board Makefile")
+    if not a.no_usb_midi:
+        line = "\t../../../../apps/common/device/usb/device/usb_device.c \\\n"
+        t = replace_once(t, line, line + line.replace("usb_device.c", "usb_midi.c"), "board Makefile")
     wr(os.path.join(dst_b, "Makefile"), t)
 
     # 5. allow "no uboot debug UART" (stock image has no UTTX)
@@ -96,6 +227,21 @@ def main():
     t = replace_once(t, "#ifndef CONFIG_UBOOT_DEBUG_PIN\n",
                      "#if !defined(CONFIG_UBOOT_DEBUG_PIN) && !defined(CONFIG_NO_UBOOT_DEBUG_PIN)\n", rule)
     wr(os.path.join(WORK, rule), t)
+
+    # 6. USB-MIDI device class (or restore the pristine USB files)
+    usb_files = [USB + "/usb_common_def.h", USB + "/usb_config.c", USB + "/device/usb_device.c",
+                 USB + "/device/descriptor.c", USB + "/device/user_setup.c",
+                 "apps/spp_and_le/examples/trans_data/app_spp_and_le.c"]
+    if a.no_usb_midi:
+        for rel in usb_files:
+            shutil.copyfile(os.path.join(PRISTINE, rel), os.path.join(WORK, rel))
+        for f in ("usb_midi.c", "usb_midi.h"):
+            p = os.path.join(WORK, USB, "device", f)
+            if os.path.exists(p):
+                os.remove(p)
+        print("  USB stack: pristine (no USB-MIDI)")
+    else:
+        apply_usb_midi()
 
     print("OK. Build: bash firmware/builder/build_ufw.sh ac636n_spp_and_le", WORK)
 
