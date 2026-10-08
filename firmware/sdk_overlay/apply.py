@@ -20,6 +20,11 @@
     apps/common/device/usb/device/ and patches usb_common_def.h, usb_device.c, usb_config.c,
     descriptor.c, user_setup.c, the board Makefile, board_smcpad_cfg.h and trans_data's
     app_spp_and_le.c (see README.md, "USB-MIDI")
+  - SMC-PAD BLE (default on with the SMC-PAD hardware; --no-ble-smcpad to skip): copies
+    ble/, sinco/, midi/ and board/smcpad_store_port.[ch] into the board dir, compiles
+    ble_smcpad.c instead of trans_data/ble_trans.c (stock GATT: BLE-MIDI, Sinco AE40, RCSP
+    AE00, battery, device info), turns Classic Bluetooth off (TCFG_USER_EDR_ENABLE 0) and
+    pairing on ("Just Works": CONFIG_BT_SM_SUPPORT_ENABLE 1 in app_config.h)
 Then build with:  bash firmware/builder/build_ufw.sh ac636n_spp_and_le /workspace/work/sdk-smcpad
 """
 import argparse
@@ -58,6 +63,17 @@ def patch_file(rel, edits):
     for old, new in edits:
         t = replace_once(t, old, new, rel)
     wr(os.path.join(WORK, rel), t)
+
+
+def replace_after(text, anchor, old, new, what):
+    """Replace the first `old` after the unique `anchor` (for lines repeated per app)."""
+    if text.count(anchor) != 1:
+        sys.exit(f"apply.py: expected exactly one anchor {anchor!r} in {what}; SDK changed?")
+    a = text.index(anchor) + len(anchor)
+    i = text.find(old, a)
+    if i < 0:
+        sys.exit(f"apply.py: {old!r} not found after {anchor!r} in {what}; SDK changed?")
+    return text[:i] + new + text[i + len(old):]
 
 
 USB = "apps/common/device/usb"
@@ -136,6 +152,24 @@ APP_TD_SMCPAD_EDIT = ("    usb_start();\n#endif\n}\n",
                       "    extern void smcpad_start(void);\n"
                       "    smcpad_start();     // sdk_overlay: pads / keys / LEDs / TRS\n"
                       "#endif\n}\n")
+
+# SMC-PAD BLE: (overlay subdir, file) copied flat into the board dir; .c files are compiled
+BLE_FILES = [("ble", "ble_smcpad.c"), ("ble", "ble_smcpad.h"), ("ble", "ble_smcpad_profile.h"),
+             ("sinco", "sinco_proto.c"), ("sinco", "sinco_proto.h"),
+             ("sinco", "sinco_store.c"), ("sinco", "sinco_store.h"),
+             ("midi", "ble_midi.c"), ("midi", "ble_midi.h"),
+             ("board", "smcpad_store_port.c"), ("board", "smcpad_store_port.h")]
+BLE_TRANS_LINE = "\t../../../../apps/spp_and_le/examples/trans_data/ble_trans.c \\\n"
+BLE_BOARD_EDITS = [
+    # BLE only, like stock: frees ~70 KB of code and the EDR heap (RCSP OTA runs over BLE)
+    ("#define TCFG_USER_EDR_ENABLE                      1   //EDR功能使能\n",
+     "#define TCFG_USER_EDR_ENABLE                      0   //EDR功能使能 (sdk_overlay: BLE only, as stock)\n"
+     "#define TCFG_SMCPAD_BLE_ENABLE                    1   // sdk_overlay: ble_smcpad.c, Sinco, BLE-MIDI\n"),
+]
+APP_CONFIG = "apps/spp_and_le/include/app_config.h"
+APP_CONFIG_SM = ("#if CONFIG_APP_SPP_LE\n",                  # anchor: the CONFIG_APP_SPP_LE block (unique)
+                 "#define CONFIG_BT_SM_SUPPORT_ENABLE        0 ",
+                 "#define CONFIG_BT_SM_SUPPORT_ENABLE        1 /* sdk_overlay: Just Works pairing */ ")
 
 
 def apply_usb_midi():
@@ -237,7 +271,11 @@ def main():
     ap.add_argument("--fresh", action="store_true", help="delete and recreate the working copy")
     ap.add_argument("--no-usb-midi", action="store_true", help="leave the SDK USB stack untouched")
     ap.add_argument("--no-smcpad-hw", action="store_true", help="demo-board peripherals, no SMC-PAD drivers")
+    ap.add_argument("--no-ble-smcpad", action="store_true", help="keep trans_data's demo BLE (ble_trans.c), EDR on")
     a = ap.parse_args()
+    if a.no_smcpad_hw and not a.no_ble_smcpad:
+        print("note: --no-smcpad-hw implies --no-ble-smcpad (the BLE/Sinco consumer is smcpad_app.c)")
+        a.no_ble_smcpad = True
 
     if not os.path.isdir(PRISTINE):
         sys.exit(f"pristine SDK missing: {PRISTINE} (run firmware/builder/setup_toolchain.py)")
@@ -265,6 +303,7 @@ def main():
         if d == "board_smcpad_cfg.h":
             edits += [] if a.no_usb_midi else USB_MIDI_BOARD_EDITS
             edits += [] if a.no_smcpad_hw else SMCPAD_BOARD_EDITS
+            edits += [] if a.no_ble_smcpad else BLE_BOARD_EDITS
         elif not a.no_smcpad_hw:
             edits += SMCPAD_BOARD_C_EDITS
         for old, new in edits:
@@ -296,6 +335,10 @@ def main():
         line = "\t../../../../apps/spp_and_le/board/br25/board_smcpad.c \\\n"
         t = replace_once(t, line, line + "".join(line.replace("board_smcpad.c", f)
                                                  for f in SMCPAD_FILES if f.endswith(".c")),
+                         "board Makefile")
+    if not a.no_ble_smcpad:
+        board_line = "\t../../../../apps/spp_and_le/board/br25/%s \\\n"
+        t = replace_once(t, BLE_TRANS_LINE, "".join(board_line % f for _, f in BLE_FILES if f.endswith(".c")),
                          "board Makefile")
     wr(os.path.join(dst_b, "Makefile"), t)
 
@@ -338,6 +381,20 @@ def main():
     edits = [] if a.no_usb_midi else [APP_TD_USB_EDIT]
     edits += [] if a.no_smcpad_hw else [APP_TD_SMCPAD_EDIT]
     patch_file(APP_TD, edits)
+
+    # 9. SMC-PAD BLE server, Sinco config protocol, BLE-MIDI (or remove them)
+    for sub, f in BLE_FILES:
+        p = os.path.join(dst_b, f)
+        if a.no_ble_smcpad:
+            if os.path.exists(p):
+                os.remove(p)
+        else:
+            shutil.copyfile(os.path.join(HERE, sub, f), p)
+            print("  wrote", os.path.join(BOARD, f))
+    t = rd(os.path.join(PRISTINE, APP_CONFIG))
+    if not a.no_ble_smcpad:
+        t = replace_after(t, *APP_CONFIG_SM, APP_CONFIG)
+    wr(os.path.join(WORK, APP_CONFIG), t)
 
     print("OK. Build: bash firmware/builder/build_ufw.sh ac636n_spp_and_le", WORK)
 

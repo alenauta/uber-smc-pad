@@ -369,6 +369,17 @@ static void feed_usb_out(const u8 *pkts, u32 nbytes)
     stub_rx_isr(&stub_dev, USB_MIDI_EP_OUT);
 }
 
+static u16 hook_log[1024];      /* (cable << 8) | byte */
+static u32 hook_n;
+static const u8 clk_rt[4] = { 0x0F, 0xF8, 0x00, 0x00 };
+static void hook_cb(u8 cable, u8 b)
+{
+    if (hook_n < 1024) {
+        hook_log[hook_n] = (u16)((cable << 8) | b);
+    }
+    hook_n++;
+}
+
 static void test_rx_and_poll(void)
 {
     usb_midi_set_rx_notify(on_rx_notify);
@@ -429,6 +440,36 @@ static void test_rx_and_poll(void)
     usb_midi_get_stats(&st1);
     ASSERT(rx_log_n == 0, "overflowed sysex must not be delivered");
     ASSERT(st1.rx_sysex_dropped == st0.rx_sysex_dropped + 1, "rx_sysex_dropped not incremented");
+
+    /* The SysEx byte hook streams every byte, even of frames longer than USB_MIDI_SYSEX_MAX */
+    hook_n = 0;
+    usb_midi_set_sysex_hook(hook_cb);
+    const u8 sx_start2[4] = { 0x24, 0xF0, 0x01, 0x02 };     /* cable 2 */
+    const u8 sx_cont2[4]  = { 0x24, 0x03, 0x04, 0x05 };
+    const u8 sx_end2[4]   = { 0x26, 0x06, 0xF7, 0x00 };
+    const u32 nconts = (USB_MIDI_SYSEX_MAX / 3) + 4;
+    feed_usb_out(sx_start2, 4);
+    for (u32 i = 0; i < nconts; i++) {
+        feed_usb_out(sx_cont2, 4);
+        usb_midi_poll(record_cb);
+    }
+    feed_usb_out(clk_rt, 4);                                /* real-time: not a SysEx byte */
+    feed_usb_out(sx_end2, 4);
+    usb_midi_poll(record_cb);
+    ASSERT(hook_n == 3 + 3 * nconts + 2, "hook saw %u bytes", hook_n);
+    ASSERT(hook_log[0] == (0x200 | 0xF0) && hook_log[3] == (0x200 | 0x03) &&
+           hook_log[hook_n - 2] == (0x200 | 0x06) && hook_log[hook_n - 1] == (0x200 | 0xF7),
+           "hook byte order / cable mismatch");
+    ASSERT(rx_log_n == 1 && rx_log[0].data[0] == 0xF8, "only the real-time byte is delivered");
+    rx_log_n = 0;
+    /* short frames still reach the poll callback too */
+    hook_n = 0;
+    const u8 tiny[4] = { 0x07, 0xF0, 0x42, 0xF7 };
+    feed_usb_out(tiny, 4);
+    usb_midi_poll(record_cb);
+    ASSERT(hook_n == 3 && rx_log_n == 1 && rx_log[0].len == 3, "tiny sysex: hook + callback");
+    usb_midi_set_sysex_hook(NULL);
+    rx_log_n = 0;
 
     /* RX ring overflow when poll is not called for > USB_MIDI_RX_RING packets */
     usb_midi_get_stats(&st0);

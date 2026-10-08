@@ -1,12 +1,14 @@
 /* SMC-PAD application glue: one task turns pad / knob / button input into MIDI on
- * USB (cable 0) and TRS, drives the LEDs, and answers a small diagnostic SysEx.
+ * USB (cable 0), TRS and BLE-MIDI, drives the LEDs, answers a small diagnostic SysEx and
+ * (with TCFG_SMCPAD_BLE_ENABLE) serves the Sinco config protocol (Midi Suite / SincoOTA)
+ * over USB SysEx and BLE AE41/AE42 with the stock storage model (sinco_store.c).
  *
  * Default mapping = the stock factory preset (docs/stock_midi_map.md):
  *   pads    Note On/Off ch10, notes 36..51 (pad index order, to be confirmed), velocity;
  *           channel aftertouch (D9) from the strongest held pad, at most every 10 ms
  *   knobs   CC 30..37 ch1, endless knob kept as an absolute 0..127 value
  *   buttons CC 25..34 ch1, 127 on press / 0 on release
- * Incoming Note On ch10 36..51 from USB lights the pad LED (velocity = brightness).
+ * Incoming Note On ch10 36..51 from USB or BLE-MIDI lights the pad LED (velocity = brightness).
  *
  * Diagnostics (non-commercial ID 0x7D, "SP"):  F0 7D 53 50 01 F7  -> pad dump
  *                                              F0 7D 53 50 02 F7  -> status dump
@@ -19,6 +21,16 @@
 #include "smcpad_board.h"
 #if TCFG_USB_SLAVE_MIDI_ENABLE
 #include "usb_midi.h"
+#endif
+#ifndef TCFG_SMCPAD_BLE_ENABLE
+#define TCFG_SMCPAD_BLE_ENABLE      0
+#endif
+#if TCFG_SMCPAD_BLE_ENABLE
+#include "sinco_proto.h"
+#include "sinco_store.h"
+#include "ble_midi.h"
+#include "ble_smcpad.h"
+#include "smcpad_store_port.h"
 #endif
 
 #define LOG_TAG_CONST       BOARD
@@ -55,12 +67,178 @@ SMCPAD_RAM_CODE static void app_notify(void)
     os_sem_post(&app_sem);
 }
 
+static void pad_led_update(u8 pad);
+
+#if TCFG_SMCPAD_BLE_ENABLE
+#define APP_GLOBALS_FLUSH_MS    2000            /* VM write after the globals stop changing */
+
+static u8 presets_ram[SMCPAD_PRESETS_SIZE];     /* 28 KB, as the stock P block */
+static struct sinco_store store;
+static u8 sinco_reply[SINCO_MAX_PKT];
+static u8 sinco_frame[SINCO_SYSEX_LEN(SINCO_MAX_PKT)];
+static struct sinco_sx usb_sx;                 /* USB SysEx -> Sinco packets */
+static u8 usb_sx_cable;
+static struct sinco_rx ble_sx;                 /* AE41 chunks -> Sinco packets */
+static struct ble_midi_enc ble_enc;
+static struct ble_midi_dec ble_dec;
+static u8  ble_pkt[BLE_MIDI_PKT_MAX];           /* a notification waiting for a free slot */
+static u16 ble_pkt_len;
+static u32 ble_conn_gen;
+static u32 ble_midi_drops;
+static u32 globals_gen_seen, globals_change_ms;
+
+static void host_midi_in(const u8 *msg, u32 len);
+
+static void sinco_midi_in(void *ctx, const u8 *b, u32 n)  /* cmd 0x15: raw MIDI bytes */
+{
+    (void)ctx;
+    for (u32 i = 0; i < n;) {
+        u32 l = ble_midi_msg_len(b[i]);
+        if (l && i + l <= n) {
+            host_midi_in(b + i, l);
+            i += l;
+        } else {
+            i++;
+        }
+    }
+}
+
+static const struct sinco_ops sinco_ops = {
+    &store, SMCPAD_NAME_VER, sinco_store_read, sinco_store_write, sinco_midi_in, NULL
+};
+
+/* BLE-MIDI out: messages are packed into one notification per task pass */
+static void ble_midi_flush(void)
+{
+    if (ble_pkt_len && ble_smcpad_midi_send(ble_pkt, ble_pkt_len) == 0) {
+        ble_pkt_len = 0;
+    }
+    if (!ble_pkt_len && ble_midi_enc_pending(&ble_enc)) {
+        ble_pkt_len = (u16)ble_midi_enc_take(&ble_enc, ble_pkt);
+        if (ble_smcpad_midi_send(ble_pkt, ble_pkt_len) == 0) {
+            ble_pkt_len = 0;
+        }
+    }
+}
+
+static void ble_midi_out(const u8 *m, u32 n)
+{
+    if (!ble_smcpad_midi_ready()) {
+        return;
+    }
+    u16 ts = (u16)sys_timer_get_ms();
+    u32 done = 0;
+    for (u32 guard = 0; done < n && guard < 64; guard++) {
+        done += ble_midi_enc_add(&ble_enc, ts, m + done, n - done);
+        if (done < n) {
+            ble_midi_flush();
+            if (ble_pkt_len) {                  /* link busy: drop the oldest packet */
+                ble_pkt_len = 0;
+                ble_midi_drops++;
+            }
+        }
+    }
+}
+
+static void ble_on_midi(void *ctx, const u8 *msg, u32 len)
+{
+    (void)ctx;
+    host_midi_in(msg, len);
+}
+
+#if TCFG_USB_SLAVE_MIDI_ENABLE
+/* usb_midi_poll() hook: every SysEx byte; Sinco frames are decoded while they stream in */
+static void on_usb_sysex_byte(u8 cable, u8 b)
+{
+    if (b == 0xF0) {
+        usb_sx_cable = cable;
+    } else if (cable != usb_sx_cable) {
+        return;
+    }
+    u32 n = sinco_sx_byte(&usb_sx, b);
+    if (n) {
+        u32 r = sinco_handle(usb_sx.rx.buf, n, sinco_reply, &sinco_ops);
+        u32 f = r ? sinco_sysex_encode(sinco_reply, r, sinco_frame, sizeof(sinco_frame)) : 0;
+        if (f) {
+            usb_midi_send_msg((u16)BIT(cable), sinco_frame, f);   /* reply on the same cable */
+        }
+    }
+}
+#endif
+
+static void service_ble(u32 now)
+{
+    static u8 buf[512];                         /* >= one ATT write (local MTU 512) */
+    u8 type;
+    u32 n;
+
+    if (ble_conn_gen != ble_smcpad_conn_gen()) {   /* new link (or none): fresh state */
+        ble_conn_gen = ble_smcpad_conn_gen();
+        ble_midi_enc_init(&ble_enc, ble_smcpad_payload_max());
+        ble_midi_dec_init(&ble_dec, ble_on_midi, NULL, NULL);
+        sinco_rx_reset(&ble_sx);
+        ble_pkt_len = 0;
+    }
+    if (!ble_midi_enc_pending(&ble_enc)) {
+        ble_midi_enc_set_max(&ble_enc, ble_smcpad_payload_max());
+    }
+    while ((n = ble_smcpad_rx_pop(&type, buf, sizeof(buf))) != 0) {
+        if (type == BLE_SMCPAD_RX_MIDI) {
+            ble_midi_dec_packet(&ble_dec, buf, n);
+        } else if (type == BLE_SMCPAD_RX_SINCO) {
+            sinco_rx_chunk_start(&ble_sx, now);
+            for (u32 i = 0; i < n; i++) {
+                u32 p = sinco_rx_byte(&ble_sx, buf[i]);
+                if (p) {
+                    u32 r = sinco_handle(ble_sx.buf, p, sinco_reply, &sinco_ops);
+                    if (r && ble_smcpad_sinco_reply(sinco_reply, r) < 0) {
+                        log_error("sinco reply dropped (busy)");
+                    }
+                }
+            }
+        }
+    }
+    ble_midi_flush();
+    ble_smcpad_poll(now);
+
+    /* globals: persist to VM once they stop changing (Midi Suite writes them live) */
+    if (store.globals_gen != globals_gen_seen) {
+        globals_gen_seen = store.globals_gen;
+        globals_change_ms = now;
+    }
+    if (store.globals_dirty && now - globals_change_ms >= APP_GLOBALS_FLUSH_MS) {
+        if (sinco_store_flush_globals(&store) < 0) {
+            log_error("globals VM write failed");
+            globals_change_ms = now;            /* retry later */
+        }
+    }
+}
+
+static void sinco_start(void)
+{
+    sinco_store_init(&store, smcpad_store_port(), presets_ram, SMCPAD_PRESETS_FLASH, SMCPAD_CALIB_FLASH);
+    globals_gen_seen = store.globals_gen;
+    log_info("presets %s, globals preset %d", store.presets_from_flash ? "loaded" : "blank",
+             store.globals[GLOB_PRESET]);
+    sinco_sx_reset(&usb_sx);
+    sinco_rx_reset(&ble_sx);
+    ble_conn_gen = ble_smcpad_conn_gen() + 1;  /* forces the BLE state reset */
+    ble_smcpad_set_notify(app_notify);
+#if TCFG_USB_SLAVE_MIDI_ENABLE
+    usb_midi_set_sysex_hook(on_usb_sysex_byte);
+#endif
+}
+#endif /* TCFG_SMCPAD_BLE_ENABLE */
+
 static void midi_out(const u8 *m, u32 n)
 {
 #if TCFG_USB_SLAVE_MIDI_ENABLE
     usb_midi_send_msg(APP_MIDI_CABLES, m, n);
 #endif
     smcpad_hw_trs_write(m, n);
+#if TCFG_SMCPAD_BLE_ENABLE
+    ble_midi_out(m, n);
+#endif
 }
 
 static void midi3(u8 st, u8 d1, u8 d2)
@@ -192,15 +370,9 @@ static void diag_reply(u8 cmd)
 #endif
 }
 
-#if TCFG_USB_SLAVE_MIDI_ENABLE
-static void on_usb_midi(u8 cable, const u8 *msg, u32 len)
+/* MIDI from the host (USB short messages, BLE-MIDI, Sinco 0x15): pad LEDs */
+static void host_midi_in(const u8 *msg, u32 len)
 {
-    (void)cable;
-    if (len == 6 && msg[0] == 0xF0 && msg[1] == 0x7D && msg[2] == 0x53 && msg[3] == 0x50 &&
-        msg[5] == 0xF7) {
-        diag_reply(msg[4]);
-        return;
-    }
     if (len == 3 && (msg[0] & 0x0f) == SMCPAD_MIDI_PAD_CH &&
         ((msg[0] & 0xf0) == 0x90 || (msg[0] & 0xf0) == 0x80)) {
         u8 pad = (u8)(msg[1] - SMCPAD_MIDI_PAD_NOTE0);
@@ -211,6 +383,20 @@ static void on_usb_midi(u8 cable, const u8 *msg, u32 len)
             app.host_rgb[pad] = (r << 16) | (g << 8) | b;
             pad_led_update(pad);
         }
+    }
+}
+
+#if TCFG_USB_SLAVE_MIDI_ENABLE
+static void on_usb_midi(u8 cable, const u8 *msg, u32 len)
+{
+    (void)cable;
+    if (len == 6 && msg[0] == 0xF0 && msg[1] == 0x7D && msg[2] == 0x53 && msg[3] == 0x50 &&
+        msg[5] == 0xF7) {
+        diag_reply(msg[4]);
+        return;
+    }
+    if (msg[0] != 0xF0) {               /* Sinco SysEx goes through on_usb_sysex_byte() */
+        host_midi_in(msg, len);
     }
 }
 #endif
@@ -231,6 +417,9 @@ static void smcpad_task(void *p)
         smcpad_hw_rgb_set(i, 0);
     }
     smcpad_hw_rgb_show();
+#if TCFG_SMCPAD_BLE_ENABLE
+    sinco_start();
+#endif
 
     for (;;) {
         os_sem_pend(&app_sem, 1);                   /* events, or at least every tick */
@@ -246,6 +435,9 @@ static void smcpad_task(void *p)
         service_buttons();
 #if TCFG_USB_SLAVE_MIDI_ENABLE
         usb_midi_poll(on_usb_midi);
+#endif
+#if TCFG_SMCPAD_BLE_ENABLE
+        service_ble(now);
 #endif
         if (app.rgb_dirty && now - app.last_rgb_ms >= APP_RGB_PERIOD_MS) {
             if (smcpad_hw_rgb_show()) {

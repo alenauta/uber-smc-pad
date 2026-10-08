@@ -86,6 +86,8 @@ struct usb_midi_gadget {
 
 static struct usb_midi_gadget _midi = {0};
 static struct usb_midi_gadget *midi = NULL;
+/* outside the gadget struct: survives usb_midi_register() / re-enumeration */
+static usb_midi_sysex_byte_cb sysex_hook;
 
 static u32 usb_midi_itf_handler(struct usb_device_t *usb_device, struct usb_ctrlrequest *req);
 static void usb_midi_reset(struct usb_device_t *usb_device, u32 itf);
@@ -536,15 +538,23 @@ u32 usb_midi_read_packet(u8 pkt[4])
     return 1;
 }
 
-static void sysex_append(struct midi_rx_parser *ps, const u8 *b, u32 n)
+static void sysex_append(struct midi_rx_parser *ps, u8 cable, const u8 *b, u32 n)
 {
     for (u32 i = 0; i < n; i++) {
+        if (sysex_hook) {
+            sysex_hook(cable, b[i]);
+        }
         if (ps->len < USB_MIDI_SYSEX_MAX) {
             ps->buf[ps->len++] = b[i];
         } else {
             ps->overflow = 1;
         }
     }
+}
+
+void usb_midi_set_sysex_hook(usb_midi_sysex_byte_cb hook)
+{
+    sysex_hook = hook;
 }
 
 void usb_midi_poll(usb_midi_msg_cb cb)
@@ -566,7 +576,7 @@ void usb_midi_poll(usb_midi_msg_cb cb)
                 ps->len = 0;
             }
             if (ps->in_sysex) {
-                sysex_append(ps, &p[1], 3);
+                sysex_append(ps, cable, &p[1], 3);
             }
             break;
         case 0x5:               /* 1-byte system common, or SysEx end with 1 byte */
@@ -610,7 +620,7 @@ void usb_midi_poll(usb_midi_msg_cb cb)
                 ps->len = 0;
             }
             if (ps->in_sysex) {
-                sysex_append(ps, &p[1], end_n);
+                sysex_append(ps, cable, &p[1], end_n);
                 if (ps->overflow) {
                     midi->stats.rx_sysex_dropped++;
                 } else if (cb) {
