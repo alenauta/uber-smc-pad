@@ -89,7 +89,7 @@ USB_MIDI_BOARD_EDITS = [
 ]
 
 
-SMCPAD_FILES = ("smcpad_logic.h", "smcpad_logic.c", "smcpad_board.h", "smcpad_hw.c", "smcpad_app.c")
+SMCPAD_FILES = ("smcpad_logic.h", "smcpad_logic.c", "smcpad_board.h", "smcpad_hw.c", "smcpad_app.c", "smcpad_safe.c")
 SMCPAD_BOARD_EDITS = [
     # PC4 is free on the SMC-PAD but nothing listens there; PC5 (TRS) is UART1, see smcpad_hw.c
     ("#define TCFG_UART0_ENABLE\t\t\t\t\tENABLE_THIS_MOUDLE ",
@@ -149,9 +149,14 @@ APP_TD_USB_EDIT = ("#if TCFG_USB_SLAVE_CDC_ENABLE\n    extern void usb_start();\
 APP_TD_SMCPAD_EDIT = ("    usb_start();\n#endif\n}\n",
                       "    usb_start();\n#endif\n"
                       "#if TCFG_SMCPAD_HW_ENABLE\n"
+                      "    extern u8 smcpad_safe_boot(void);\n"
                       "    extern void smcpad_start(void);\n"
-                      "    smcpad_start();     // sdk_overlay: pads / keys / LEDs / TRS\n"
+                      "    if (!smcpad_safe_boot()) {  // sdk_overlay: safe mode = SDK only (BLE + OTA + USB)\n"
+                      "        smcpad_start();     // sdk_overlay: pads / keys / LEDs / TRS\n"
+                      "    }\n"
                       "#endif\n}\n")
+SAFE_ONLY_ANCHOR = "#define TCFG_SMCPAD_HW_ENABLE                     1   // sdk_overlay: pads/keys/LEDs/TRS, smcpad_hw.c\n"
+SAFE_ONLY_LINE = "#define SMCPAD_FORCE_SAFE_MODE                    1   // sdk_overlay --safe-only: drivers never start\n"
 
 # SMC-PAD BLE: (overlay subdir, file) copied flat into the board dir; .c files are compiled
 BLE_FILES = [("ble", "ble_smcpad.c"), ("ble", "ble_smcpad.h"), ("ble", "ble_smcpad_profile.h"),
@@ -273,10 +278,14 @@ def main():
     ap.add_argument("--no-usb-midi", action="store_true", help="leave the SDK USB stack untouched")
     ap.add_argument("--no-smcpad-hw", action="store_true", help="demo-board peripherals, no SMC-PAD drivers")
     ap.add_argument("--no-ble-smcpad", action="store_true", help="keep trans_data's demo BLE (ble_trans.c), EDR on")
+    ap.add_argument("--safe-only", action="store_true",
+                    help="minimal first image: everything built, SMC-PAD drivers never started (BLE + OTA + USB only)")
     a = ap.parse_args()
     if a.no_smcpad_hw and not a.no_ble_smcpad:
         print("note: --no-smcpad-hw implies --no-ble-smcpad (the BLE/Sinco consumer is smcpad_app.c)")
         a.no_ble_smcpad = True
+    if a.safe_only and a.no_smcpad_hw:
+        sys.exit("--safe-only needs the SMC-PAD board (drop --no-smcpad-hw)")
 
     if not os.path.isdir(PRISTINE):
         sys.exit(f"pristine SDK missing: {PRISTINE} (run firmware/builder/setup_toolchain.py)")
@@ -309,6 +318,9 @@ def main():
             edits += SMCPAD_BOARD_C_EDITS
         for old, new in edits:
             t = replace_once(t, old, new, d)
+        if d == "board_smcpad_cfg.h" and a.safe_only:
+            t = replace_once(t, SAFE_ONLY_ANCHOR, SAFE_ONLY_ANCHOR + SAFE_ONLY_LINE, d)
+            print("  --safe-only: SMCPAD_FORCE_SAFE_MODE 1")
         wr(os.path.join(dst_b, d), hdr + t)
 
     # 2. our build cfg

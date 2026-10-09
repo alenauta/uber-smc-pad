@@ -248,6 +248,22 @@ static void test_leds(void)
     CHECK(smcpad_knob_value(64, -1) == 63);
 }
 
+static void test_safe_mode(void)
+{
+    u8 vm = 0, next;
+    /* boot 1 and 2 end early: counter 1, 2; boot 3 = safe mode, counter reset */
+    CHECK(smcpad_safe_step(vm, &next) == 0 && next == 1); vm = next;
+    CHECK(smcpad_safe_step(vm, &next) == 0 && next == 2); vm = next;
+    CHECK(smcpad_safe_step(vm, &next) == 1 && next == 0); vm = next;
+    /* the boot after safe mode is normal again */
+    CHECK(smcpad_safe_step(vm, &next) == 0 && next == 1);
+    /* a boot that survives 5 s writes 0, so normal use never reaches safe mode */
+    CHECK(smcpad_safe_step(0, &next) == 0 && next == 1);
+    /* blank / junk VM values count as 0 */
+    CHECK(smcpad_safe_step(0xFF, &next) == 0 && next == 1);
+    CHECK(smcpad_safe_step(SMCPAD_SAFE_BOOTS, &next) == 0 && next == 1);
+}
+
 int main(void)
 {
     test_tables();
@@ -256,6 +272,7 @@ int main(void)
     test_pads();
     test_ring();
     test_leds();
+    test_safe_mode();
     if (failures) {
         printf("test_smcpad_logic: %d FAILED\n", failures);
         return 1;
