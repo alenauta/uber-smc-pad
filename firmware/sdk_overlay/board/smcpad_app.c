@@ -57,6 +57,8 @@
 #define APP_TASK_STACK      512                 /* u32 words */
 #define APP_KNOB_PERIOD_MS  50                  /* stock: encoder deltas every 50 ms */
 #define APP_KNOB_TICK_MS    10                  /* knob value walker */
+#define APP_BT_LONG_MS      800                 /* stock long press: 41 x 20 ms (docs/pinmap.md) */
+#define APP_BT_BLINK_MS     500                 /* BT LED half period while not connected */
 
 static OS_SEM app_sem;
 
@@ -72,6 +74,9 @@ static struct {
     u32 host_rgb[SMCPAD_NUM_PADS];
     u32 last_knob_ms;
     u32 last_knob_tick_ms;
+    u32 bt_press_ms;
+    u8  bt_long_done;
+    u8  bt_led;
 } app;
 
 /* IRQ context, called from the RAM ISRs: keep it in RAM too (os_sem_post is in mask ROM) */
@@ -326,7 +331,37 @@ static void refresh_leds(void)
         smcpad_hw_rgb_set(i, smcpad_preset_pad_rgb(&preset, i));
     }
     app.rgb_dirty = 1;
-    smcpad_hw_button_leds(smcpad_preset_button_leds(&preset, app.buttons));
+    u16 held = app.buttons;
+#if TCFG_SMCPAD_BLE_ENABLE
+    held &= (u16)~BIT(SMCPAD_HWBTN_BT);             /* BT LED = Bluetooth state, not "held" */
+#endif
+    u16 leds = smcpad_preset_button_leds(&preset, held);
+#if TCFG_SMCPAD_BLE_ENABLE
+    if (app.bt_led) {
+        leds |= (u16)BIT(SMCPAD_HWBTN_BT);
+    }
+#endif
+    smcpad_hw_button_leds(leds);
+}
+#endif
+
+#if TCFG_SMCPAD_BLE_ENABLE
+/* BT button (stock behaviour): hold ~0.8 s = Bluetooth on/off. BT LED: off = Bluetooth off,
+ * blinking = advertising / waiting for a connection, solid = connected. */
+static void service_bt(u32 now)
+{
+    if ((app.buttons & BIT(SMCPAD_HWBTN_BT)) && !app.bt_long_done &&
+        now - app.bt_press_ms >= APP_BT_LONG_MS) {
+        app.bt_long_done = 1;
+        if (ble_smcpad_set_enabled(!ble_smcpad_enabled()) < 0) {
+            log_error("bt toggle not queued");
+        }
+    }
+    u8 led = !ble_smcpad_enabled() ? 0 : ble_smcpad_connected() ? 1 : (u8)((now / APP_BT_BLINK_MS) & 1);
+    if (led != app.bt_led) {
+        app.bt_led = led;
+        preset.led_dirty = 1;
+    }
 }
 #endif
 
@@ -422,13 +457,22 @@ static void service_knobs(u32 now)
     }
 }
 
-static void service_buttons(void)
+static void service_buttons(u32 t)
 {
     u16 now = smcpad_hw_buttons();
     u16 changed = now ^ app.buttons;
     if (!changed) {
         return;
     }
+#if TCFG_SMCPAD_BLE_ENABLE
+    if ((changed & BIT(SMCPAD_HWBTN_BT)) && (now & BIT(SMCPAD_HWBTN_BT))) {
+        app.bt_press_ms = t;                        /* service_bt() times the long press */
+        app.bt_long_done = 0;
+    }
+    changed &= (u16)~BIT(SMCPAD_HWBTN_BT);          /* not a preset button */
+#else
+    (void)t;
+#endif
     for (u8 b = 0; b < SMCPAD_NUM_BUTTONS; b++) {
         if (changed & BIT(b)) {
 #if APP_PRESETS
@@ -637,7 +681,10 @@ static void smcpad_task(void *p)
         }
         service_pads(now);
         service_knobs(now);
-        service_buttons();
+        service_buttons(now);
+#if TCFG_SMCPAD_BLE_ENABLE
+        service_bt(now);
+#endif
 #if TCFG_USB_SLAVE_MIDI_ENABLE
         usb_midi_poll(on_usb_midi);
 #endif

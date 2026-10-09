@@ -98,6 +98,7 @@ static struct {
 
 static u8  batt_last = 0xFF;
 static u32 batt_ms;
+static volatile u8 ble_on = 1;          /* BT button state; every boot starts with BLE on */
 
 static uint16_t smcpad_att_read_callback(hci_con_handle_t connection_handle, uint16_t att_handle, uint16_t offset, uint8_t *buffer, uint16_t buffer_size);
 static int smcpad_att_write_callback(hci_con_handle_t connection_handle, uint16_t att_handle, uint16_t transaction_mode, uint16_t offset, uint8_t *buffer, uint16_t buffer_size);
@@ -196,6 +197,35 @@ void ble_smcpad_set_notify(void (*fn)(void))
 u32 ble_smcpad_connected(void)
 {
     return con_handle != 0;
+}
+
+/* runs in app_core (Q_CALLBACK), like the SDK's own key handlers calling ble_module_enable() */
+static void enable_in_app_core(int en)
+{
+    ble_module_enable((u8)en);  /* 0: adv off, disconnect, idle; 1: advertise again */
+    notify_app();
+}
+
+int ble_smcpad_set_enabled(u8 en)
+{
+    int msg[3];
+    en = en ? 1 : 0;
+    if (en == ble_on) {
+        return 0;
+    }
+    msg[0] = (int)enable_in_app_core;
+    msg[1] = 1;
+    msg[2] = en;
+    if (os_taskq_post_type("app_core", Q_CALLBACK, 3, msg) != 0) {
+        return -1;
+    }
+    ble_on = en;
+    return 0;
+}
+
+u8 ble_smcpad_enabled(void)
+{
+    return ble_on;
 }
 
 u32 ble_smcpad_conn_gen(void)
@@ -542,6 +572,7 @@ void bt_ble_init(void)
     log_info("%s\n", __FUNCTION__);
     ble_comm_set_config_name(SMCPAD_DEVICE_NAME, 0);
     con_handle = 0;
+    ble_on = 1;
     trans_server_init();
     ble_module_enable(1);
 }
