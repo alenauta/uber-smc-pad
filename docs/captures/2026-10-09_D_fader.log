@@ -1,0 +1,12 @@
+listening: SMC-PAD Bluetooth
+--- press pads / turn knobs (Ctrl-C to stop) ---
+  13.962  SMC-PAD Bluetooth  f0 35 59 10 6e 7f f7 SysEx (7 bytes)
+  13.962  SMC-PAD Bluetooth  f0 35 59 66 00 04 f7 SysEx (7 bytes)
+  14.164  SMC-PAD Bluetooth  f0 35 59 10 6e 00 f7 SysEx (7 bytes)
+  14.261  SMC-PAD Bluetooth  f0 35 59 10 6e 7f f7 SysEx (7 bytes)
+  14.262  SMC-PAD Bluetooth  f0 35 59 66 00 05 f7 SysEx (7 bytes)
+  14.306  SMC-PAD Bluetooth  f0 35 59 66 00 06 f7 SysEx (7 bytes)
+  14.509  SMC-PAD Bluetooth  f0 35 59 10 6e 00 f7 SysEx (7 bytes)
+  22.909  SMC-PAD Bluetooth  f0 35 59 10 6e 7f f7 SysEx (7 bytes)
+  22.910  SMC-PAD Bluetooth  f0 35 59 66 00 07 f7 SysEx (7 bytes)
+  23.096  SMC-PAD Bluetooth  f0 35 59 10 6e 00 f7 SysEx (7 bytes)

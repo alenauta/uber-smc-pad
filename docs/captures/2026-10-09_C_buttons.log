@@ -1,0 +1,12 @@
+listening: SMC-PAD Bluetooth
+--- press pads / turn knobs (Ctrl-C to stop) ---
+  26.725  SMC-PAD Bluetooth  b0 1d 7f     ch1  CC  29 = 127
+  27.183  SMC-PAD Bluetooth  b0 1d 00     ch1  CC  29 = 0
+  28.323  SMC-PAD Bluetooth  b0 1c 7f     ch1  CC  28 = 127
+  28.787  SMC-PAD Bluetooth  b0 1c 00     ch1  CC  28 = 0
+  29.748  SMC-PAD Bluetooth  b0 1b 7f     ch1  CC  27 = 127
+  30.265  SMC-PAD Bluetooth  b0 1b 00     ch1  CC  27 = 0
+  31.045  SMC-PAD Bluetooth  b0 1a 7f     ch1  CC  26 = 127
+  31.585  SMC-PAD Bluetooth  b0 1a 00     ch1  CC  26 = 0
+  32.403  SMC-PAD Bluetooth  b0 19 7f     ch1  CC  25 = 127
+  32.965  SMC-PAD Bluetooth  b0 19 00     ch1  CC  25 = 0

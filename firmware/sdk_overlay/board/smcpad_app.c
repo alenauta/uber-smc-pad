@@ -47,6 +47,7 @@
 #include "debug.h"
 
 #define APP_MIDI_CABLES     BIT(0)              /* stock duplicates on cable 0 and 1 */
+#define APP_MIDI_MCP_CABLES BIT(2)              /* "SMC-PAD-MCP": Mackie-class output, as stock */
 #define APP_AT_PERIOD_MS    10
 #define APP_RGB_PERIOD_MS   10
 #define APP_PAD_HELD_RGB    0x606060
@@ -102,11 +103,24 @@ static u32 led_presets_gen, led_globals_gen;
 
 static void host_midi_in(const u8 *msg, u32 len);
 static void midi_out(const u8 *m, u32 n);
+static void ble_midi_out(const u8 *m, u32 n);
 
 static void preset_midi(void *ctx, const u8 *m, u32 n)
 {
     (void)ctx;
     midi_out(m, n);
+}
+
+/* Mackie-class messages: USB cable 2 (stock: 0x1E0FEA2 + USB TX unwrap of F0 35 59 .. F7).
+ * BLE gets them as plain MIDI (stock wraps them in that non-standard SysEx over BLE). */
+static void preset_midi_mcp(void *ctx, const u8 *m, u32 n)
+{
+    (void)ctx;
+#if TCFG_USB_SLAVE_MIDI_ENABLE
+    usb_midi_send_msg(APP_MIDI_MCP_CABLES, m, n);
+#endif
+    smcpad_hw_trs_write(m, n);
+    ble_midi_out(m, n);
 }
 
 static void preset_globals_changed(void *ctx)  /* pad-bank button: persist like a Sinco write */
@@ -116,7 +130,7 @@ static void preset_globals_changed(void *ctx)  /* pad-bank button: persist like 
     store.globals_gen++;
 }
 
-static const struct smcpad_preset_io preset_io = {NULL, preset_midi, preset_globals_changed};
+static const struct smcpad_preset_io preset_io = {NULL, preset_midi, preset_midi_mcp, preset_globals_changed};
 
 static void sinco_midi_in(void *ctx, const u8 *b, u32 n)  /* cmd 0x15: raw MIDI bytes */
 {

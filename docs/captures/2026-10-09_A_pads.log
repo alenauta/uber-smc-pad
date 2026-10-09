@@ -1,0 +1,236 @@
+listening: SMC-PAD Bluetooth
+--- press pads / turn knobs (Ctrl-C to stop) ---
+   6.461  SMC-PAD Bluetooth  99 24 51     ch10 NoteOn   36 (C2) vel 81
+   6.790  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+   6.814  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+   6.829  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+   6.844  SMC-PAD Bluetooth  d9 7a        ch10 ChanAT = 122
+   6.851  SMC-PAD Bluetooth  d9 6f        ch10 ChanAT = 111
+   6.859  SMC-PAD Bluetooth  d9 5e        ch10 ChanAT = 94
+   6.876  SMC-PAD Bluetooth  d9 3a        ch10 ChanAT = 58
+   6.883  SMC-PAD Bluetooth  d9 14        ch10 ChanAT = 20
+   6.890  SMC-PAD Bluetooth  d9 03        ch10 ChanAT = 3
+   6.906  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+   6.906  SMC-PAD Bluetooth  89 24 40     ch10 NoteOff  36 (C2) vel 64
+   7.457  SMC-PAD Bluetooth  99 25 49     ch10 NoteOn   37 (C#2) vel 73
+   7.630  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+   7.757  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+   7.802  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+   7.819  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+   7.841  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+   7.848  SMC-PAD Bluetooth  d9 78        ch10 ChanAT = 120
+   7.864  SMC-PAD Bluetooth  d9 71        ch10 ChanAT = 113
+   7.870  SMC-PAD Bluetooth  d9 64        ch10 ChanAT = 100
+   7.879  SMC-PAD Bluetooth  d9 48        ch10 ChanAT = 72
+   7.894  SMC-PAD Bluetooth  d9 1e        ch10 ChanAT = 30
+   7.901  SMC-PAD Bluetooth  d9 0b        ch10 ChanAT = 11
+   7.901  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+   7.909  SMC-PAD Bluetooth  89 25 40     ch10 NoteOff  37 (C#2) vel 64
+  11.072  SMC-PAD Bluetooth  99 26 47     ch10 NoteOn   38 (D2) vel 71
+  11.312  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  11.322  SMC-PAD Bluetooth  d9 7e        ch10 ChanAT = 126
+  11.349  SMC-PAD Bluetooth  d9 7a        ch10 ChanAT = 122
+  11.359  SMC-PAD Bluetooth  d9 76        ch10 ChanAT = 118
+  11.381  SMC-PAD Bluetooth  d9 71        ch10 ChanAT = 113
+  11.389  SMC-PAD Bluetooth  d9 6d        ch10 ChanAT = 109
+  11.411  SMC-PAD Bluetooth  d9 69        ch10 ChanAT = 105
+  11.418  SMC-PAD Bluetooth  d9 64        ch10 ChanAT = 100
+  11.434  SMC-PAD Bluetooth  d9 5b        ch10 ChanAT = 91
+  11.442  SMC-PAD Bluetooth  d9 4b        ch10 ChanAT = 75
+  11.448  SMC-PAD Bluetooth  d9 34        ch10 ChanAT = 52
+  11.448  SMC-PAD Bluetooth  d9 15        ch10 ChanAT = 21
+  11.463  SMC-PAD Bluetooth  d9 03        ch10 ChanAT = 3
+  11.472  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  11.473  SMC-PAD Bluetooth  89 26 40     ch10 NoteOff  38 (D2) vel 64
+  11.950  SMC-PAD Bluetooth  99 27 45     ch10 NoteOn   39 (D#2) vel 69
+  12.212  SMC-PAD Bluetooth  d9 7c        ch10 ChanAT = 124
+  12.242  SMC-PAD Bluetooth  d9 78        ch10 ChanAT = 120
+  12.259  SMC-PAD Bluetooth  d9 73        ch10 ChanAT = 115
+  12.274  SMC-PAD Bluetooth  d9 6f        ch10 ChanAT = 111
+  12.282  SMC-PAD Bluetooth  d9 6a        ch10 ChanAT = 106
+  12.288  SMC-PAD Bluetooth  d9 63        ch10 ChanAT = 99
+  12.303  SMC-PAD Bluetooth  d9 5d        ch10 ChanAT = 93
+  12.311  SMC-PAD Bluetooth  d9 57        ch10 ChanAT = 87
+  12.311  SMC-PAD Bluetooth  d9 50        ch10 ChanAT = 80
+  12.318  SMC-PAD Bluetooth  d9 41        ch10 ChanAT = 65
+  12.333  SMC-PAD Bluetooth  d9 34        ch10 ChanAT = 52
+  12.341  SMC-PAD Bluetooth  d9 1b        ch10 ChanAT = 27
+  12.348  SMC-PAD Bluetooth  d9 01        ch10 ChanAT = 1
+  12.363  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  12.363  SMC-PAD Bluetooth  89 27 40     ch10 NoteOff  39 (D#2) vel 64
+  13.472  SMC-PAD Bluetooth  99 28 48     ch10 NoteOn   40 (E2) vel 72
+  13.720  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  13.744  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  13.759  SMC-PAD Bluetooth  d9 7d        ch10 ChanAT = 125
+  13.774  SMC-PAD Bluetooth  d9 7a        ch10 ChanAT = 122
+  13.781  SMC-PAD Bluetooth  d9 75        ch10 ChanAT = 117
+  13.789  SMC-PAD Bluetooth  d9 70        ch10 ChanAT = 112
+  13.804  SMC-PAD Bluetooth  d9 6a        ch10 ChanAT = 106
+  13.812  SMC-PAD Bluetooth  d9 63        ch10 ChanAT = 99
+  13.819  SMC-PAD Bluetooth  d9 5c        ch10 ChanAT = 92
+  13.834  SMC-PAD Bluetooth  d9 51        ch10 ChanAT = 81
+  13.841  SMC-PAD Bluetooth  d9 42        ch10 ChanAT = 66
+  13.849  SMC-PAD Bluetooth  d9 29        ch10 ChanAT = 41
+  13.864  SMC-PAD Bluetooth  d9 0e        ch10 ChanAT = 14
+  13.871  SMC-PAD Bluetooth  d9 04        ch10 ChanAT = 4
+  13.871  SMC-PAD Bluetooth  89 28 40     ch10 NoteOff  40 (E2) vel 64
+  14.342  SMC-PAD Bluetooth  99 29 47     ch10 NoteOn   41 (F2) vel 71
+  14.522  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  14.597  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  14.642  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  14.659  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  14.687  SMC-PAD Bluetooth  d9 7e        ch10 ChanAT = 126
+  14.704  SMC-PAD Bluetooth  d9 79        ch10 ChanAT = 121
+  14.711  SMC-PAD Bluetooth  d9 70        ch10 ChanAT = 112
+  14.719  SMC-PAD Bluetooth  d9 62        ch10 ChanAT = 98
+  14.734  SMC-PAD Bluetooth  d9 4d        ch10 ChanAT = 77
+  14.741  SMC-PAD Bluetooth  d9 29        ch10 ChanAT = 41
+  14.749  SMC-PAD Bluetooth  d9 11        ch10 ChanAT = 17
+  14.749  SMC-PAD Bluetooth  d9 05        ch10 ChanAT = 5
+  14.764  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  14.764  SMC-PAD Bluetooth  89 29 40     ch10 NoteOff  41 (F2) vel 64
+  15.318  SMC-PAD Bluetooth  99 2a 44     ch10 NoteOn   42 (F#2) vel 68
+  15.797  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  15.822  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  15.844  SMC-PAD Bluetooth  d9 7d        ch10 ChanAT = 125
+  15.851  SMC-PAD Bluetooth  d9 77        ch10 ChanAT = 119
+  15.859  SMC-PAD Bluetooth  d9 71        ch10 ChanAT = 113
+  15.874  SMC-PAD Bluetooth  d9 64        ch10 ChanAT = 100
+  15.882  SMC-PAD Bluetooth  d9 54        ch10 ChanAT = 84
+  15.889  SMC-PAD Bluetooth  d9 2c        ch10 ChanAT = 44
+  15.904  SMC-PAD Bluetooth  d9 15        ch10 ChanAT = 21
+  15.904  SMC-PAD Bluetooth  d9 02        ch10 ChanAT = 2
+  15.911  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  15.911  SMC-PAD Bluetooth  89 2a 40     ch10 NoteOff  42 (F#2) vel 64
+  16.472  SMC-PAD Bluetooth  99 2b 4a     ch10 NoteOn   43 (G2) vel 74
+  16.907  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  16.932  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  16.938  SMC-PAD Bluetooth  d9 7e        ch10 ChanAT = 126
+  16.953  SMC-PAD Bluetooth  d9 75        ch10 ChanAT = 117
+  16.961  SMC-PAD Bluetooth  d9 6a        ch10 ChanAT = 106
+  16.968  SMC-PAD Bluetooth  d9 5d        ch10 ChanAT = 93
+  16.983  SMC-PAD Bluetooth  d9 4d        ch10 ChanAT = 77
+  16.991  SMC-PAD Bluetooth  d9 2c        ch10 ChanAT = 44
+  16.998  SMC-PAD Bluetooth  d9 19        ch10 ChanAT = 25
+  17.014  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  17.014  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  17.014  SMC-PAD Bluetooth  89 2b 40     ch10 NoteOff  43 (G2) vel 64
+  17.537  SMC-PAD Bluetooth  99 2c 47     ch10 NoteOn   44 (G#2) vel 71
+  17.710  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  17.777  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  17.890  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  17.927  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  17.944  SMC-PAD Bluetooth  d9 7a        ch10 ChanAT = 122
+  17.959  SMC-PAD Bluetooth  d9 76        ch10 ChanAT = 118
+  17.974  SMC-PAD Bluetooth  d9 6d        ch10 ChanAT = 109
+  17.982  SMC-PAD Bluetooth  d9 60        ch10 ChanAT = 96
+  17.982  SMC-PAD Bluetooth  d9 4c        ch10 ChanAT = 76
+  17.988  SMC-PAD Bluetooth  d9 24        ch10 ChanAT = 36
+  18.004  SMC-PAD Bluetooth  d9 15        ch10 ChanAT = 21
+  18.011  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  18.018  SMC-PAD Bluetooth  89 2c 40     ch10 NoteOff  44 (G#2) vel 64
+  19.308  SMC-PAD Bluetooth  99 2d 47     ch10 NoteOn   45 (A2) vel 71
+  19.773  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  19.810  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  19.834  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  19.849  SMC-PAD Bluetooth  d9 7b        ch10 ChanAT = 123
+  19.864  SMC-PAD Bluetooth  d9 76        ch10 ChanAT = 118
+  19.872  SMC-PAD Bluetooth  d9 6d        ch10 ChanAT = 109
+  19.879  SMC-PAD Bluetooth  d9 62        ch10 ChanAT = 98
+  19.894  SMC-PAD Bluetooth  d9 4a        ch10 ChanAT = 74
+  19.902  SMC-PAD Bluetooth  d9 25        ch10 ChanAT = 37
+  19.909  SMC-PAD Bluetooth  d9 16        ch10 ChanAT = 22
+  19.924  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  19.932  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  19.932  SMC-PAD Bluetooth  89 2d 40     ch10 NoteOff  45 (A2) vel 64
+  20.590  SMC-PAD Bluetooth  99 2e 51     ch10 NoteOn   46 (A#2) vel 81
+  20.770  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  20.913  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  20.929  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  20.952  SMC-PAD Bluetooth  d9 7c        ch10 ChanAT = 124
+  20.974  SMC-PAD Bluetooth  d9 78        ch10 ChanAT = 120
+  20.989  SMC-PAD Bluetooth  d9 74        ch10 ChanAT = 116
+  21.004  SMC-PAD Bluetooth  d9 6f        ch10 ChanAT = 111
+  21.020  SMC-PAD Bluetooth  d9 69        ch10 ChanAT = 105
+  21.034  SMC-PAD Bluetooth  d9 63        ch10 ChanAT = 99
+  21.042  SMC-PAD Bluetooth  d9 5b        ch10 ChanAT = 91
+  21.049  SMC-PAD Bluetooth  d9 4c        ch10 ChanAT = 76
+  21.064  SMC-PAD Bluetooth  d9 2f        ch10 ChanAT = 47
+  21.072  SMC-PAD Bluetooth  d9 11        ch10 ChanAT = 17
+  21.079  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  21.079  SMC-PAD Bluetooth  89 2e 40     ch10 NoteOff  46 (A#2) vel 64
+  22.728  SMC-PAD Bluetooth  99 2f 47     ch10 NoteOn   47 (B2) vel 71
+  23.163  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  23.171  SMC-PAD Bluetooth  d9 7c        ch10 ChanAT = 124
+  23.195  SMC-PAD Bluetooth  d9 77        ch10 ChanAT = 119
+  23.195  SMC-PAD Bluetooth  d9 71        ch10 ChanAT = 113
+  23.202  SMC-PAD Bluetooth  d9 68        ch10 ChanAT = 104
+  23.210  SMC-PAD Bluetooth  d9 54        ch10 ChanAT = 84
+  23.225  SMC-PAD Bluetooth  d9 37        ch10 ChanAT = 55
+  23.232  SMC-PAD Bluetooth  d9 15        ch10 ChanAT = 21
+  23.239  SMC-PAD Bluetooth  d9 04        ch10 ChanAT = 4
+  23.255  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  23.255  SMC-PAD Bluetooth  89 2f 40     ch10 NoteOff  47 (B2) vel 64
+  23.868  SMC-PAD Bluetooth  99 30 4d     ch10 NoteOn   48 (C3) vel 77
+  24.063  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  24.190  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  24.250  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  24.280  SMC-PAD Bluetooth  d9 7e        ch10 ChanAT = 126
+  24.290  SMC-PAD Bluetooth  d9 78        ch10 ChanAT = 120
+  24.305  SMC-PAD Bluetooth  d9 71        ch10 ChanAT = 113
+  24.312  SMC-PAD Bluetooth  d9 69        ch10 ChanAT = 105
+  24.320  SMC-PAD Bluetooth  d9 58        ch10 ChanAT = 88
+  24.335  SMC-PAD Bluetooth  d9 37        ch10 ChanAT = 55
+  24.341  SMC-PAD Bluetooth  d9 1a        ch10 ChanAT = 26
+  24.349  SMC-PAD Bluetooth  d9 0c        ch10 ChanAT = 12
+  24.365  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  24.365  SMC-PAD Bluetooth  89 30 40     ch10 NoteOff  48 (C3) vel 64
+  24.798  SMC-PAD Bluetooth  99 31 45     ch10 NoteOn   49 (C#3) vel 69
+  24.993  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  25.113  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  25.150  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  25.175  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  25.190  SMC-PAD Bluetooth  d9 7d        ch10 ChanAT = 125
+  25.212  SMC-PAD Bluetooth  d9 78        ch10 ChanAT = 120
+  25.220  SMC-PAD Bluetooth  d9 72        ch10 ChanAT = 114
+  25.235  SMC-PAD Bluetooth  d9 65        ch10 ChanAT = 101
+  25.242  SMC-PAD Bluetooth  d9 49        ch10 ChanAT = 73
+  25.250  SMC-PAD Bluetooth  d9 1e        ch10 ChanAT = 30
+  25.250  SMC-PAD Bluetooth  d9 10        ch10 ChanAT = 16
+  25.264  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  25.271  SMC-PAD Bluetooth  89 31 40     ch10 NoteOff  49 (C#3) vel 64
+  27.333  SMC-PAD Bluetooth  99 32 4a     ch10 NoteOn   50 (D3) vel 74
+  27.663  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  27.738  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  27.762  SMC-PAD Bluetooth  d9 7d        ch10 ChanAT = 125
+  27.769  SMC-PAD Bluetooth  d9 77        ch10 ChanAT = 119
+  27.784  SMC-PAD Bluetooth  d9 6e        ch10 ChanAT = 110
+  27.792  SMC-PAD Bluetooth  d9 61        ch10 ChanAT = 97
+  27.799  SMC-PAD Bluetooth  d9 4e        ch10 ChanAT = 78
+  27.814  SMC-PAD Bluetooth  d9 36        ch10 ChanAT = 54
+  27.822  SMC-PAD Bluetooth  d9 1a        ch10 ChanAT = 26
+  27.829  SMC-PAD Bluetooth  d9 02        ch10 ChanAT = 2
+  27.829  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  27.844  SMC-PAD Bluetooth  89 32 40     ch10 NoteOff  50 (D3) vel 64
+  28.270  SMC-PAD Bluetooth  99 33 4d     ch10 NoteOn   51 (D#3) vel 77
+  28.743  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  28.759  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  28.774  SMC-PAD Bluetooth  d9 7b        ch10 ChanAT = 123
+  28.782  SMC-PAD Bluetooth  d9 73        ch10 ChanAT = 115
+  28.790  SMC-PAD Bluetooth  d9 69        ch10 ChanAT = 105
+  28.804  SMC-PAD Bluetooth  d9 58        ch10 ChanAT = 88
+  28.812  SMC-PAD Bluetooth  d9 2e        ch10 ChanAT = 46
+  28.820  SMC-PAD Bluetooth  d9 07        ch10 ChanAT = 7
+  28.821  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  28.834  SMC-PAD Bluetooth  89 33 40     ch10 NoteOff  51 (D#3) vel 64
+  82.448  SMC-PAD Bluetooth  99 34 5c     ch10 NoteOn   52 (E3) vel 92
+  82.837  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  83.061  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  83.085  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  83.109  SMC-PAD Bluetooth  d9 7f        ch10 ChanAT = 127
+  83.117  SMC-PAD Bluetooth  d9 79        ch10 ChanAT = 121
+  83.124  SMC-PAD Bluetooth  d9 65        ch10 ChanAT = 101
+  83.138  SMC-PAD Bluetooth  d9 3d        ch10 ChanAT = 61
+  83.145  SMC-PAD Bluetooth  d9 09        ch10 ChanAT = 9
+  83.152  SMC-PAD Bluetooth  d9 00        ch10 ChanAT = 0
+  83.152  SMC-PAD Bluetooth  89 34 40     ch10 NoteOff  52 (E3) vel 64
