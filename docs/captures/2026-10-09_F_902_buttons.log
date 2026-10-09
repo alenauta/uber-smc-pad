@@ -1,0 +1,14 @@
+listening: SMC-PAD -Master
+listening: SMC-PAD -Private
+listening: SMC-PAD -MCP
+--- press pads / turn knobs (Ctrl-C to stop) ---
+   8.493  SMC-PAD -Master    b0 19 7f     ch1  CC  25 = 127
+   9.888  SMC-PAD -Master    b0 19 00     ch1  CC  25 = 0
+  10.997  SMC-PAD -Master    b0 1a 7f     ch1  CC  26 = 127
+  12.182  SMC-PAD -Master    b0 1a 00     ch1  CC  26 = 0
+  13.337  SMC-PAD -Master    b0 1b 7f     ch1  CC  27 = 127
+  14.562  SMC-PAD -Master    b0 1b 00     ch1  CC  27 = 0
+  15.691  SMC-PAD -Master    b0 1c 7f     ch1  CC  28 = 127
+  16.899  SMC-PAD -Master    b0 1c 00     ch1  CC  28 = 0
+  18.063  SMC-PAD -Master    b0 1d 7f     ch1  CC  29 = 127
+  19.163  SMC-PAD -Master    b0 1d 00     ch1  CC  29 = 0

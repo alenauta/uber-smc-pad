@@ -1,0 +1,451 @@
+listening: SMC-PAD -Master
+listening: SMC-PAD -Private
+listening: SMC-PAD -MCP
+--- press pads / turn knobs (Ctrl-C to stop) ---
+   5.093  SMC-PAD -Master    b0 1e 07     ch1  CC  30 = 7
+   5.143  SMC-PAD -Master    b0 1e 08     ch1  CC  30 = 8
+   5.193  SMC-PAD -Master    b0 1e 09     ch1  CC  30 = 9
+   5.243  SMC-PAD -Master    b0 1e 0a     ch1  CC  30 = 10
+   5.293  SMC-PAD -Master    b0 1e 0b     ch1  CC  30 = 11
+   5.343  SMC-PAD -Master    b0 1e 0c     ch1  CC  30 = 12
+   5.343  SMC-PAD -Master    b0 1e 0d     ch1  CC  30 = 13
+   5.345  SMC-PAD -Master    b0 1e 0e     ch1  CC  30 = 14
+   5.345  SMC-PAD -Master    b0 1e 0f     ch1  CC  30 = 15
+   5.393  SMC-PAD -Master    b0 1e 10     ch1  CC  30 = 16
+   5.395  SMC-PAD -Master    b0 1e 11     ch1  CC  30 = 17
+   5.395  SMC-PAD -Master    b0 1e 12     ch1  CC  30 = 18
+   5.395  SMC-PAD -Master    b0 1e 13     ch1  CC  30 = 19
+   5.443  SMC-PAD -Master    b0 1e 14     ch1  CC  30 = 20
+   5.493  SMC-PAD -Master    b0 1e 15     ch1  CC  30 = 21
+   5.493  SMC-PAD -Master    b0 1e 16     ch1  CC  30 = 22
+   5.494  SMC-PAD -Master    b0 1e 17     ch1  CC  30 = 23
+   5.495  SMC-PAD -Master    b0 1e 18     ch1  CC  30 = 24
+   5.543  SMC-PAD -Master    b0 1e 19     ch1  CC  30 = 25
+   5.593  SMC-PAD -Master    b0 1e 1a     ch1  CC  30 = 26
+   5.593  SMC-PAD -Master    b0 1e 1b     ch1  CC  30 = 27
+   5.595  SMC-PAD -Master    b0 1e 1c     ch1  CC  30 = 28
+   5.595  SMC-PAD -Master    b0 1e 1d     ch1  CC  30 = 29
+   5.643  SMC-PAD -Master    b0 1e 1e     ch1  CC  30 = 30
+   5.693  SMC-PAD -Master    b0 1e 1f     ch1  CC  30 = 31
+   5.793  SMC-PAD -Master    b0 1e 20     ch1  CC  30 = 32
+   5.843  SMC-PAD -Master    b0 1e 21     ch1  CC  30 = 33
+   6.243  SMC-PAD -Master    b0 1e 20     ch1  CC  30 = 32
+   6.293  SMC-PAD -Master    b0 1e 1f     ch1  CC  30 = 31
+   6.343  SMC-PAD -Master    b0 1e 1e     ch1  CC  30 = 30
+   6.393  SMC-PAD -Master    b0 1e 1d     ch1  CC  30 = 29
+   6.443  SMC-PAD -Master    b0 1e 1c     ch1  CC  30 = 28
+   6.493  SMC-PAD -Master    b0 1e 1b     ch1  CC  30 = 27
+   6.543  SMC-PAD -Master    b0 1e 1a     ch1  CC  30 = 26
+   6.543  SMC-PAD -Master    b0 1e 19     ch1  CC  30 = 25
+   6.545  SMC-PAD -Master    b0 1e 18     ch1  CC  30 = 24
+   6.545  SMC-PAD -Master    b0 1e 17     ch1  CC  30 = 23
+   6.593  SMC-PAD -Master    b0 1e 16     ch1  CC  30 = 22
+   6.643  SMC-PAD -Master    b0 1e 15     ch1  CC  30 = 21
+   6.693  SMC-PAD -Master    b0 1e 14     ch1  CC  30 = 20
+   6.693  SMC-PAD -Master    b0 1e 13     ch1  CC  30 = 19
+   6.695  SMC-PAD -Master    b0 1e 12     ch1  CC  30 = 18
+   6.695  SMC-PAD -Master    b0 1e 11     ch1  CC  30 = 17
+   6.743  SMC-PAD -Master    b0 1e 10     ch1  CC  30 = 16
+   6.793  SMC-PAD -Master    b0 1e 0f     ch1  CC  30 = 15
+   6.793  SMC-PAD -Master    b0 1e 0e     ch1  CC  30 = 14
+   6.795  SMC-PAD -Master    b0 1e 0d     ch1  CC  30 = 13
+   6.795  SMC-PAD -Master    b0 1e 0c     ch1  CC  30 = 12
+   6.843  SMC-PAD -Master    b0 1e 0b     ch1  CC  30 = 11
+   6.893  SMC-PAD -Master    b0 1e 0a     ch1  CC  30 = 10
+   6.895  SMC-PAD -Master    b0 1e 09     ch1  CC  30 = 9
+   6.895  SMC-PAD -Master    b0 1e 08     ch1  CC  30 = 8
+   6.896  SMC-PAD -Master    b0 1e 07     ch1  CC  30 = 7
+   6.943  SMC-PAD -Master    b0 1e 06     ch1  CC  30 = 6
+   6.993  SMC-PAD -Master    b0 1e 05     ch1  CC  30 = 5
+   7.093  SMC-PAD -Master    b0 1e 04     ch1  CC  30 = 4
+   7.193  SMC-PAD -Master    b0 1e 03     ch1  CC  30 = 3
+   8.693  SMC-PAD -Master    b0 25 05     ch1  CC  37 = 5
+   8.743  SMC-PAD -Master    b0 25 06     ch1  CC  37 = 6
+   8.743  SMC-PAD -Master    b0 25 07     ch1  CC  37 = 7
+   8.745  SMC-PAD -Master    b0 25 08     ch1  CC  37 = 8
+   8.745  SMC-PAD -Master    b0 25 09     ch1  CC  37 = 9
+   8.803  SMC-PAD -Master    b0 25 0a     ch1  CC  37 = 10
+   8.803  SMC-PAD -Master    b0 25 0b     ch1  CC  37 = 11
+   8.805  SMC-PAD -Master    b0 25 0c     ch1  CC  37 = 12
+   8.805  SMC-PAD -Master    b0 25 0d     ch1  CC  37 = 13
+   8.807  SMC-PAD -Master    b0 25 0e     ch1  CC  37 = 14
+   8.807  SMC-PAD -Master    b0 25 0f     ch1  CC  37 = 15
+   8.853  SMC-PAD -Master    b0 25 10     ch1  CC  37 = 16
+   8.853  SMC-PAD -Master    b0 25 11     ch1  CC  37 = 17
+   8.855  SMC-PAD -Master    b0 25 12     ch1  CC  37 = 18
+   8.855  SMC-PAD -Master    b0 25 13     ch1  CC  37 = 19
+   8.856  SMC-PAD -Master    b0 25 14     ch1  CC  37 = 20
+   8.857  SMC-PAD -Master    b0 25 15     ch1  CC  37 = 21
+   8.903  SMC-PAD -Master    b0 25 16     ch1  CC  37 = 22
+   8.905  SMC-PAD -Master    b0 25 17     ch1  CC  37 = 23
+   8.905  SMC-PAD -Master    b0 25 18     ch1  CC  37 = 24
+   8.907  SMC-PAD -Master    b0 25 19     ch1  CC  37 = 25
+   8.907  SMC-PAD -Master    b0 25 1a     ch1  CC  37 = 26
+   8.909  SMC-PAD -Master    b0 25 1b     ch1  CC  37 = 27
+   8.953  SMC-PAD -Master    b0 25 1c     ch1  CC  37 = 28
+   8.954  SMC-PAD -Master    b0 25 1d     ch1  CC  37 = 29
+   8.955  SMC-PAD -Master    b0 25 1e     ch1  CC  37 = 30
+   8.955  SMC-PAD -Master    b0 25 1f     ch1  CC  37 = 31
+   9.003  SMC-PAD -Master    b0 25 20     ch1  CC  37 = 32
+   9.003  SMC-PAD -Master    b0 25 21     ch1  CC  37 = 33
+   9.005  SMC-PAD -Master    b0 25 22     ch1  CC  37 = 34
+   9.005  SMC-PAD -Master    b0 25 23     ch1  CC  37 = 35
+   9.053  SMC-PAD -Master    b0 25 24     ch1  CC  37 = 36
+   9.055  SMC-PAD -Master    b0 25 25     ch1  CC  37 = 37
+   9.056  SMC-PAD -Master    b0 25 26     ch1  CC  37 = 38
+   9.057  SMC-PAD -Master    b0 25 27     ch1  CC  37 = 39
+   9.103  SMC-PAD -Master    b0 25 28     ch1  CC  37 = 40
+   9.153  SMC-PAD -Master    b0 25 29     ch1  CC  37 = 41
+   9.153  SMC-PAD -Master    b0 25 2a     ch1  CC  37 = 42
+   9.154  SMC-PAD -Master    b0 25 2b     ch1  CC  37 = 43
+   9.155  SMC-PAD -Master    b0 25 2c     ch1  CC  37 = 44
+   9.203  SMC-PAD -Master    b0 25 2d     ch1  CC  37 = 45
+   9.253  SMC-PAD -Master    b0 25 2e     ch1  CC  37 = 46
+   9.303  SMC-PAD -Master    b0 25 2f     ch1  CC  37 = 47
+   9.353  SMC-PAD -Master    b0 25 30     ch1  CC  37 = 48
+   9.753  SMC-PAD -Master    b0 25 2f     ch1  CC  37 = 47
+   9.803  SMC-PAD -Master    b0 25 2e     ch1  CC  37 = 46
+   9.805  SMC-PAD -Master    b0 25 2d     ch1  CC  37 = 45
+   9.805  SMC-PAD -Master    b0 25 2c     ch1  CC  37 = 44
+   9.807  SMC-PAD -Master    b0 25 2b     ch1  CC  37 = 43
+   9.853  SMC-PAD -Master    b0 25 2a     ch1  CC  37 = 42
+   9.854  SMC-PAD -Master    b0 25 29     ch1  CC  37 = 41
+   9.855  SMC-PAD -Master    b0 25 28     ch1  CC  37 = 40
+   9.855  SMC-PAD -Master    b0 25 27     ch1  CC  37 = 39
+   9.857  SMC-PAD -Master    b0 25 26     ch1  CC  37 = 38
+   9.857  SMC-PAD -Master    b0 25 25     ch1  CC  37 = 37
+   9.903  SMC-PAD -Master    b0 25 24     ch1  CC  37 = 36
+   9.904  SMC-PAD -Master    b0 25 23     ch1  CC  37 = 35
+   9.905  SMC-PAD -Master    b0 25 22     ch1  CC  37 = 34
+   9.905  SMC-PAD -Master    b0 25 21     ch1  CC  37 = 33
+   9.953  SMC-PAD -Master    b0 25 20     ch1  CC  37 = 32
+   9.955  SMC-PAD -Master    b0 25 1f     ch1  CC  37 = 31
+   9.955  SMC-PAD -Master    b0 25 1e     ch1  CC  37 = 30
+   9.957  SMC-PAD -Master    b0 25 1d     ch1  CC  37 = 29
+   9.957  SMC-PAD -Master    b0 25 1c     ch1  CC  37 = 28
+   9.959  SMC-PAD -Master    b0 25 1b     ch1  CC  37 = 27
+  10.003  SMC-PAD -Master    b0 25 1a     ch1  CC  37 = 26
+  10.004  SMC-PAD -Master    b0 25 19     ch1  CC  37 = 25
+  10.005  SMC-PAD -Master    b0 25 18     ch1  CC  37 = 24
+  10.005  SMC-PAD -Master    b0 25 17     ch1  CC  37 = 23
+  10.053  SMC-PAD -Master    b0 25 16     ch1  CC  37 = 22
+  10.054  SMC-PAD -Master    b0 25 15     ch1  CC  37 = 21
+  10.055  SMC-PAD -Master    b0 25 14     ch1  CC  37 = 20
+  10.055  SMC-PAD -Master    b0 25 13     ch1  CC  37 = 19
+  10.057  SMC-PAD -Master    b0 25 12     ch1  CC  37 = 18
+  10.057  SMC-PAD -Master    b0 25 11     ch1  CC  37 = 17
+  10.103  SMC-PAD -Master    b0 25 10     ch1  CC  37 = 16
+  10.153  SMC-PAD -Master    b0 25 0f     ch1  CC  37 = 15
+  10.154  SMC-PAD -Master    b0 25 0e     ch1  CC  37 = 14
+  10.155  SMC-PAD -Master    b0 25 0d     ch1  CC  37 = 13
+  10.155  SMC-PAD -Master    b0 25 0c     ch1  CC  37 = 12
+  10.203  SMC-PAD -Master    b0 25 0b     ch1  CC  37 = 11
+  10.253  SMC-PAD -Master    b0 25 0a     ch1  CC  37 = 10
+  10.303  SMC-PAD -Master    b0 25 09     ch1  CC  37 = 9
+  10.303  SMC-PAD -Master    b0 25 08     ch1  CC  37 = 8
+  10.305  SMC-PAD -Master    b0 25 07     ch1  CC  37 = 7
+  10.305  SMC-PAD -Master    b0 25 06     ch1  CC  37 = 6
+  10.353  SMC-PAD -Master    b0 25 05     ch1  CC  37 = 5
+  10.354  SMC-PAD -Master    b0 25 04     ch1  CC  37 = 4
+  10.355  SMC-PAD -Master    b0 25 03     ch1  CC  37 = 3
+  10.356  SMC-PAD -Master    b0 25 02     ch1  CC  37 = 2
+  10.403  SMC-PAD -Master    b0 25 01     ch1  CC  37 = 1
+  10.553  SMC-PAD -Master    b0 25 00     ch1  CC  37 = 0
+  16.252  SMC-PAD -Master    b0 1e 04     ch1  CC  30 = 4
+  16.302  SMC-PAD -Master    b0 1e 05     ch1  CC  30 = 5
+  16.353  SMC-PAD -Master    b0 1e 06     ch1  CC  30 = 6
+  16.354  SMC-PAD -Master    b0 1e 07     ch1  CC  30 = 7
+  16.354  SMC-PAD -Master    b0 1e 08     ch1  CC  30 = 8
+  16.355  SMC-PAD -Master    b0 1e 09     ch1  CC  30 = 9
+  16.402  SMC-PAD -Master    b0 1e 0a     ch1  CC  30 = 10
+  16.452  SMC-PAD -Master    b0 1e 0b     ch1  CC  30 = 11
+  16.453  SMC-PAD -Master    b0 1e 0c     ch1  CC  30 = 12
+  16.454  SMC-PAD -Master    b0 1e 0d     ch1  CC  30 = 13
+  16.454  SMC-PAD -Master    b0 1e 0e     ch1  CC  30 = 14
+  16.502  SMC-PAD -Master    b0 1e 0f     ch1  CC  30 = 15
+  16.552  SMC-PAD -Master    b0 1e 10     ch1  CC  30 = 16
+  16.553  SMC-PAD -Master    b0 1e 11     ch1  CC  30 = 17
+  16.555  SMC-PAD -Master    b0 1e 12     ch1  CC  30 = 18
+  16.556  SMC-PAD -Master    b0 1e 13     ch1  CC  30 = 19
+  16.602  SMC-PAD -Master    b0 1e 14     ch1  CC  30 = 20
+  16.653  SMC-PAD -Master    b0 1e 15     ch1  CC  30 = 21
+  16.654  SMC-PAD -Master    b0 1e 16     ch1  CC  30 = 22
+  16.654  SMC-PAD -Master    b0 1e 17     ch1  CC  30 = 23
+  16.655  SMC-PAD -Master    b0 1e 18     ch1  CC  30 = 24
+  16.702  SMC-PAD -Master    b0 1e 19     ch1  CC  30 = 25
+  16.752  SMC-PAD -Master    b0 1e 1a     ch1  CC  30 = 26
+  16.753  SMC-PAD -Master    b0 1e 1b     ch1  CC  30 = 27
+  16.754  SMC-PAD -Master    b0 1e 1c     ch1  CC  30 = 28
+  16.755  SMC-PAD -Master    b0 1e 1d     ch1  CC  30 = 29
+  16.852  SMC-PAD -Master    b0 1e 1e     ch1  CC  30 = 30
+  16.902  SMC-PAD -Master    b0 1e 1f     ch1  CC  30 = 31
+  17.502  SMC-PAD -Master    b0 1e 1e     ch1  CC  30 = 30
+  17.602  SMC-PAD -Master    b0 1e 1d     ch1  CC  30 = 29
+  17.652  SMC-PAD -Master    b0 1e 1c     ch1  CC  30 = 28
+  17.752  SMC-PAD -Master    b0 1e 1b     ch1  CC  30 = 27
+  17.802  SMC-PAD -Master    b0 1e 1a     ch1  CC  30 = 26
+  17.853  SMC-PAD -Master    b0 1e 19     ch1  CC  30 = 25
+  17.902  SMC-PAD -Master    b0 1e 18     ch1  CC  30 = 24
+  17.903  SMC-PAD -Master    b0 1e 17     ch1  CC  30 = 23
+  17.905  SMC-PAD -Master    b0 1e 16     ch1  CC  30 = 22
+  17.906  SMC-PAD -Master    b0 1e 15     ch1  CC  30 = 21
+  17.952  SMC-PAD -Master    b0 1e 14     ch1  CC  30 = 20
+  18.002  SMC-PAD -Master    b0 1e 13     ch1  CC  30 = 19
+  18.052  SMC-PAD -Master    b0 1e 12     ch1  CC  30 = 18
+  18.053  SMC-PAD -Master    b0 1e 11     ch1  CC  30 = 17
+  18.055  SMC-PAD -Master    b0 1e 10     ch1  CC  30 = 16
+  18.056  SMC-PAD -Master    b0 1e 0f     ch1  CC  30 = 15
+  18.102  SMC-PAD -Master    b0 1e 0e     ch1  CC  30 = 14
+  18.152  SMC-PAD -Master    b0 1e 0d     ch1  CC  30 = 13
+  18.202  SMC-PAD -Master    b0 1e 0c     ch1  CC  30 = 12
+  18.252  SMC-PAD -Master    b0 1e 0b     ch1  CC  30 = 11
+  18.302  SMC-PAD -Master    b0 1e 0a     ch1  CC  30 = 10
+  18.352  SMC-PAD -Master    b0 1e 09     ch1  CC  30 = 9
+  18.402  SMC-PAD -Master    b0 1e 08     ch1  CC  30 = 8
+  18.403  SMC-PAD -Master    b0 1e 07     ch1  CC  30 = 7
+  18.404  SMC-PAD -Master    b0 1e 06     ch1  CC  30 = 6
+  18.404  SMC-PAD -Master    b0 1e 05     ch1  CC  30 = 5
+  18.502  SMC-PAD -Master    b0 1e 04     ch1  CC  30 = 4
+  18.602  SMC-PAD -Master    b0 1e 03     ch1  CC  30 = 3
+  27.071  SMC-PAD -Master    99 34 3d     ch10 NoteOn   52 (E3) vel 61
+  27.071  SMC-PAD -Master    89 34 40     ch10 NoteOff  52 (E3) vel 64
+  27.088  SMC-PAD -Master    99 34 2e     ch10 NoteOn   52 (E3) vel 46
+  27.089  SMC-PAD -Master    d9 33        ch10 ChanAT = 51
+  27.093  SMC-PAD -Master    d9 47        ch10 ChanAT = 71
+  27.103  SMC-PAD -Master    d9 4a        ch10 ChanAT = 74
+  27.113  SMC-PAD -Master    d9 4b        ch10 ChanAT = 75
+  27.123  SMC-PAD -Master    d9 46        ch10 ChanAT = 70
+  27.132  SMC-PAD -Master    d9 38        ch10 ChanAT = 56
+  27.142  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  27.142  SMC-PAD -Master    89 34 40     ch10 NoteOff  52 (E3) vel 64
+  27.702  SMC-PAD -Master    99 35 57     ch10 NoteOn   53 (F3) vel 87
+  27.703  SMC-PAD -Master    d9 2a        ch10 ChanAT = 42
+  27.706  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  27.708  SMC-PAD -Master    89 35 40     ch10 NoteOff  53 (F3) vel 64
+  27.715  SMC-PAD -Master    99 35 37     ch10 NoteOn   53 (F3) vel 55
+  27.716  SMC-PAD -Master    d9 3b        ch10 ChanAT = 59
+  27.723  SMC-PAD -Master    d9 42        ch10 ChanAT = 66
+  27.733  SMC-PAD -Master    d9 37        ch10 ChanAT = 55
+  27.743  SMC-PAD -Master    d9 2a        ch10 ChanAT = 42
+  27.750  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  27.751  SMC-PAD -Master    89 35 40     ch10 NoteOff  53 (F3) vel 64
+  28.369  SMC-PAD -Master    99 36 49     ch10 NoteOn   54 (F#3) vel 73
+  28.369  SMC-PAD -Master    d9 44        ch10 ChanAT = 68
+  28.373  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  28.373  SMC-PAD -Master    89 36 40     ch10 NoteOff  54 (F#3) vel 64
+  28.382  SMC-PAD -Master    99 36 32     ch10 NoteOn   54 (F#3) vel 50
+  28.383  SMC-PAD -Master    d9 37        ch10 ChanAT = 55
+  28.393  SMC-PAD -Master    d9 38        ch10 ChanAT = 56
+  28.403  SMC-PAD -Master    d9 36        ch10 ChanAT = 54
+  28.411  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  28.411  SMC-PAD -Master    89 36 40     ch10 NoteOff  54 (F#3) vel 64
+  29.091  SMC-PAD -Master    99 37 4f     ch10 NoteOn   55 (G3) vel 79
+  29.092  SMC-PAD -Master    d9 3e        ch10 ChanAT = 62
+  29.096  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  29.097  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
+  29.107  SMC-PAD -Master    99 37 24     ch10 NoteOn   55 (G3) vel 36
+  29.108  SMC-PAD -Master    d9 29        ch10 ChanAT = 41
+  29.123  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  29.123  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
+  29.939  SMC-PAD -Master    99 34 7f     ch10 NoteOn   52 (E3) vel 127
+  29.939  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  30.003  SMC-PAD -Master    d9 7e        ch10 ChanAT = 126
+  30.013  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  30.013  SMC-PAD -Master    89 34 40     ch10 NoteOff  52 (E3) vel 64
+  30.551  SMC-PAD -Master    99 35 7f     ch10 NoteOn   53 (F3) vel 127
+  30.552  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  30.623  SMC-PAD -Master    d9 77        ch10 ChanAT = 119
+  30.633  SMC-PAD -Master    d9 35        ch10 ChanAT = 53
+  30.634  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  30.635  SMC-PAD -Master    89 35 40     ch10 NoteOff  53 (F3) vel 64
+  31.130  SMC-PAD -Master    99 36 7f     ch10 NoteOn   54 (F#3) vel 127
+  31.131  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  31.193  SMC-PAD -Master    d9 75        ch10 ChanAT = 117
+  31.203  SMC-PAD -Master    d9 2c        ch10 ChanAT = 44
+  31.205  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  31.205  SMC-PAD -Master    89 36 40     ch10 NoteOff  54 (F#3) vel 64
+  31.709  SMC-PAD -Master    99 37 7f     ch10 NoteOn   55 (G3) vel 127
+  31.709  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  31.783  SMC-PAD -Master    d9 49        ch10 ChanAT = 73
+  31.789  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  31.789  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
+  37.191  SMC-PAD -Master    99 34 37     ch10 NoteOn   52 (E3) vel 55
+  37.192  SMC-PAD -Master    d9 2d        ch10 ChanAT = 45
+  37.196  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  37.197  SMC-PAD -Master    89 34 40     ch10 NoteOff  52 (E3) vel 64
+  37.203  SMC-PAD -Master    99 34 47     ch10 NoteOn   52 (E3) vel 71
+  37.204  SMC-PAD -Master    d9 4f        ch10 ChanAT = 79
+  37.213  SMC-PAD -Master    d9 58        ch10 ChanAT = 88
+  37.223  SMC-PAD -Master    d9 5d        ch10 ChanAT = 93
+  37.233  SMC-PAD -Master    d9 4e        ch10 ChanAT = 78
+  37.253  SMC-PAD -Master    d9 2e        ch10 ChanAT = 46
+  37.255  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  37.256  SMC-PAD -Master    89 34 40     ch10 NoteOff  52 (E3) vel 64
+  37.471  SMC-PAD -Master    99 34 5b     ch10 NoteOn   52 (E3) vel 91
+  37.473  SMC-PAD -Master    89 34 40     ch10 NoteOff  52 (E3) vel 64
+  37.495  SMC-PAD -Master    99 34 23     ch10 NoteOn   52 (E3) vel 35
+  37.496  SMC-PAD -Master    d9 29        ch10 ChanAT = 41
+  37.503  SMC-PAD -Master    d9 28        ch10 ChanAT = 40
+  37.507  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  37.509  SMC-PAD -Master    89 34 40     ch10 NoteOff  52 (E3) vel 64
+  37.764  SMC-PAD -Master    99 34 66     ch10 NoteOn   52 (E3) vel 102
+  37.765  SMC-PAD -Master    d9 3c        ch10 ChanAT = 60
+  37.769  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  37.769  SMC-PAD -Master    89 34 40     ch10 NoteOff  52 (E3) vel 64
+  38.230  SMC-PAD -Master    99 35 73     ch10 NoteOn   53 (F3) vel 115
+  38.231  SMC-PAD -Master    89 35 40     ch10 NoteOff  53 (F3) vel 64
+  38.241  SMC-PAD -Master    99 35 3d     ch10 NoteOn   53 (F3) vel 61
+  38.242  SMC-PAD -Master    d9 41        ch10 ChanAT = 65
+  38.253  SMC-PAD -Master    d9 4c        ch10 ChanAT = 76
+  38.263  SMC-PAD -Master    d9 41        ch10 ChanAT = 65
+  38.273  SMC-PAD -Master    d9 32        ch10 ChanAT = 50
+  38.277  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  38.278  SMC-PAD -Master    89 35 40     ch10 NoteOff  53 (F3) vel 64
+  38.461  SMC-PAD -Master    99 35 4d     ch10 NoteOn   53 (F3) vel 77
+  38.463  SMC-PAD -Master    89 35 40     ch10 NoteOff  53 (F3) vel 64
+  38.474  SMC-PAD -Master    99 35 3b     ch10 NoteOn   53 (F3) vel 59
+  38.475  SMC-PAD -Master    d9 3e        ch10 ChanAT = 62
+  38.483  SMC-PAD -Master    d9 41        ch10 ChanAT = 65
+  38.493  SMC-PAD -Master    d9 3d        ch10 ChanAT = 61
+  38.503  SMC-PAD -Master    d9 32        ch10 ChanAT = 50
+  38.507  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  38.508  SMC-PAD -Master    89 35 40     ch10 NoteOff  53 (F3) vel 64
+  38.650  SMC-PAD -Master    99 35 44     ch10 NoteOn   53 (F3) vel 68
+  38.651  SMC-PAD -Master    d9 29        ch10 ChanAT = 41
+  38.663  SMC-PAD -Master    d9 4d        ch10 ChanAT = 77
+  38.673  SMC-PAD -Master    d9 5b        ch10 ChanAT = 91
+  38.683  SMC-PAD -Master    d9 4f        ch10 ChanAT = 79
+  38.692  SMC-PAD -Master    d9 3e        ch10 ChanAT = 62
+  38.703  SMC-PAD -Master    d9 29        ch10 ChanAT = 41
+  38.705  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  38.706  SMC-PAD -Master    89 35 40     ch10 NoteOff  53 (F3) vel 64
+  39.145  SMC-PAD -Master    99 36 47     ch10 NoteOn   54 (F#3) vel 71
+  39.146  SMC-PAD -Master    d9 38        ch10 ChanAT = 56
+  39.149  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  39.150  SMC-PAD -Master    89 36 40     ch10 NoteOff  54 (F#3) vel 64
+  39.160  SMC-PAD -Master    99 36 2e     ch10 NoteOn   54 (F#3) vel 46
+  39.161  SMC-PAD -Master    d9 32        ch10 ChanAT = 50
+  39.173  SMC-PAD -Master    d9 2c        ch10 ChanAT = 44
+  39.179  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  39.180  SMC-PAD -Master    89 36 40     ch10 NoteOff  54 (F#3) vel 64
+  39.363  SMC-PAD -Master    99 36 51     ch10 NoteOn   54 (F#3) vel 81
+  39.364  SMC-PAD -Master    d9 2b        ch10 ChanAT = 43
+  39.367  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  39.370  SMC-PAD -Master    89 36 40     ch10 NoteOff  54 (F#3) vel 64
+  39.378  SMC-PAD -Master    99 36 29     ch10 NoteOn   54 (F#3) vel 41
+  39.379  SMC-PAD -Master    d9 28        ch10 ChanAT = 40
+  39.382  SMC-PAD -Master    d9 29        ch10 ChanAT = 41
+  39.393  SMC-PAD -Master    d9 32        ch10 ChanAT = 50
+  39.398  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  39.400  SMC-PAD -Master    89 36 40     ch10 NoteOff  54 (F#3) vel 64
+  39.567  SMC-PAD -Master    99 36 5c     ch10 NoteOn   54 (F#3) vel 92
+  39.568  SMC-PAD -Master    d9 37        ch10 ChanAT = 55
+  39.573  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  39.574  SMC-PAD -Master    89 36 40     ch10 NoteOff  54 (F#3) vel 64
+  39.580  SMC-PAD -Master    99 36 4c     ch10 NoteOn   54 (F#3) vel 76
+  39.581  SMC-PAD -Master    d9 4f        ch10 ChanAT = 79
+  39.592  SMC-PAD -Master    d9 56        ch10 ChanAT = 86
+  39.603  SMC-PAD -Master    d9 42        ch10 ChanAT = 66
+  39.612  SMC-PAD -Master    d9 2b        ch10 ChanAT = 43
+  39.614  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  39.615  SMC-PAD -Master    89 36 40     ch10 NoteOff  54 (F#3) vel 64
+  40.001  SMC-PAD -Master    99 37 43     ch10 NoteOn   55 (G3) vel 67
+  40.002  SMC-PAD -Master    d9 2b        ch10 ChanAT = 43
+  40.006  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  40.006  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
+  40.228  SMC-PAD -Master    99 37 44     ch10 NoteOn   55 (G3) vel 68
+  40.229  SMC-PAD -Master    d9 2c        ch10 ChanAT = 44
+  40.234  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  40.234  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
+  40.243  SMC-PAD -Master    99 37 2e     ch10 NoteOn   55 (G3) vel 46
+  40.244  SMC-PAD -Master    d9 2f        ch10 ChanAT = 47
+  40.261  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  40.263  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
+  40.450  SMC-PAD -Master    99 37 32     ch10 NoteOn   55 (G3) vel 50
+  40.451  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
+  40.461  SMC-PAD -Master    99 37 50     ch10 NoteOn   55 (G3) vel 80
+  40.462  SMC-PAD -Master    d9 53        ch10 ChanAT = 83
+  40.474  SMC-PAD -Master    d9 6e        ch10 ChanAT = 110
+  40.482  SMC-PAD -Master    d9 77        ch10 ChanAT = 119
+  40.492  SMC-PAD -Master    d9 76        ch10 ChanAT = 118
+  40.503  SMC-PAD -Master    d9 54        ch10 ChanAT = 84
+  40.512  SMC-PAD -Master    d9 23        ch10 ChanAT = 35
+  40.514  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  40.515  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
+  40.676  SMC-PAD -Master    99 37 41     ch10 NoteOn   55 (G3) vel 65
+  40.676  SMC-PAD -Master    d9 33        ch10 ChanAT = 51
+  40.679  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  40.680  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
+  40.690  SMC-PAD -Master    99 37 31     ch10 NoteOn   55 (G3) vel 49
+  40.691  SMC-PAD -Master    d9 25        ch10 ChanAT = 37
+  40.695  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  40.696  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
+  41.448  SMC-PAD -Master    99 34 7f     ch10 NoteOn   52 (E3) vel 127
+  41.449  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  41.494  SMC-PAD -Master    d9 73        ch10 ChanAT = 115
+  41.502  SMC-PAD -Master    d9 4a        ch10 ChanAT = 74
+  41.509  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  41.510  SMC-PAD -Master    89 34 40     ch10 NoteOff  52 (E3) vel 64
+  41.698  SMC-PAD -Master    99 34 7f     ch10 NoteOn   52 (E3) vel 127
+  41.698  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  41.764  SMC-PAD -Master    d9 5f        ch10 ChanAT = 95
+  41.771  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  41.772  SMC-PAD -Master    89 34 40     ch10 NoteOff  52 (E3) vel 64
+  41.950  SMC-PAD -Master    99 34 7f     ch10 NoteOn   52 (E3) vel 127
+  41.951  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  42.012  SMC-PAD -Master    d9 5c        ch10 ChanAT = 92
+  42.019  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  42.020  SMC-PAD -Master    89 34 40     ch10 NoteOff  52 (E3) vel 64
+  42.368  SMC-PAD -Master    99 35 7f     ch10 NoteOn   53 (F3) vel 127
+  42.370  SMC-PAD -Master    d9 71        ch10 ChanAT = 113
+  42.382  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  42.424  SMC-PAD -Master    d9 64        ch10 ChanAT = 100
+  42.432  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  42.432  SMC-PAD -Master    89 35 40     ch10 NoteOff  53 (F3) vel 64
+  42.604  SMC-PAD -Master    99 35 7f     ch10 NoteOn   53 (F3) vel 127
+  42.604  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  42.652  SMC-PAD -Master    d9 5c        ch10 ChanAT = 92
+  42.662  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  42.664  SMC-PAD -Master    89 35 40     ch10 NoteOff  53 (F3) vel 64
+  42.826  SMC-PAD -Master    99 35 7f     ch10 NoteOn   53 (F3) vel 127
+  42.827  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  42.892  SMC-PAD -Master    d9 7a        ch10 ChanAT = 122
+  42.903  SMC-PAD -Master    d9 3b        ch10 ChanAT = 59
+  42.907  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  42.908  SMC-PAD -Master    89 35 40     ch10 NoteOff  53 (F3) vel 64
+  43.275  SMC-PAD -Master    99 36 7f     ch10 NoteOn   54 (F#3) vel 127
+  43.276  SMC-PAD -Master    d9 66        ch10 ChanAT = 102
+  43.282  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  43.332  SMC-PAD -Master    d9 5c        ch10 ChanAT = 92
+  43.342  SMC-PAD -Master    d9 26        ch10 ChanAT = 38
+  43.344  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  43.345  SMC-PAD -Master    89 36 40     ch10 NoteOff  54 (F#3) vel 64
+  43.516  SMC-PAD -Master    99 36 7f     ch10 NoteOn   54 (F#3) vel 127
+  43.518  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  43.572  SMC-PAD -Master    d9 5a        ch10 ChanAT = 90
+  43.578  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  43.578  SMC-PAD -Master    89 36 40     ch10 NoteOff  54 (F#3) vel 64
+  43.773  SMC-PAD -Master    99 36 7f     ch10 NoteOn   54 (F#3) vel 127
+  43.774  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  43.834  SMC-PAD -Master    d9 6f        ch10 ChanAT = 111
+  43.842  SMC-PAD -Master    d9 30        ch10 ChanAT = 48
+  43.845  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  43.846  SMC-PAD -Master    89 36 40     ch10 NoteOff  54 (F#3) vel 64
+  44.244  SMC-PAD -Master    99 37 7f     ch10 NoteOn   55 (G3) vel 127
+  44.246  SMC-PAD -Master    d9 5a        ch10 ChanAT = 90
+  44.254  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  44.302  SMC-PAD -Master    d9 68        ch10 ChanAT = 104
+  44.314  SMC-PAD -Master    d9 3d        ch10 ChanAT = 61
+  44.316  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  44.316  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
+  44.508  SMC-PAD -Master    99 37 7f     ch10 NoteOn   55 (G3) vel 127
+  44.509  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  44.562  SMC-PAD -Master    d9 6f        ch10 ChanAT = 111
+  44.572  SMC-PAD -Master    d9 26        ch10 ChanAT = 38
+  44.574  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  44.576  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
+  44.759  SMC-PAD -Master    99 37 7f     ch10 NoteOn   55 (G3) vel 127
+  44.760  SMC-PAD -Master    d9 7f        ch10 ChanAT = 127
+  44.824  SMC-PAD -Master    d9 66        ch10 ChanAT = 102
+  44.832  SMC-PAD -Master    d9 00        ch10 ChanAT = 0
+  44.833  SMC-PAD -Master    89 37 40     ch10 NoteOff  55 (G3) vel 64
