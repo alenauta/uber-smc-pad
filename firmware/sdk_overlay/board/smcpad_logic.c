@@ -37,7 +37,7 @@ SMCPAD_TABLE struct smcpad_pad_cfg smcpad_pad_cfg_default = {
     .peak_frames = 3,
     .baseline_shift = 6,
     .hold_frames = 12,      /* ~20 ms: first hardware test showed note-offs 2-5 ms after soft hits */
-    .release_frames = 3,
+    .release_frames = 12,   /* ~20 ms: 904 test, hard hits dip below off_thr then rebound ~12-17 ms later */
 };
 
 /* ---- key matrix -------------------------------------------------------------------- */
