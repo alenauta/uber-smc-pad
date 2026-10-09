@@ -238,10 +238,19 @@ static void test_leds(void)
     CHECK(r == 0x40);
 
     u8 seg[SMCPAD_BLED_PHASES];
-    smcpad_bled_phases(1u << 0, seg);
+    smcpad_bled_phases(1u << 3, seg);               /* hw 3 = Left -> LED 0 = 0x10 */
     CHECK(seg[0] == 0 && seg[1] == 1 && seg[2] == 0);
+    smcpad_bled_phases(1u << 0, seg);               /* hw 0 = BT -> LED 5 = 0x22 */
+    CHECK(seg[0] == 0 && seg[1] == 0 && seg[2] == 4);
+    smcpad_bled_phases(1u << 2, seg);               /* hw 2 = knob bank -> LED 7 = 0x20 */
+    CHECK(seg[0] == 0 && seg[1] == 0 && seg[2] == 1);
     smcpad_bled_phases(0x3ff, seg);
     CHECK(seg[0] == 0x0f && seg[1] == 0x07 && seg[2] == 0x07);
+    u16 seen = 0;                                   /* the map is a permutation of 0..9 */
+    for (int b = 0; b < SMCPAD_NUM_BUTTONS; b++) {
+        CHECK(smcpad_led_of_button[b] < SMCPAD_NUM_BUTTONS && !(seen & (1u << smcpad_led_of_button[b])));
+        seen |= (u16)(1u << smcpad_led_of_button[b]);
+    }
 
     CHECK(smcpad_knob_value(126, 5) == 127);
     CHECK(smcpad_knob_value(2, -5) == 0);

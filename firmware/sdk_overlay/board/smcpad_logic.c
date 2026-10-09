@@ -19,6 +19,12 @@ SMCPAD_TABLE u8 smcpad_button_step[SMCPAD_NUM_BUTTONS] = {
 SMCPAD_TABLE u8 smcpad_button_led[SMCPAD_NUM_BUTTONS] = {
     0x10, 0x03, 0x12, 0x01, 0x11, 0x22, 0x21, 0x20, 0x02, 0x00,
 };
+/* hardware button -> LED number (index into smcpad_button_led). Stock lights LEDs 0-4 for the
+ * preset buttons (hw 3-7) and LED 7 for knob bank (hw 2); BT, pad bank, shift and note repeat
+ * own LEDs 5, 6, 8, 9 (first hardware test, 2026-10-09). */
+SMCPAD_TABLE u8 smcpad_led_of_button[SMCPAD_NUM_BUTTONS] = {
+    5, 6, 7, 0, 1, 2, 3, 4, 8, 9,
+};
 SMCPAD_TABLE u8 smcpad_rgb_chain_pos[SMCPAD_NUM_RGB] = {
     11, 4, 2, 7, 10, 14, 6, 9, 0, 5, 15, 1, 13, 12, 8, 3,
 };
@@ -244,7 +250,7 @@ void smcpad_bled_phases(u16 on_mask, u8 seg_on[SMCPAD_BLED_PHASES])
     }
     for (u8 b = 0; b < SMCPAD_NUM_BUTTONS; b++) {
         if (on_mask & (1u << b)) {
-            u8 led = smcpad_button_led[b];
+            u8 led = smcpad_button_led[smcpad_led_of_button[b]];
             seg_on[(led >> 4) % SMCPAD_BLED_PHASES] |= (u8)(1u << (led & 0x0f));
         }
     }
