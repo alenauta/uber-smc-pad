@@ -49,6 +49,7 @@
 #define APP_MIDI_CABLES     BIT(0)              /* stock duplicates on cable 0 and 1 */
 #define APP_MIDI_MCP_CABLES BIT(2)              /* "SMC-PAD-MCP": Mackie-class output, as stock */
 #define APP_AT_PERIOD_MS    10
+#define APP_AT_FULL         600                 /* held pressure for AT 127 (904 test; held < strike peak) */
 #define APP_RGB_PERIOD_MS   10
 #define APP_PAD_HELD_RGB    0x606060
 #define APP_HOST_RGB        0x0040ff            /* colour for host-lit pads, scaled by vel */
@@ -372,7 +373,7 @@ static void service_pads(u32 now)
                 }
             }
         }
-        u32 at = (u32)p * 127u / smcpad_pad_cfg_default.vel_full;
+        u32 at = (u32)p * 127u / APP_AT_FULL;
         u8 v = (u8)(at > 127 ? 127 : at);
 #if APP_PRESETS
         smcpad_preset_pressure(&preset, strongest, v);  /* Note pads, globals AT on, [min, max] */

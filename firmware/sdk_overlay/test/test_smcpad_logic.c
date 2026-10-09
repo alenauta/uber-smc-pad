@@ -159,7 +159,7 @@ static void test_pads(void)
     CHECK(smcpad_pad_sample(&p, c, 1, 150, &vel) == SMCPAD_EV_NONE);   /* rising, 1 */
     CHECK(smcpad_pad_sample(&p, c, 1, 300, &vel) == SMCPAD_EV_NONE);   /* 2 */
     CHECK(smcpad_pad_sample(&p, c, 1, 500, &vel) == SMCPAD_EV_PAD_ON); /* 3 frames */
-    CHECK(vel == smcpad_velocity(c, p.peak) && vel > 60 && vel < 100);
+    CHECK(vel == smcpad_velocity(c, p.peak) && vel > 40 && vel < 80);
     CHECK(p.pressure > 350);
     CHECK(smcpad_pad_sample(&p, c, 1, 300, &vel) == SMCPAD_EV_NONE && p.pressure > 150);
     /* a short dip below off_thr (soft-hit wobble) does not end the note */
@@ -199,8 +199,8 @@ static void test_pads(void)
 
     /* a hit that peaks and falls fast fires before peak_frames */
     smcpad_pad_init(&p, 100);
-    smcpad_pad_sample(&p, c, 1, 700, &vel);
-    CHECK(smcpad_pad_sample(&p, c, 1, 400, &vel) == SMCPAD_EV_PAD_ON && vel == 127);
+    smcpad_pad_sample(&p, c, 1, 1000, &vel);
+    CHECK(smcpad_pad_sample(&p, c, 1, 600, &vel) == SMCPAD_EV_PAD_ON && vel == 127);
 
     /* inverted polarity */
     smcpad_pad_init(&p, 900);
