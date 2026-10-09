@@ -176,6 +176,10 @@ APP_CONFIG = "apps/spp_and_le/include/app_config.h"
 APP_CONFIG_SM = ("#if CONFIG_APP_SPP_LE\n",                  # anchor: the CONFIG_APP_SPP_LE block (unique)
                  "#define CONFIG_BT_SM_SUPPORT_ENABLE        0 ",
                  "#define CONFIG_BT_SM_SUPPORT_ENABLE        1 /* sdk_overlay: Just Works pairing */ ")
+# No debug UART on the SMC-PAD (PC4 = pad mux), so printf/log_* only cost flash. Every image has to
+# fit the stock code area (0x26000) because SincoOTA's stock updater keeps the stock layout.
+APP_CONFIG_NODEBUG = ("#define CONFIG_DEBUG_ENABLE\n",
+                      "// #define CONFIG_DEBUG_ENABLE   /* sdk_overlay: no debug UART on the SMC-PAD; saves flash */\n")
 
 
 def apply_usb_midi():
@@ -407,6 +411,8 @@ def main():
     t = rd(os.path.join(PRISTINE, APP_CONFIG))
     if not a.no_ble_smcpad:
         t = replace_after(t, *APP_CONFIG_SM, APP_CONFIG)
+    if not a.no_smcpad_hw:
+        t = replace_once(t, *APP_CONFIG_NODEBUG, APP_CONFIG)
     wr(os.path.join(WORK, APP_CONFIG), t)
 
     print("OK. Build: bash firmware/builder/build_ufw.sh ac636n_spp_and_le", WORK)
