@@ -12,6 +12,9 @@ Usage:
   smcdiag.py peek ADDR [N]          read N 32-bit words (RAM, SFR)                (cmd 0x10)
   smcdiag.py poke ADDR VALUE        write one SFR word (0x1E0000-0x1FFFFF)        (cmd 0x11)
   smcdiag.py regs                   key-matrix related registers (SPI2, IOMAP, PORTA/B/C)
+  smcdiag.py flicker                guided LED-flicker test: pauses parts for 10 s each, then restores
+  smcdiag.py watch [SECONDS]        print knob counts / buttons / raw rows whenever they change
+(BAUD / ADR / CNT registers are write-only and read back 0.)
 """
 import ctypes
 import os
@@ -168,6 +171,60 @@ def cmd_regs(pad):
         print(f"{name:11} 0x{a:06X} = 0x{dec32(r,5):08X}")
 
 
+def peek1(pad, a):
+    return dec32(pad.request([0x10, *enc32(a), 1, 0x00]), 5)
+
+
+def poke1(pad, a, v):
+    return dec32(pad.request([0x11, *enc32(a), *enc32(v), 0x00]), 5)
+
+
+SPI1_CON, ADC_CON = 0x1E1D00, 0x1E3100
+
+
+def cmd_flicker(pad, secs=10):
+    def phase(title):
+        print(f"\n>>> {title}: watch a lit button LED for {secs} s", flush=True)
+        for i in range(secs, 0, -1):
+            print(f"   {i:2}", end="\r", flush=True)
+            time.sleep(1)
+        print("      ")
+    input("Light one button LED (e.g. press PAD BANK once), then press Enter here... ")
+    phase("A  normal")
+    v = peek1(pad, SPI1_CON)
+    poke1(pad, SPI1_CON, v & ~1)                    # pad-LED (WS2812) SPI off
+    try:
+        phase("B  pad-LED updates paused (pad colours freeze)")
+    finally:
+        poke1(pad, SPI1_CON, v)
+    v = peek1(pad, ADC_CON)
+    poke1(pad, ADC_CON, 0)                          # pad scanning off (pads dead meanwhile)
+    try:
+        phase("C  pad scanning paused (pads do nothing)")
+    finally:
+        poke1(pad, ADC_CON, v | (1 << 6))           # restart the conversion chain
+    phase("D  normal again")
+    print("Done. Which of A / B / C / D flickered? (pads restarted:", "ok" if peek1(pad, ADC_CON) else "CHECK", ")")
+
+
+def cmd_watch(pad, secs=60):
+    last = None
+    end = time.monotonic() + secs
+    print(f"watching for {secs} s: turn knobs / press buttons (Ctrl-C to stop)")
+    try:
+        while time.monotonic() < end:
+            r = pad.request([0x02])
+            knobs = [u14(r, 15 + 2 * k) for k in range(8)]
+            knobs = [k - 0x4000 if k & 0x2000 else k for k in knobs]
+            cur = (u14(r, 12), tuple(knobs))
+            if cur != last:
+                print(f"{time.strftime('%H:%M:%S')}  buttons {cur[0]:010b}  knobs {list(cur[1])}", flush=True)
+                last = cur
+            time.sleep(0.05)
+    except KeyboardInterrupt:
+        pass
+
+
 def main():
     a = sys.argv[1:]
     if not a:
@@ -187,6 +244,10 @@ def main():
         cmd_poke(pad, num(a[1]), num(a[2]))
     elif a[0] == "regs":
         cmd_regs(pad)
+    elif a[0] == "flicker":
+        cmd_flicker(pad)
+    elif a[0] == "watch":
+        cmd_watch(pad, float(a[1]) if len(a) > 1 else 60)
     else:
         print(__doc__)
 
