@@ -537,6 +537,29 @@ static void diag_reply(const u8 *req, u32 len)
         } else {
             put32(&p, 0xDEADBEEF);
         }
+    } else if (cmd == 0x20 || (cmd == 0x21 && len >= 17)) {
+        /* pad detector settings: on off vel_full (2 x 7 bit each), peak shift hold release (7 bit)
+         * 0x20 = read, 0x21 = write (F0 7D 53 50 21 <10 bytes> 00 F7), live only (not saved) */
+        struct smcpad_pad_cfg c;
+        smcpad_hw_pad_cfg(&c, NULL);
+        if (cmd == 0x21) {
+            const u8 *q = req + 5;
+            c.on_thr = (u16)(q[0] | (q[1] << 7));
+            c.off_thr = (u16)(q[2] | (q[3] << 7));
+            c.vel_full = (u16)(q[4] | (q[5] << 7));
+            c.peak_frames = q[6];
+            c.baseline_shift = q[7];
+            c.hold_frames = q[8];
+            c.release_frames = q[9];
+            smcpad_hw_pad_cfg(&c, &c);
+        }
+        put14(&p, c.on_thr);
+        put14(&p, c.off_thr);
+        put14(&p, c.vel_full);
+        *p++ = (u8)(c.peak_frames & 0x7f);
+        *p++ = (u8)(c.baseline_shift & 0x7f);
+        *p++ = (u8)(c.hold_frames & 0x7f);
+        *p++ = (u8)(c.release_frames & 0x7f);
     } else {
         return;
     }

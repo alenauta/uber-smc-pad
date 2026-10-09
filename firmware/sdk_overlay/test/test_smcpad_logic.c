@@ -162,7 +162,29 @@ static void test_pads(void)
     CHECK(vel == smcpad_velocity(c, p.peak) && vel > 60 && vel < 100);
     CHECK(p.pressure > 350);
     CHECK(smcpad_pad_sample(&p, c, 1, 300, &vel) == SMCPAD_EV_NONE && p.pressure > 150);
-    CHECK(smcpad_pad_sample(&p, c, 1, 105, &vel) == SMCPAD_EV_PAD_OFF && p.pressure == 0);
+    /* a short dip below off_thr (soft-hit wobble) does not end the note */
+    CHECK(smcpad_pad_sample(&p, c, 1, 105, &vel) == SMCPAD_EV_NONE);
+    CHECK(smcpad_pad_sample(&p, c, 1, 105, &vel) == SMCPAD_EV_NONE);
+    CHECK(smcpad_pad_sample(&p, c, 1, 200, &vel) == SMCPAD_EV_NONE && p.state == PAD_HELD);
+    /* even a sustained dip waits for the minimum hold */
+    int n = 0;
+    while (smcpad_pad_sample(&p, c, 1, 105, &vel) == SMCPAD_EV_NONE && n < 100) {
+        n++;
+    }
+    CHECK(p.state == PAD_IDLE && p.pressure == 0);
+    CHECK(n + 1 + 4 >= c->hold_frames && n < 100);    /* released at hold_frames, not before */
+    /* after the hold, release needs release_frames consecutive low samples */
+    smcpad_pad_init(&p, 100);
+    smcpad_pad_sample(&p, c, 1, 500, &vel);
+    smcpad_pad_sample(&p, c, 1, 500, &vel);
+    CHECK(smcpad_pad_sample(&p, c, 1, 500, &vel) == SMCPAD_EV_PAD_ON);
+    for (int i = 0; i < c->hold_frames; i++) {
+        smcpad_pad_sample(&p, c, 1, 400, &vel);
+    }
+    for (int i = 0; i + 1 < c->release_frames; i++) {
+        CHECK(smcpad_pad_sample(&p, c, 1, 105, &vel) == SMCPAD_EV_NONE);
+    }
+    CHECK(smcpad_pad_sample(&p, c, 1, 105, &vel) == SMCPAD_EV_PAD_OFF);
 
     /* a hit that peaks and falls fast fires before peak_frames */
     smcpad_pad_init(&p, 100);

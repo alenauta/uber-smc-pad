@@ -46,6 +46,9 @@
 #ifndef SMCPAD_BTN_DEBOUNCE_FRAMES
 #define SMCPAD_BTN_DEBOUNCE_FRAMES 48   /* ~23 ms: frames run at ~2.1 kHz (measured); stock 3 x 20 ms */
 #endif
+#ifndef SMCPAD_BLED_EVERY
+#define SMCPAD_BLED_EVERY       4       /* button-LED phase every 4 key-matrix steps (power of 2) */
+#endif
 #ifndef SMCPAD_WS_SPI_HZ
 #define SMCPAD_WS_SPI_HZ        6000000 /* 8 SPI bits per LED bit = 750 kHz (stock) */
 #endif
@@ -72,6 +75,7 @@ u8   smcpad_hw_pad_pop(struct smcpad_pad_ev *e);
 u16  smcpad_hw_pad_pressure(u8 pad);
 u16  smcpad_hw_pad_raw(u8 pad);
 u16  smcpad_hw_pad_baseline(u8 pad);
+void smcpad_hw_pad_cfg(struct smcpad_pad_cfg *get, const struct smcpad_pad_cfg *set);  /* live tuning */
 s32  smcpad_hw_knob_count(u8 knob);
 u16  smcpad_hw_buttons(void);           /* debounced, bit b = button b pressed */
 void smcpad_hw_km_frame(u8 *out);       /* diagnostics: last raw key-matrix frame (16 B) */

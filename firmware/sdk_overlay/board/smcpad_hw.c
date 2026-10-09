@@ -242,6 +242,19 @@ u16 smcpad_hw_pad_baseline(u8 pad)
     return pad < SMCPAD_NUM_PADS ? (u16)(pad_state[pad].baseline_q4 >> 4) : 0;
 }
 
+/* diagnostics / live tuning: read and optionally replace the pad detector settings */
+void smcpad_hw_pad_cfg(struct smcpad_pad_cfg *get, const struct smcpad_pad_cfg *set)
+{
+    if (set) {
+        local_irq_disable();
+        pad_cfg = *set;
+        local_irq_enable();
+    }
+    if (get) {
+        *get = pad_cfg;
+    }
+}
+
 /* sdk_overlay patch in cpu/br25/adc_api.c */
 extern void adc_ext_set_value(u32 ch, u32 value);
 
@@ -308,7 +321,6 @@ static void km_frame_done(const u8 *frame)
     u16 changed = smcpad_debounce_step(&km.db, smcpad_km_buttons_raw(frame),
                                        SMCPAD_BTN_DEBOUNCE_FRAMES);
     km.frames++;
-    bled_step();
     if (moved || changed) {
         notify_task();
     }
@@ -330,6 +342,9 @@ static void smcpad_spi2_isr(void)
     JL_SPI2->ADR = (u32)&km.word;
     JL_SPI2->CNT = 2;
     JL_PORTB->OUT &= ~B_KM_LATCH;
+    if ((next & (SMCPAD_BLED_EVERY - 1)) == 0) {
+        bled_step();                                /* button-LED phase: 4x per frame */
+    }
     if (next == 0) {
         km.wr ^= 1;
         km_frame_done(f);

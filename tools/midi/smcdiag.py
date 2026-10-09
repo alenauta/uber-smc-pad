@@ -14,6 +14,8 @@ Usage:
   smcdiag.py regs                   key-matrix related registers (SPI2, IOMAP, PORTA/B/C)
   smcdiag.py flicker                guided LED-flicker test: pauses parts for 10 s each, then restores
   smcdiag.py watch [SECONDS]        print knob counts / buttons / raw rows whenever they change
+  smcdiag.py padcfg [KEY=VAL ...]   show / change the pad detector live (904+, RAM only, lost on reboot)
+                                    keys: on off vel_full peak shift hold release  (cmd 0x20 / 0x21)
 (BAUD / ADR / CNT registers are write-only and read back 0.)
 """
 import ctypes
@@ -225,6 +227,36 @@ def cmd_watch(pad, secs=60):
         pass
 
 
+PADCFG_KEYS = ("on", "off", "vel_full", "peak", "shift", "hold", "release")
+
+
+def _padcfg_decode(r):
+    return dict(zip(PADCFG_KEYS, (u14(r, 0), u14(r, 2), u14(r, 4), r[6], r[7], r[8], r[9])))
+
+
+def cmd_padcfg(pad, sets):
+    c = _padcfg_decode(pad.request([0x20, 0x00]))
+    if sets:
+        for s in sets:
+            k, _, v = s.partition("=")
+            if k not in PADCFG_KEYS or not v:
+                sys.exit(f"bad setting {s!r}; keys: {' '.join(PADCFG_KEYS)}")
+            c[k] = int(v, 0)
+        for k in ("on", "off", "vel_full"):
+            if not 0 <= c[k] < 0x4000:
+                sys.exit(f"{k} must be 0..16383")
+        for k in ("peak", "shift", "hold", "release"):
+            if not 0 <= c[k] < 0x80:
+                sys.exit(f"{k} must be 0..127")
+        if c["off"] >= c["on"]:
+            sys.exit("off must be below on")
+        body = [c["on"] & 0x7F, c["on"] >> 7, c["off"] & 0x7F, c["off"] >> 7,
+                c["vel_full"] & 0x7F, c["vel_full"] >> 7, c["peak"], c["shift"], c["hold"], c["release"]]
+        c = _padcfg_decode(pad.request([0x21, *body, 0x00]))
+    print("  ".join(f"{k} {v}" for k, v in c.items()))
+    print("(frames: one pad frame is ~1.7 ms; hold = minimum note length, release = samples below 'off')")
+
+
 def main():
     a = sys.argv[1:]
     if not a:
@@ -248,6 +280,8 @@ def main():
         cmd_flicker(pad)
     elif a[0] == "watch":
         cmd_watch(pad, float(a[1]) if len(a) > 1 else 60)
+    elif a[0] == "padcfg":
+        cmd_padcfg(pad, a[1:])
     else:
         print(__doc__)
 

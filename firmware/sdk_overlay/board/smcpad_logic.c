@@ -36,6 +36,8 @@ SMCPAD_TABLE struct smcpad_pad_cfg smcpad_pad_cfg_default = {
     .vel_full = 600,
     .peak_frames = 3,
     .baseline_shift = 6,
+    .hold_frames = 12,      /* ~20 ms: first hardware test showed note-offs 2-5 ms after soft hits */
+    .release_frames = 3,
 };
 
 /* ---- key matrix -------------------------------------------------------------------- */
@@ -179,17 +181,29 @@ u8 smcpad_pad_sample(struct smcpad_pad *p, const struct smcpad_pad_cfg *c,
         if (p->frames >= c->peak_frames || (u32)delta + (p->peak >> 3) < p->peak) {
             p->state = PAD_HELD;
             p->pressure = delta;
+            p->frames = 0;
+            p->low = 0;
             *vel = smcpad_velocity(c, p->peak);
             return SMCPAD_EV_PAD_ON;
         }
         return SMCPAD_EV_NONE;
     }
-    /* PAD_HELD */
+    /* PAD_HELD: release after the minimum hold and release_frames consecutive low samples */
+    if (p->frames < 0xff) {
+        p->frames++;
+    }
     if (delta < c->off_thr) {
-        p->state = PAD_IDLE;
-        p->pressure = 0;
-        p->peak = 0;
-        return SMCPAD_EV_PAD_OFF;
+        if (p->low < 0xff) {
+            p->low++;
+        }
+        if (p->low >= c->release_frames && p->frames >= c->hold_frames) {
+            p->state = PAD_IDLE;
+            p->pressure = 0;
+            p->peak = 0;
+            return SMCPAD_EV_PAD_OFF;
+        }
+    } else {
+        p->low = 0;
     }
     p->pressure = delta;
     return SMCPAD_EV_NONE;
