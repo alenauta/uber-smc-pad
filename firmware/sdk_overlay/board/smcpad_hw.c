@@ -350,7 +350,9 @@ static void km_init(void)
         smcpad_knob_init(&km.knobs[k], 0);
     }
 
-    /* stock 0x1E0F1CA: LED mux lines output low, rows input, no pulls */
+    /* stock 0x1E0F1CA: LED mux lines output low, rows input WITH pull-up (helper 0x1E008C6 writes
+     * PORTx->PU = 1 for PB0/PC1). Without it a closed key keeps the row low for every column
+     * (first hardware test: all buttons fired together, knobs dead). */
     static const u8 bled_pins[7] = {
         SMCPAD_BLED_SEG0_PIN, SMCPAD_BLED_SEG1_PIN, SMCPAD_BLED_SEG2_PIN, SMCPAD_BLED_SEG3_PIN,
         SMCPAD_BLED_COM0_PIN, SMCPAD_BLED_COM1_PIN, SMCPAD_BLED_COM2_PIN,
@@ -365,7 +367,7 @@ static void km_init(void)
     for (u8 i = 0; i < 2; i++) {
         gpio_set_die(rows[i], 1);
         gpio_set_direction(rows[i], 1);
-        gpio_set_pull_up(rows[i], 0);
+        gpio_set_pull_up(rows[i], 1);
         gpio_set_pull_down(rows[i], 0);
     }
     gpio_direction_output(SMCPAD_KM_LATCH_PIN, 0);
@@ -398,6 +400,14 @@ s32 smcpad_hw_knob_count(u8 knob)
 u16 smcpad_hw_buttons(void)
 {
     return km.db.state;
+}
+
+/* diagnostics: the last complete key-matrix frame, byte[step] = PB0 | PC1 << 1 (active low) */
+void smcpad_hw_km_frame(u8 *out)
+{
+    local_irq_disable();
+    memcpy(out, km.frame[km.wr ^ 1], SMCPAD_KM_STEPS);
+    local_irq_enable();
 }
 
 void smcpad_hw_button_leds(u16 on_mask)

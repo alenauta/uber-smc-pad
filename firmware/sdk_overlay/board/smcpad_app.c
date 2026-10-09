@@ -452,9 +452,39 @@ static void put14(u8 **p, u32 v)
     *(*p)++ = (u8)((v >> 7) & 0x7f);
 }
 
-static void diag_reply(u8 cmd)
+static void put32(u8 **p, u32 v)                    /* 5 x 7 bits, LSB first */
+{
+    for (u8 i = 0; i < 5; i++) {
+        *(*p)++ = (u8)(v & 0x7f);
+        v >>= 7;
+    }
+}
+
+static u32 get32(const u8 *q)
+{
+    u32 v = 0;
+    for (u8 i = 0; i < 5; i++) {
+        v |= (u32)(q[i] & 0x7f) << (7 * i);
+    }
+    return v;
+}
+
+/* peek/poke windows: RAM and the low-speed / high-speed SFR blocks */
+static u8 diag_readable(u32 a)
+{
+    return !(a & 3) && (a < 0x30000 || (a >= 0x1e0000 && a < 0x200000));
+}
+
+static u8 diag_writable(u32 a)
+{
+    return !(a & 3) && a >= 0x1e0000 && a < 0x200000;
+}
+
+/* req = whole SysEx F0 7D 53 50 cmd ... F7 */
+static void diag_reply(const u8 *req, u32 len)
 {
     static u8 m[6 + SMCPAD_NUM_PADS * 6 + 1];
+    u8 cmd = req[4];
     u8 *p = m;
     *p++ = 0xF0; *p++ = 0x7D; *p++ = 0x53; *p++ = 0x50; *p++ = cmd;
     if (cmd == 0x01) {
@@ -480,9 +510,37 @@ static void diag_reply(u8 cmd)
         for (u8 k = 0; k < SMCPAD_NUM_KNOBS; k++) {
             put14(&p, (u32)smcpad_hw_knob_count(k));
         }
+    } else if (cmd == 0x03) {                       /* raw key-matrix frame */
+        u8 f[SMCPAD_KM_STEPS];
+        struct smcpad_hw_status s;
+        smcpad_hw_km_frame(f);
+        smcpad_hw_status(&s);
+        for (u8 i = 0; i < SMCPAD_KM_STEPS; i++) {
+            *p++ = (u8)(f[i] & 0x7f);
+        }
+        put14(&p, smcpad_hw_buttons());
+        put32(&p, s.km_frames);
+    } else if (cmd == 0x10 && len >= 13) {          /* F0 7D 53 50 10 addr5 n 00 F7 */
+        u32 a = get32(req + 5);
+        u8 n = req[10];
+        n = n < 1 ? 1 : (n > 16 ? 16 : n);
+        put32(&p, a);
+        for (u8 i = 0; i < n; i++, a += 4) {
+            put32(&p, diag_readable(a) ? *(volatile u32 *)a : 0xDEADBEEF);
+        }
+    } else if (cmd == 0x11 && len >= 17) {          /* F0 7D 53 50 11 addr5 val5 00 F7 */
+        u32 a = get32(req + 5), v = get32(req + 10);
+        put32(&p, a);
+        if (diag_writable(a)) {
+            *(volatile u32 *)a = v;
+            put32(&p, *(volatile u32 *)a);
+        } else {
+            put32(&p, 0xDEADBEEF);
+        }
     } else {
         return;
     }
+    *p++ = 0x00;                                    /* never end a frame with 7D F7 */
     *p++ = 0xF7;
 #if TCFG_USB_SLAVE_MIDI_ENABLE
     usb_midi_send_msg(APP_MIDI_CABLES, m, (u32)(p - m));
@@ -513,9 +571,9 @@ static void host_midi_in(const u8 *msg, u32 len)
 static void on_usb_midi(u8 cable, const u8 *msg, u32 len)
 {
     (void)cable;
-    if (len == 6 && msg[0] == 0xF0 && msg[1] == 0x7D && msg[2] == 0x53 && msg[3] == 0x50 &&
-        msg[5] == 0xF7) {
-        diag_reply(msg[4]);
+    if (len >= 6 && msg[0] == 0xF0 && msg[1] == 0x7D && msg[2] == 0x53 && msg[3] == 0x50 &&
+        msg[len - 1] == 0xF7) {
+        diag_reply(msg, len);
         return;
     }
     if (msg[0] != 0xF0) {               /* Sinco SysEx goes through on_usb_sysex_byte() */

@@ -44,7 +44,7 @@
 #define SMCPAD_KM_SPI_HZ        1000000 /* stock: 4 MHz (lsb/12); 1 MHz = ~3 kHz frames */
 #endif
 #ifndef SMCPAD_BTN_DEBOUNCE_FRAMES
-#define SMCPAD_BTN_DEBOUNCE_FRAMES 16   /* ~5 ms at 1 MHz */
+#define SMCPAD_BTN_DEBOUNCE_FRAMES 48   /* ~23 ms: frames run at ~2.1 kHz (measured); stock 3 x 20 ms */
 #endif
 #ifndef SMCPAD_WS_SPI_HZ
 #define SMCPAD_WS_SPI_HZ        6000000 /* 8 SPI bits per LED bit = 750 kHz (stock) */
@@ -74,6 +74,7 @@ u16  smcpad_hw_pad_raw(u8 pad);
 u16  smcpad_hw_pad_baseline(u8 pad);
 s32  smcpad_hw_knob_count(u8 knob);
 u16  smcpad_hw_buttons(void);           /* debounced, bit b = button b pressed */
+void smcpad_hw_km_frame(u8 *out);       /* diagnostics: last raw key-matrix frame (16 B) */
 void smcpad_hw_button_leds(u16 on_mask);
 void smcpad_hw_rgb_set(u8 led, u32 rgb);
 void smcpad_hw_rgb_brightness(u8 b);
