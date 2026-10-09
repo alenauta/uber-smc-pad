@@ -194,8 +194,12 @@ static void test_presets(void)
     u8 v = 1;
     CHECK(sinco_store_write(&st, 5, SMCPAD_PRESETS_SIZE, &v, 1) == -1);
     CHECK(sinco_store_write(&st, 5, SMCPAD_PRESETS_SIZE - 1, r, 2) == -1);
-    CHECK(sinco_store_write(&st, 5, 0x80000000u, &v, 1) == -1);   /* stock mode flag */
-    CHECK(sinco_store_read(&st, 5, 0x80000000u, r, 1) == -1);
+    u32 gen = st.presets_gen;                                       /* stock mode flag: ignored */
+    CHECK(sinco_store_write(&st, 5, 0x80000000u, &v, 1) == 0 && st.presets_gen == gen);
+    r[0] = 0xAA;
+    CHECK(sinco_store_read(&st, 5, 0x80000000u, r, 1) == 0 && r[0] == 0);
+    CHECK(sinco_store_write(&st, 5, 0x80000001u, &v, 1) == -1);
+    CHECK(sinco_store_write(&st, 5, 0x80000000u, r, 5) == -1);
     CHECK(sinco_store_write(&st, 5, 0xFFFFFFFFu, &v, 1) == -1);   /* overflow */
     CHECK(sinco_store_write(&st, 5, 5, NULL, 0) == -1);
     CHECK(sinco_store_write(&st, 9, 0, &v, 1) == -1 && sinco_store_read(&st, 1, 0, r, 1) == -1);
