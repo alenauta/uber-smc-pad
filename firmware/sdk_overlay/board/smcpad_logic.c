@@ -205,7 +205,14 @@ u8 smcpad_pad_sample(struct smcpad_pad *p, const struct smcpad_pad_cfg *c,
     } else {
         p->low = 0;
     }
-    p->pressure = delta;
+    /* aftertouch source: instant rise, falls by 1/8 per frame (~10 ms to half). Hardware (904):
+     * right after a strike the reading drops to ~0 for 5-10 ms and comes back (rubber rebound),
+     * which sent AT 0 mid-note. */
+    if (delta >= p->pressure) {
+        p->pressure = delta;
+    } else {
+        p->pressure = (u16)(p->pressure - ((p->pressure - delta + 7u) >> 3));
+    }
     return SMCPAD_EV_NONE;
 }
 

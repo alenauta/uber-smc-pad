@@ -186,6 +186,17 @@ static void test_pads(void)
     }
     CHECK(smcpad_pad_sample(&p, c, 1, 105, &vel) == SMCPAD_EV_PAD_OFF);
 
+    /* strike rebound: ~7 ms at zero right after the hit keeps the AT pressure up, rise is instant */
+    smcpad_pad_init(&p, 100);
+    smcpad_pad_sample(&p, c, 1, 600, &vel);
+    smcpad_pad_sample(&p, c, 1, 600, &vel);
+    CHECK(smcpad_pad_sample(&p, c, 1, 600, &vel) == SMCPAD_EV_PAD_ON && p.pressure == 500);
+    for (int i = 0; i < 4; i++) {
+        CHECK(smcpad_pad_sample(&p, c, 1, 100, &vel) == SMCPAD_EV_NONE);
+    }
+    CHECK(p.state == PAD_HELD && p.pressure > 250 && p.pressure < 500);
+    CHECK(smcpad_pad_sample(&p, c, 1, 700, &vel) == SMCPAD_EV_NONE && p.pressure == 600);
+
     /* a hit that peaks and falls fast fires before peak_frames */
     smcpad_pad_init(&p, 100);
     smcpad_pad_sample(&p, c, 1, 700, &vel);
