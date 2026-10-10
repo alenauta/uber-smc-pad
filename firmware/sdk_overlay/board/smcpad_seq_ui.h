@@ -11,8 +11,8 @@
  *                              15 sync on/off, 16 tap tempo
  *   PAD BANK tap / hold + pad  view step -> kit -> keyboard / select track
  *   Left / Right               page; Shift + Left / Right = undo / redo
- *   Play / Stop                (Stop twice = to the start); Rec = live record
- *   Stop + pad (kit view)      mute; Shift + Stop + pad = clear that track
+ *   Play / Stop                (Stop on release; twice = to the start); Rec = live record
+ *   Stop + pad (kit view)      mute (playback continues); Shift + Stop + pad = clear that track
  *   KNOB BANK                  knob page: track / pattern
  */
 #ifndef SMCPAD_SEQ_UI_H
@@ -66,7 +66,8 @@ struct seq_ui {
     u32 act_ms;                             /* last pad / knob / button event */
 };
 
-enum { SUI_OV_NONE = 0, SUI_OV_BAR, SUI_OV_SIGNED, SUI_OV_KEYS, SUI_OV_SCALE, SUI_OV_COUNT, SUI_OV_FLASH };
+enum { SUI_OV_NONE = 0, SUI_OV_BAR, SUI_OV_SIGNED, SUI_OV_KEYS, SUI_OV_SCALE, SUI_OV_COUNT, SUI_OV_FLASH,
+       SUI_OV_PICK };
 
 void seq_ui_init(struct seq_ui *u, struct seq *s, const struct seq_ui_io *io);
 void seq_ui_toggle(struct seq_ui *u);                       /* enter / leave sequencer mode */

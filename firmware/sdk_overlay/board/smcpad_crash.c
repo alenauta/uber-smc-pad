@@ -13,35 +13,77 @@
 #if SMCPAD_BOOTS_VM_ID < CFG_USER_DEFINE_BEGIN || SMCPAD_BOOTS_VM_ID > CFG_USER_DEFINE_END
 #error "SMCPAD_BOOTS_VM_ID must be a user VM id"
 #endif
-#define CRASH_MAGIC             0x43525348u /* "CRSH" */
-#define HIST_VER                1
+#define HIST_VER                2
+#define CRUMB_MAGIC             0x534D4352u /* "SMCR" */
 
 extern u8 power_reset_src;                  /* cpu/br25/setup.c, set at boot */
 extern void chip_reset(void);
+extern u32 cpu0_sstack_begin[];             /* sdk.ld: IRQ stack start = end of .boot_info */
 
-/* 909 also replaced the CPU exception handlers (irq 0 / 1) to record faults; that build
- * boot-looped into safe mode, so the SDK handler stays. Only the reset sources are kept. */
-static struct smcpad_crash_rec last;        /* never filled for now */
-static u8 last_valid;
 static struct smcpad_boot_hist hist;
+static volatile u32 *crumb;                 /* 4 words: magic, ms, stage|ev|vbat, ev_ms */
 
 void smcpad_crash_init(void)
 {
+    u32 base = (u32)cpu0_sstack_begin - 16;
+    crumb = (base & 15) ? NULL : (volatile u32 *)base;
+
     if (syscfg_read(SMCPAD_BOOTS_VM_ID, (u8 *)&hist, sizeof(hist)) != sizeof(hist) || hist.ver != HIST_VER) {
         memset(&hist, 0, sizeof(hist));
         hist.ver = HIST_VER;
     }
     memmove(&hist.e[1], &hist.e[0], sizeof(hist.e[0]) * (SMCPAD_BOOT_HIST - 1));
-    hist.e[0].rst = (u8)JL_RST->SRC;
-    hist.e[0].pwr = power_reset_src;
-    hist.e[0].crash = last_valid;
-    hist.e[0].rsv = 0;
-    hist.e[0].pc = last_valid ? last.reti : 0;
+    struct smcpad_boot_entry *e = &hist.e[0];
+    memset(e, 0, sizeof(*e));
+    e->rst = (u8)JL_RST->SRC;
+    e->pwr = power_reset_src;
+    if (crumb && crumb[0] == CRUMB_MAGIC) {     /* the previous run's last words */
+        u32 w2 = crumb[2];
+        u32 age = (crumb[1] - crumb[3]) / 100;
+        e->prev = 1;
+        e->ms = crumb[1];
+        e->stage = (u8)w2;
+        e->ev_kind = (u8)(w2 >> 8);
+        e->ev_id = (u8)(w2 >> 16);
+        e->vbat2 = (u8)(w2 >> 24);
+        e->ev_age = (u8)(age > 255 ? 255 : age);
+    }
     if (hist.n < SMCPAD_BOOT_HIST) {
         hist.n++;
     }
     hist.boots++;
     syscfg_write(SMCPAD_BOOTS_VM_ID, (u8 *)&hist, sizeof(hist));
+
+    if (crumb) {
+        crumb[1] = 0;
+        crumb[2] = 0;
+        crumb[3] = 0;
+        crumb[0] = CRUMB_MAGIC;
+    }
+}
+
+void smcpad_crumb_stage(u8 stage, u32 now_ms)
+{
+    if (crumb) {
+        crumb[1] = now_ms;
+        crumb[2] = (crumb[2] & ~0xFFu) | stage;
+    }
+}
+
+void smcpad_crumb_event(u8 kind, u8 id, u32 now_ms)
+{
+    if (crumb) {
+        crumb[2] = (crumb[2] & 0xFF0000FFu) | ((u32)kind << 8) | ((u32)id << 16);
+        crumb[3] = now_ms;
+    }
+}
+
+void smcpad_crumb_vbat(u16 vbat_10mv)
+{
+    if (crumb) {
+        u32 v = vbat_10mv / 2;
+        crumb[2] = (crumb[2] & 0x00FFFFFFu) | ((v > 255 ? 255 : v) << 24);
+    }
 }
 
 const struct smcpad_boot_hist *smcpad_crash_hist(void)
@@ -51,7 +93,7 @@ const struct smcpad_boot_hist *smcpad_crash_hist(void)
 
 const struct smcpad_crash_rec *smcpad_crash_last(void)
 {
-    return last_valid ? &last : NULL;
+    return NULL;
 }
 
 void smcpad_crash_reboot(void)

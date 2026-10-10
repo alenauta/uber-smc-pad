@@ -75,15 +75,18 @@ static void test_mode_and_steps(void)
     seq_ui_pad(&U, P(5), 1, 90, now);
     seq_ui_knob(&U, 0, -10, now);                              /* K1 velocity */
     seq_ui_knob(&U, 3, 2, now);                                /* K4 micro (small: no accel) */
-    seq_ui_knob(&U, 2, 4, now);                                /* K3 probability nibble 4 */
-    seq_ui_knob(&U, 6, 1, now);                                /* K7 condition 1:2 */
+    seq_ui_knob(&U, 2, -3, now);                               /* K3 probability: from the track's 100 % */
+    seq_ui_knob(&U, 6, 2, now);                                /* K7 condition: one per report -> 1:2 */
     seq_ui_knob(&U, 7, 1, now);                                /* K8 tie */
-    seq_ui_knob(&U, 5, 3, now);                                /* K6 ratchet rate: table 2 = 1/16 */
+    seq_ui_knob(&U, 5, 3, now);                                /* K6 ratchet rate: auto -> 1/8 */
+    seq_ui_knob(&U, 1, 1, now);                                /* K2 gate: from the track's 1/2 step */
     seq_ui_pad(&U, P(5), 0, 0, now);
     struct seq_step *st = &pat.track[0].step[5];
     CHECK(st->vel == SUI_DEFAULT_VEL - 40);                    /* accel: |10| >= 3 -> x4 */
-    CHECK(st->micro == 2 && (st->prob_gate >> 4) == 4 && (st->cond & SEQ_COND_MASK) == SEQ_COND_1_2);
-    CHECK((st->cond & SEQ_COND_TIE) && (st->ratchet & 0x0f) == 3);
+    CHECK(st->micro == 2 && (st->prob_gate >> 4) == 14 && seq_step_prob(&pat.track[0], st) == 92);
+    CHECK((st->cond & SEQ_COND_MASK) == SEQ_COND_1_2);
+    CHECK((st->cond & SEQ_COND_TIE) && (st->ratchet & 0x0f) == 2);
+    CHECK((st->prob_gate & 0x0f) == 5);                        /* track gate index 3 + 1, stored +1 */
     /* an existing step held + edited stays on */
     seq_ui_pad(&U, P(5), 1, 90, now);
     seq_ui_knob(&U, 0, 1, now);
@@ -217,10 +220,12 @@ static void test_knob_pages_and_leds(void)
     setup();
     seq_ui_knob(&U, 6, -4, now);                               /* K7 steps 16 -> 12 */
     CHECK(pat.track[0].len == 12);
-    seq_ui_knob(&U, 7, -1, now);                               /* K8 rate 1/16 -> 1/8T */
+    seq_ui_knob(&U, 7, -2, now);                               /* K8 rate: one per report, 1/16 -> 1/8T */
     CHECK(pat.track[0].rate == SEQ_RATE_8T);
+    seq_ui_leds(&U, now, rgb);                                 /* pick: pad 4 (printed 1/8T) bright */
+    CHECK(rgb[3] == palette[0] && rgb[4] == rgbs(palette[0], 1, 12) && rgb[8] == 0);
     seq_ui_knob(&U, 4, 2, now);                                /* K5 base note + preview */
-    CHECK(pat.track[0].note == 38 && last[0] == 0x99 && last[1] == 38);
+    CHECK(pat.track[0].note == 37 && last[0] == 0x99 && last[1] == 37);
     /* overlay for K1 volume (bar) */
     seq_ui_knob(&U, 0, -64, now);                              /* 127 -> 0 (accel) */
     CHECK(pat.track[0].vol == 0);
@@ -232,6 +237,7 @@ static void test_knob_pages_and_leds(void)
     seq_ui_knob(&U, 0, 1, now);
     CHECK(S.centibpm == 12100 && tempo_seen == 12100);
     seq_ui_knob(&U, 2, 2, now);
+    seq_ui_knob(&U, 2, 1, now);
     seq_ui_knob(&U, 3, 1, now);
     CHECK(pat.root == 2 && pat.scale == SCALE_MAJOR);
     seq_ui_leds(&U, now, rgb);                                 /* scale overlay: D major */
@@ -253,10 +259,37 @@ static void test_knob_pages_and_leds(void)
     CHECK(rgb[P(3)] != 0 && rgb[P(4)] == 0);                   /* page 2: steps 17-20 only */
     /* pattern K8: play early in 7 ms steps, persisted */
     press(SUI_KNOB_BANK);
-    seq_ui_knob(&U, 7, 3, now);
+    for (int i = 0; i < 3; i++) {
+        seq_ui_knob(&U, 7, 2, now);
+    }
     CHECK(S.lead_ms == 21 && lead_seen == 21);
-    seq_ui_knob(&U, 7, 20, now);
+    for (int i = 0; i < 10; i++) {
+        seq_ui_knob(&U, 7, 5, now);
+    }
     CHECK(S.lead_ms == SEQ_LEAD_MAX_MS);
+    /* pattern K7: MIDI channel, 1 pad lit = ch 1 ... 16 pads = ch 16 */
+    pat.track[0].chan = 0;
+    seq_ui_knob(&U, 6, 3, now);                                /* -> ch 2 */
+    seq_ui_leds(&U, now, rgb);
+    CHECK(pat.track[0].chan == 1 && rgb[0] == palette[0] && rgb[1] == palette[0] && rgb[2] == rgbs(palette[0], 1, 24));
+    pat.track[0].chan = 14;
+    seq_ui_knob(&U, 6, 1, now);                                /* -> ch 16: all lit */
+    seq_ui_leds(&U, now, rgb);
+    CHECK(pat.track[0].chan == 15 && rgb[15] == palette[0]);
+}
+
+static void test_stop_mute_running(void)
+{
+    setup();
+    press(SUI_PAD_BANK);                                       /* kit view */
+    press(SUI_PLAY);
+    seq_ui_button(&U, SUI_STOP, 1, now);
+    CHECK(S.running);                                          /* Stop acts on release */
+    tap(3);
+    seq_ui_button(&U, SUI_STOP, 0, now);
+    CHECK(S.running && pat.track[3].mute == 1);                /* muted, still playing */
+    press(SUI_STOP);
+    CHECK(!S.running);
 }
 
 static void test_beat_led(void)
@@ -334,6 +367,7 @@ int main(void)
     test_views_kit_keys();
     test_transport();
     test_knob_pages_and_leds();
+    test_stop_mute_running();
     test_beat_led();
     test_undo();
     printf(failures ? "test_smcpad_seq_ui: %d FAILED\n" : "test_smcpad_seq_ui: ALL PASSED\n", failures);

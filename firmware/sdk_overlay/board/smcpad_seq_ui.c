@@ -157,6 +157,16 @@ void seq_ui_toggle(struct seq_ui *u)
 }
 
 /* ---- knobs ---------------------------------------------------------------------------- */
+static s32 one(s32 d)                           /* discrete values: one per knob report */
+{
+    return d > 0 ? 1 : (d < 0 ? -1 : 0);
+}
+
+static u8 prob_nibble(u8 pct)                   /* 0..100 % -> step nibble 1..15 */
+{
+    return (u8)((pct > 100 ? 100 : pct) * 14 / 100 + 1);
+}
+
 static void knob_step(struct seq_ui *u, u8 k, s32 d, u32 now)
 {
     struct seq_pattern *p = u->seq->pat;
@@ -177,37 +187,43 @@ static void knob_step(struct seq_ui *u, u8 k, s32 d, u32 now)
             v = st->vel = (u8)clampi(st->vel + accel(d, 127), 1, 127);
             if (first) overlay(u, SUI_OV_BAR, u->track, v, 0, 127, now);
             break;
-        case 1:
-            v = clampi((st->prob_gate & 0x0f) + d, 0, 15);
-            st->prob_gate = (u8)((st->prob_gate & 0xF0) | v);
-            if (first) overlay(u, SUI_OV_BAR, u->track, v ? v : 0, 0, 15, now);
+        case 1: {                               /* gate: starts from the track's gate */
+            u8 g = st->prob_gate & 0x0f;
+            v = clampi((g ? g - 1 : t->gate) + one(d), 0, SEQ_GATES - 1);
+            st->prob_gate = (u8)((st->prob_gate & 0xF0) | (v + 1));
+            if (first) overlay(u, SUI_OV_BAR, u->track, v, -1, SEQ_GATES - 1, now);
             break;
-        case 2:
-            v = clampi((st->prob_gate >> 4) + d, 0, 15);
+        }
+        case 2: {                               /* probability: starts from the track's */
+            u8 n = st->prob_gate >> 4;
+            v = clampi((n ? n : prob_nibble(t->prob)) + one(d), 1, 15);
             st->prob_gate = (u8)((st->prob_gate & 0x0F) | (v << 4));
             if (first) overlay(u, SUI_OV_BAR, u->track, seq_step_prob(t, st), 0, 100, now);
             break;
+        }
         case 3:
             v = st->micro = (s8)clampi(st->micro + accel(d, 96), -SEQ_MICRO_MAX, SEQ_MICRO_MAX);
             if (first) overlay(u, SUI_OV_SIGNED, u->track, v, -SEQ_MICRO_MAX, SEQ_MICRO_MAX, now);
             break;
         case 4:
-            v = st->note = (s8)clampi(st->note + d, -48, 48);
+            v = st->note = (s8)clampi(st->note + one(d), -48, 48);
             if (first) {
                 u8 n = seq_step_note(p, t, st);
                 live_on(u, 16, t->chan, n, st->vel);
                 overlay(u, SUI_OV_KEYS, u->track, n, 0, 127, now);
             }
             break;
-        case 5:
-            v = clampi((st->ratchet & 0x0f) + d, 0, SEQ_RATCHET_RATES);
-            st->ratchet = (u8)((st->ratchet & 0xF0) | v);
-            if (first) overlay(u, SUI_OV_BAR, u->track, v, 0, SEQ_RATCHET_RATES, now);
+        case 5: {                               /* ratchet rate: starts from the track's */
+            u8 rr = st->ratchet & 0x0f;
+            v = clampi((rr ? rr - 1 : t->ratchet_rate) + one(d), 0, SEQ_RATCHET_RATES - 1);
+            st->ratchet = (u8)((st->ratchet & 0xF0) | (v + 1));
+            if (first) overlay(u, SUI_OV_PICK, u->track, v, 0, SEQ_RATCHET_RATES - 1, now);
             break;
+        }
         case 6:
-            v = clampi((st->cond & SEQ_COND_MASK) + d, 0, SEQ_CONDS - 1);
+            v = clampi((st->cond & SEQ_COND_MASK) + one(d), 0, SEQ_CONDS - 1);
             st->cond = (u8)((st->cond & SEQ_COND_TIE) | v);
-            if (first) overlay(u, SUI_OV_BAR, u->track, v, 0, SEQ_CONDS - 1, now);
+            if (first) overlay(u, SUI_OV_PICK, u->track, v, 0, SEQ_CONDS - 1, now);
             break;
         default:
             if (d > 0) st->cond |= SEQ_COND_TIE;
@@ -226,17 +242,17 @@ static void knob_track(struct seq_ui *u, u8 k, s32 d, u32 now)
     u8 c = u->track;
     switch (k) {
     case 0: t->vol = (u8)clampi(t->vol + accel(d, 127), 0, 127); overlay(u, SUI_OV_BAR, c, t->vol, 0, 127, now); break;
-    case 1: t->gate = (u8)clampi(t->gate + d, 0, SEQ_GATES - 1); overlay(u, SUI_OV_BAR, c, t->gate, 0, SEQ_GATES - 1, now); break;
+    case 1: t->gate = (u8)clampi(t->gate + one(d), 0, SEQ_GATES - 1); overlay(u, SUI_OV_BAR, c, t->gate, -1, SEQ_GATES - 1, now); break;
     case 2: t->prob = (u8)clampi(t->prob + accel(d, 100), 0, 100); overlay(u, SUI_OV_BAR, c, t->prob, 0, 100, now); break;
     case 3: t->quantize = (u8)clampi(t->quantize + accel(d, 100), 0, 100); overlay(u, SUI_OV_BAR, c, t->quantize, 0, 100, now); break;
     case 4:
-        t->note = (u8)clampi(t->note + d, 0, 127);
+        t->note = (u8)clampi(t->note + one(d), 0, 127);
         live_on(u, 16, t->chan, t->note, SUI_DEFAULT_VEL);
         overlay(u, SUI_OV_KEYS, c, t->note, 0, 127, now);
         break;
-    case 5: t->ratchet_rate = (u8)clampi(t->ratchet_rate + d, 0, SEQ_RATCHET_RATES - 1); overlay(u, SUI_OV_BAR, c, t->ratchet_rate, 0, SEQ_RATCHET_RATES - 1, now); break;
+    case 5: t->ratchet_rate = (u8)clampi(t->ratchet_rate + one(d), 0, SEQ_RATCHET_RATES - 1); overlay(u, SUI_OV_PICK, c, t->ratchet_rate, 0, SEQ_RATCHET_RATES - 1, now); break;
     case 6: t->len = (u8)clampi(t->len + d, 1, SEQ_STEPS); overlay(u, SUI_OV_BAR, c, t->len, 0, SEQ_STEPS, now); break;
-    default: t->rate = (u8)clampi(t->rate + d, 0, SEQ_RATES - 1); overlay(u, SUI_OV_BAR, c, t->rate, 0, SEQ_RATES - 1, now); break;
+    default: t->rate = (u8)clampi(t->rate + one(d), 0, SEQ_RATES - 1); overlay(u, SUI_OV_PICK, c, t->rate, 0, SEQ_RATES - 1, now); break;
     }
 }
 
@@ -256,23 +272,23 @@ static void knob_pattern(struct seq_ui *u, u8 k, s32 d, u32 now)
         tempo_changed(u);
         break;
     case 2:
-        p->root = (u8)((p->root + 12 + (d % 12)) % 12);
+        p->root = (u8)((p->root + 12 + one(d)) % 12);
         overlay(u, SUI_OV_SCALE, u->track, p->root, 0, 11, now);
         break;
     case 3:
-        p->scale = (u8)clampi(p->scale + d, 0, SCALE_COUNT - 1);
+        p->scale = (u8)clampi(p->scale + one(d), 0, SCALE_COUNT - 1);
         overlay(u, SUI_OV_SCALE, u->track, p->scale, 0, SCALE_COUNT - 1, now);
         break;
-    case 6: {
+    case 6: {                                   /* MIDI channel: 1 pad = ch 1 ... 16 pads = ch 16 */
         struct seq_track *t = &p->track[u->track];
-        t->chan = (u8)clampi(t->chan + d, 0, 15);
-        overlay(u, SUI_OV_BAR, u->track, t->chan, 0, 15, now);
+        t->chan = (u8)clampi(t->chan + one(d), 0, 15);
+        overlay(u, SUI_OV_BAR, u->track, t->chan, -1, 15, now);
         break;
     }
-    case 7: {                                   /* play early, 7 ms steps */
-        s32 v = clampi(s->lead_ms / SEQ_LEAD_STEP_MS + d, 0, SEQ_LEAD_MAX_MS / SEQ_LEAD_STEP_MS);
+    case 7: {                                   /* play early: pads 1..8 = 0, 7 ... 49 ms */
+        s32 v = clampi(s->lead_ms / SEQ_LEAD_STEP_MS + one(d), 0, SEQ_LEAD_MAX_MS / SEQ_LEAD_STEP_MS);
         s->lead_ms = (u8)(v * SEQ_LEAD_STEP_MS);
-        overlay(u, SUI_OV_BAR, u->track, v, 0, SEQ_LEAD_MAX_MS / SEQ_LEAD_STEP_MS, now);
+        overlay(u, SUI_OV_PICK, u->track, v, 0, SEQ_LEAD_MAX_MS / SEQ_LEAD_STEP_MS, now);
         tempo_changed(u);
         break;
     }
@@ -512,10 +528,11 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
             u->at_start = 0;
         }
         break;
-    case SUI_STOP:
+    case SUI_STOP:                              /* acts on release: Stop + pad = mute, no stop */
         u->stop = pressed;
         if (pressed) {
             u->stop_used = 0;
+        } else if (!u->stop_used) {
             if (s->running) {
                 seq_stop(s);
             } else {
@@ -541,6 +558,13 @@ static void draw_overlay(const struct seq_ui *u, u32 rgb[16])
     if (u->ov_kind == SUI_OV_FLASH) {           /* undo / redo done */
         for (u8 i = 0; i < 16; i++) {
             rgb[i] = rgbs(WHITE, 1, 6);
+        }
+        return;
+    }
+    if (u->ov_kind == SUI_OV_PICK) {            /* one pad per choice, from pad 1 */
+        for (u8 i = 0; i < 16; i++) {
+            s32 idx = (s32)i + lo;
+            rgb[i] = idx > hi ? 0 : (idx == v ? c : rgbs(c, 1, 12));
         }
         return;
     }

@@ -84,7 +84,11 @@ static struct {
     u8  seq_shown;                  /* the LEDs currently show the sequencer */
     u8  diag_reset;                 /* 1 = reboot, 2 = test exception, after the reply went out */
     u32 diag_reset_ms;
+    u32 vbat_ms;
+    u16 vbat, vbat_min;             /* battery, 10 mV units */
 } app;
+
+extern u16 get_vbat_level(void);                /* SDK, 10 mV units */
 
 /* IRQ context, called from the RAM ISRs: keep it in RAM too (os_sem_post is in mask ROM) */
 SMCPAD_RAM_CODE static void app_notify(void)
@@ -489,6 +493,9 @@ static void service_pads(u32 now)
 {
     struct smcpad_pad_ev e;
     while (smcpad_hw_pad_pop(&e)) {
+        if (e.type == SMCPAD_EV_PAD_ON) {
+            smcpad_crumb_event(CRUMB_EV_PAD, e.pad, smcpad_hw_ms());
+        }
 #if APP_PRESETS
         if (sui.active) {                           /* sequencer mode: pads drive the sequencer */
             u8 on = e.type == SMCPAD_EV_PAD_ON;
@@ -582,6 +589,7 @@ static void service_knobs(u32 now)
             continue;
         }
         app.knob_rep[k] += steps * 2;
+        smcpad_crumb_event(CRUMB_EV_KNOB, k, smcpad_hw_ms());
 #if APP_PRESETS
         if (sui.active) {
             seq_ui_knob(&sui, k, steps, smcpad_hw_ms());
@@ -616,6 +624,9 @@ static void service_buttons(u32 t)
 #endif
     for (u8 b = 0; b < SMCPAD_NUM_BUTTONS; b++) {
         if (changed & BIT(b)) {
+            if (now & BIT(b)) {
+                smcpad_crumb_event(CRUMB_EV_BUTTON, b, smcpad_hw_ms());
+            }
 #if APP_PRESETS
             u8 pressed = (now & BIT(b)) ? 1 : 0;
             if (sui.active) {
@@ -723,22 +734,26 @@ static void diag_reply(const u8 *req, u32 len)
         put14(&p, (u32)(seq.ext_err + 8192));
         put14(&p, seq.ext_err_max);
         put14(&p, undo_levels(&seq_undo));
+        /* 911+: battery now / lowest since boot, 10 mV */
+        put14(&p, app.vbat);
+        put14(&p, app.vbat_min);
 #endif
-    } else if (cmd == 0x04) {                       /* boot history + last exception record */
+    } else if (cmd == 0x04) {                       /* boot history v2 (911+) */
         const struct smcpad_boot_hist *h = smcpad_crash_hist();
-        const struct smcpad_crash_rec *c = smcpad_crash_last();
+        *p++ = 2;                                   /* format */
         put14(&p, h->boots);
         *p++ = h->n;
         for (u8 i = 0; i < SMCPAD_BOOT_HIST; i++) {
-            put14(&p, h->e[i].rst);
-            put14(&p, h->e[i].pwr);
-            *p++ = h->e[i].crash;
-            put32(&p, h->e[i].pc);
-        }
-        *p++ = c ? 1 : 0;
-        if (c) {
-            put32(&p, c->reti); put32(&p, c->rets); put32(&p, c->msg); put32(&p, c->emu);
-            put32(&p, c->mmu); put32(&p, c->wrl); put32(&p, c->ms); put32(&p, c->task);
+            const struct smcpad_boot_entry *e = &h->e[i];
+            put14(&p, e->rst);
+            put14(&p, e->pwr);
+            *p++ = e->prev;
+            *p++ = (u8)(e->stage & 0x7f);
+            put32(&p, e->ms);
+            *p++ = (u8)(e->ev_kind & 0x7f);
+            *p++ = (u8)(e->ev_id & 0x7f);
+            put14(&p, e->vbat2);
+            put14(&p, e->ev_age);
         }
     } else if (cmd == 0x30 || cmd == 0x31) {        /* reboot / test exception, after the reply */
         app.diag_reset = cmd == 0x30 ? 1 : 2;
@@ -863,6 +878,7 @@ static void smcpad_task(void *p)
 #endif
 
     for (;;) {
+        smcpad_crumb_stage(CRUMB_IDLE, smcpad_hw_ms());
         os_sem_pend(&app_sem, 1);                   /* events, or at least every tick */
         smcpad_hw_notified();
         u32 now = sys_timer_get_ms();
@@ -873,33 +889,52 @@ static void smcpad_task(void *p)
             app.diag_reset = 0;
             smcpad_crash_test();
         }
+        if (now - app.vbat_ms >= 1000) {            /* battery: now / lowest since boot */
+            u16 v = get_vbat_level();
+            app.vbat_ms = now;
+            app.vbat = v;
+            if (v && (!app.vbat_min || v < app.vbat_min)) {
+                app.vbat_min = v;
+            }
+            smcpad_crumb_vbat(v);
+        }
 
         if (!pads_started && smcpad_hw_pad_calibrated()) {
             smcpad_hw_pad_begin();                  /* hands off pads must be idle at boot */
             pads_started = 1;
         }
+        smcpad_crumb_stage(CRUMB_PADS, smcpad_hw_ms());
         service_pads(now);
+        smcpad_crumb_stage(CRUMB_KNOBS, smcpad_hw_ms());
         service_knobs(now);
+        smcpad_crumb_stage(CRUMB_BUTTONS, smcpad_hw_ms());
         service_buttons(now);
 #if TCFG_SMCPAD_BLE_ENABLE
+        smcpad_crumb_stage(CRUMB_BT, smcpad_hw_ms());
         service_bt(now);
 #endif
 #if TCFG_USB_SLAVE_MIDI_ENABLE
+        smcpad_crumb_stage(CRUMB_USB, smcpad_hw_ms());
         usb_midi_poll(on_usb_midi);
 #endif
 #if TCFG_SMCPAD_BLE_ENABLE
+        smcpad_crumb_stage(CRUMB_BLE, smcpad_hw_ms());
         service_ble(now);
+        smcpad_crumb_stage(CRUMB_SEQ, smcpad_hw_ms());
         service_seq();
 #endif
 #if APP_PRESETS
+        smcpad_crumb_stage(CRUMB_LEDS, smcpad_hw_ms());
         refresh_leds();
 #endif
+        smcpad_crumb_stage(CRUMB_RGB, smcpad_hw_ms());
         if (app.rgb_dirty && now - app.last_rgb_ms >= APP_RGB_PERIOD_MS) {
             if (smcpad_hw_rgb_show()) {
                 app.rgb_dirty = 0;
                 app.last_rgb_ms = now;
             }
         }
+        smcpad_crumb_stage(CRUMB_ADC, smcpad_hw_ms());
         smcpad_hw_sync_sdk_adc();
     }
 }

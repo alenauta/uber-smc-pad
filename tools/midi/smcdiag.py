@@ -146,6 +146,8 @@ def cmd_status(pad):
         err, emax = u14(r, 41) - 8192, u14(r, 43)
         print(f"play early {r[40]} ms  host F8 phase error last {err:+d} max {emax} (1/960 beat, 40 = 1 clock)"
               f"  undo levels {u14(r, 45)}")
+    if len(r) >= 51:                                       # 911+: battery
+        print(f"battery {u14(r, 47) / 100:.2f} V  (lowest since boot {u14(r, 49) / 100:.2f} V)")
 
 
 def cmd_frame(pad, n=1):
@@ -271,30 +273,36 @@ def cmd_padcfg(pad, sets):
     print("(frames: one pad frame is ~1.7 ms; hold = minimum note length, release = samples below 'off')")
 
 
+PWR_SRC = {0x01: "power-on", 0x40: "soft reset / crash", 0x04: "0x04 (watchdog or low voltage?)"}
+STAGES = ("idle", "pads", "knobs", "buttons", "bt", "usb", "ble", "seq", "leds", "rgb", "adc", "globals")
+BUTTONS = ("BT", "PAD BANK", "KNOB BANK", "LEFT", "RIGHT", "PLAY", "STOP", "REC", "SHIFT", "NOTE REPEAT")
+
+
 def cmd_boots(pad):
     r = pad.request([0x04])
-    boots, n = u14(r, 0), r[2]
-    print(f"boots recorded: {boots}  (newest first; rst = JL_RST->SRC, pwr = P33 reset source)")
-    i = 3
-    for k in range(8):
-        rst, pwr, crash, pc = u14(r, i), u14(r, i + 2), r[i + 4], dec32(r, i + 5)
-        i += 10
-        if k < n:
-            print(f"  #{k}: rst 0x{rst:02X}  pwr 0x{pwr:02X}" + (f"  EXCEPTION before it, pc 0x{pc:08X}" if crash else ""))
-    if r[i]:
-        names = ("reti(pc)", "rets", "dbg msg", "emu msg", "mmu msg", "wr-limit msg", "ms since boot", "task")
-        vals = [dec32(r, i + 1 + 5 * j) for j in range(8)]
-        print("last exception (previous run):")
-        for nm, v in zip(names, vals):
-            if nm == "task":
-                name = bytes([(v >> (8 * b)) & 0xFF for b in range(4)]).rstrip(b"\0").decode("latin-1")
-                print(f"  {nm:14s} {name!r}")
-            elif nm == "ms since boot":
-                print(f"  {nm:14s} {v}")
-            else:
-                print(f"  {nm:14s} 0x{v:08X}")
-    else:
-        print("no exception record from the previous run")
+    if r[0] != 2:                                          # 909 / 910 format
+        boots, n = u14(r, 0), r[2]
+        print(f"boots recorded: {boots}  (newest first; rst = JL_RST->SRC, pwr = P33 reset source)")
+        for k in range(min(n, 8)):
+            i = 3 + 10 * k
+            print(f"  #{k}: rst 0x{u14(r, i):02X}  pwr 0x{u14(r, i + 2):02X}")
+        return
+    boots, n = u14(r, 1), r[3]
+    print(f"boots recorded: {boots}  (newest first)")
+    for k in range(min(n, 8)):
+        i = 4 + 17 * k
+        rst, pwr, prev, stage = u14(r, i), u14(r, i + 2), r[i + 4], r[i + 5]
+        ms, evk, evi, vb2, age = dec32(r, i + 6), r[i + 11], r[i + 12], u14(r, i + 13), u14(r, i + 15)
+        line = f"  #{k}: {PWR_SRC.get(pwr, f'pwr 0x{pwr:02X}')}  (rst 0x{rst:02X} pwr 0x{pwr:02X})"
+        if prev:
+            ev = {1: f"knob K{evi + 1}", 2: f"button {BUTTONS[evi] if evi < len(BUTTONS) else evi}",
+                  3: f"pad {evi + 1}"}.get(evk, "none")
+            agestr = ">25 s" if age >= 255 else f"{age / 10:.1f} s"
+            line += (f"\n        previous run: up {ms / 1000:.1f} s, ended in '{STAGES[stage] if stage < len(STAGES) else stage}',"
+                     f" last event {ev} {agestr} before, battery {vb2 * 0.02:.2f} V")
+        else:
+            line += "\n        previous run: no breadcrumb (power was off, or older firmware)"
+        print(line)
 
 
 def main():

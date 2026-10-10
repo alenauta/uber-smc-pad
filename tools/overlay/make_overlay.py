@@ -42,7 +42,7 @@ KNOB_POS = {7: (0, 0), 8: (1, 0), 5: (0, 1), 6: (1, 1), 3: (0, 2), 4: (1, 2), 1:
 # buttons top -> bottom: label lines next to each button
 BUTTONS = [
     ("BT", []),
-    ("PAD BANK", ["VIEW \u25b8", "hold + pad", "= TRACK"]),
+    ("PAD BANK", ["VIEW (LED):", "off  step", "on   kit", "blink keys", "+pad TRACK"]),
     ("KNOB BANK", ["PATTERN", "KNOBS"]),
     ("<", ["PAGE \u25c2", "\u21e7 UNDO"]),
     (">", ["PAGE \u25b8", "\u21e7 REDO"]),
@@ -180,7 +180,7 @@ def card():
    </ul></div>
   <h3>Kit &amp; Keys views</h3>
   <ul>
-   <li>Kit: pads play and select tracks. <b>Stop + pad</b> mutes.</li>
+   <li>Kit: pads play and select tracks. <b>Stop + pad</b> mutes; playback continues (Stop acts on release).</li>
    <li>Keys: pads play the track's notes in the pattern scale.</li>
    <li><b>Rec</b> + Play: live recording, snapped to the nearest step (K4 = strength).</li>
    <li><b>Shift + Stop + pad</b>: clear that track.</li>
@@ -205,7 +205,9 @@ def card():
   {knob_rows}</table>
   <h3>Reading the pads while turning a knob</h3>
   <ul>
-   <li>Bar from pad 1 (dim) to pad 16 (full) = value. Micro-timing: centre-out.</li>
+   <li><b>Amounts</b> (volume, velocity, probability, quantize, steps, tempo, swing): bar from pad 1, dim &rarr; full. Micro-timing: centre-out.</li>
+   <li><b>Choices</b> light one pad: rate (pads 1&ndash;8 = printed 1/4&hellip;1/32T), ratchet rate, trig condition, play early (pad 1 = 0 ms, +7 ms per pad).</li>
+   <li><b>Counts</b>: MIDI channel (1 pad = ch 1 &hellip; 16 = ch 16), gate.</li>
    <li>Notes: pads 1&ndash;12 = keyboard, top row = octave. Ratchet count: pads 1&ndash;4.</li>
    <li>Trig conditions (K7): always, 1:2, 2:2, 1:3, 2:3, 3:3, 1:4&hellip;4:4, first, fill, not fill.</li>
    <li>Ratchet rate (K6): auto (split the step), 1/8, 1/16, 1/16T, 1/32, 1/32T, 1/64.</li>
@@ -282,7 +284,7 @@ def build():
 the grey holes. The left strip goes over the knobs (pull the knob caps off if they don't pass through), the right
 strip next to the buttons. The pads stay uncovered: their printed timing labels already match the timing page,
 except pad 14 (FILL, use the sticker).</p>
-<p>The sizes come from the drawing in the manual. Measure your unit before you cut. Firmware 908 and later.</p></div>"""
+<p>The sizes come from the drawing in the manual. Measure your unit before you cut. Firmware 911 and later.</p></div>"""
     sticker = ('<div class="sticker">FILL</div><div class="stickerlab">&larr; sticker for pad 14: covers the '
                'printed &ldquo;LATCH&rdquo; label</div>')
     page = f'<div class="page">{left}{right}{head}{ruler()}{sticker}{card()}</div>'
