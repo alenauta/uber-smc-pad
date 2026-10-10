@@ -57,7 +57,7 @@
 #define APP_PAD_HELD_RGB    0x606060
 #define APP_HOST_RGB        0x0040ff            /* colour for host-lit pads, scaled by vel */
 #define APP_TASK_PRIO       2
-#define APP_TASK_STACK      1024                /* u32 words (908: 512) */
+#define APP_TASK_STACK      512                 /* u32 words (909 tried 1024 and boot-looped) */
 #define APP_KNOB_PERIOD_MS  50                  /* stock: encoder deltas every 50 ms */
 #define APP_KNOB_TICK_MS    10                  /* knob value walker */
 #define APP_BT_LONG_MS      800                 /* stock long press: 41 x 20 ms (docs/pinmap.md) */

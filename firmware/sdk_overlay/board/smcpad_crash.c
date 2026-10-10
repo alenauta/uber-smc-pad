@@ -19,56 +19,14 @@
 extern u8 power_reset_src;                  /* cpu/br25/setup.c, set at boot */
 extern void chip_reset(void);
 
-static struct smcpad_crash_rec *rec;        /* survives the reset (best effort) */
-static struct smcpad_crash_rec last;        /* what this boot found */
+/* 909 also replaced the CPU exception handlers (irq 0 / 1) to record faults; that build
+ * boot-looped into safe mode, so the SDK handler stays. Only the reset sources are kept. */
+static struct smcpad_crash_rec last;        /* never filled for now */
 static u8 last_valid;
 static struct smcpad_boot_hist hist;
 
-static u32 rec_sum(const struct smcpad_crash_rec *r)
-{
-    return r->magic ^ r->reti ^ r->rets ^ r->msg ^ r->emu ^ r->mmu ^ r->wrl ^ r->ms ^ r->task ^ 0x5AA5C33Cu;
-}
-
-___interrupt
-static void smcpad_crash_isr(void)
-{
-    struct smcpad_crash_rec *r = rec;
-    if (r) {
-        u32 reti, rets;
-        __asm__ volatile("%0 = reti" : "=r"(reti));
-        __asm__ volatile("%0 = rets" : "=r"(rets));
-        r->reti = reti;
-        r->rets = rets;
-        r->msg = JL_DEBUG->MSG;
-        r->emu = q32DSP(0)->EMU_MSG;
-        r->mmu = JL_DEBUG->PRP_MMU_MSG;
-        r->wrl = JL_DEBUG->PRP_WR_LIMIT_MSG;
-        r->ms = smcpad_hw_ms();
-        u32 tn = 0;
-        const char *t = os_current_task();
-        for (u8 i = 0; t && i < 4 && t[i]; i++) {
-            tn |= (u32)(u8)t[i] << (8 * i);
-        }
-        r->task = tn;
-        r->magic = CRASH_MAGIC;
-        r->check = rec_sum(r);
-    }
-    chip_reset();
-    while (1) {
-    }
-}
-
 void smcpad_crash_init(void)
 {
-    rec = (struct smcpad_crash_rec *)malloc(sizeof(*rec));
-    if (rec && rec->magic == CRASH_MAGIC && rec->check == rec_sum(rec)) {
-        last = *rec;
-        last_valid = 1;
-    }
-    if (rec) {
-        memset(rec, 0, sizeof(*rec));
-    }
-
     if (syscfg_read(SMCPAD_BOOTS_VM_ID, (u8 *)&hist, sizeof(hist)) != sizeof(hist) || hist.ver != HIST_VER) {
         memset(&hist, 0, sizeof(hist));
         hist.ver = HIST_VER;
@@ -84,9 +42,6 @@ void smcpad_crash_init(void)
     }
     hist.boots++;
     syscfg_write(SMCPAD_BOOTS_VM_ID, (u8 *)&hist, sizeof(hist));
-
-    request_irq(0, 2, smcpad_crash_isr, 0); /* CPU exceptions: record, then reset */
-    request_irq(1, 2, smcpad_crash_isr, 0);
 }
 
 const struct smcpad_boot_hist *smcpad_crash_hist(void)
