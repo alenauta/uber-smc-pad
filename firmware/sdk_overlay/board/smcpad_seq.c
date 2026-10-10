@@ -13,6 +13,8 @@ const u16 seq_ratchet_units[SEQ_RATCHET_RATES] = {0, 480, 240, 160, 120, 80, 60}
 
 #define TIE_OVERLAP     10              /* units a tied note overlaps the next step */
 #define EXT_TIMEOUT_MS  500             /* no F8 for this long: back to the internal clock */
+#define EXT_IV_MIN_Q8   1600            /* F8 spacing (ms << 8) accepted: 400 BPM ... */
+#define EXT_IV_MAX_Q8   32000           /* ... 20 BPM */
 
 u32 seq_step_units(u8 rate)
 {
@@ -389,8 +391,9 @@ static void ext_tempo(struct seq *s, u32 now_ms)
     if (s->ext_n) {
         u8 oldest = s->ext_n < SEQ_EXT_RING ? 0 : s->ext_i;
         u32 span = now_ms - s->ext_ts[oldest];
-        if (span) {
-            s->ext_interval_q8 = span * 256u / s->ext_n;
+        u32 iv = span * 256u / s->ext_n;
+        if (iv >= EXT_IV_MIN_Q8 && iv <= EXT_IV_MAX_Q8) {   /* 20..400 BPM: else a burst */
+            s->ext_interval_q8 = iv;
         }
     }
     s->ext_ts[s->ext_i] = now_ms;

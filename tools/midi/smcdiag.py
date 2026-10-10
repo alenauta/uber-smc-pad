@@ -16,6 +16,9 @@ Usage:
   smcdiag.py watch [SECONDS]        print knob counts / buttons / raw rows whenever they change
   smcdiag.py padcfg [KEY=VAL ...]   show / change the pad detector live (904+, RAM only, lost on reboot)
                                     keys: on off vel_full peak shift hold release  (cmd 0x20 / 0x21)
+  smcdiag.py boots                  reset history of the last 8 boots + last exception (909+, cmd 0x04)
+  smcdiag.py reboot                 soft reset (909+, cmd 0x30)
+  smcdiag.py crashtest              deliberate CPU exception, to check the crash capture (909+, 0x31)
 (BAUD / ADR / CNT registers are write-only and read back 0.)
 """
 import ctypes
@@ -268,6 +271,32 @@ def cmd_padcfg(pad, sets):
     print("(frames: one pad frame is ~1.7 ms; hold = minimum note length, release = samples below 'off')")
 
 
+def cmd_boots(pad):
+    r = pad.request([0x04])
+    boots, n = u14(r, 0), r[2]
+    print(f"boots recorded: {boots}  (newest first; rst = JL_RST->SRC, pwr = P33 reset source)")
+    i = 3
+    for k in range(8):
+        rst, pwr, crash, pc = u14(r, i), u14(r, i + 2), r[i + 4], dec32(r, i + 5)
+        i += 10
+        if k < n:
+            print(f"  #{k}: rst 0x{rst:02X}  pwr 0x{pwr:02X}" + (f"  EXCEPTION before it, pc 0x{pc:08X}" if crash else ""))
+    if r[i]:
+        names = ("reti(pc)", "rets", "dbg msg", "emu msg", "mmu msg", "wr-limit msg", "ms since boot", "task")
+        vals = [dec32(r, i + 1 + 5 * j) for j in range(8)]
+        print("last exception (previous run):")
+        for nm, v in zip(names, vals):
+            if nm == "task":
+                name = bytes([(v >> (8 * b)) & 0xFF for b in range(4)]).rstrip(b"\0").decode("latin-1")
+                print(f"  {nm:14s} {name!r}")
+            elif nm == "ms since boot":
+                print(f"  {nm:14s} {v}")
+            else:
+                print(f"  {nm:14s} 0x{v:08X}")
+    else:
+        print("no exception record from the previous run")
+
+
 def main():
     a = sys.argv[1:]
     if not a:
@@ -293,6 +322,11 @@ def main():
         cmd_watch(pad, float(a[1]) if len(a) > 1 else 60)
     elif a[0] == "padcfg":
         cmd_padcfg(pad, a[1:])
+    elif a[0] == "boots":
+        cmd_boots(pad)
+    elif a[0] in ("reboot", "crashtest"):
+        pad.request([0x30 if a[0] == "reboot" else 0x31])
+        print("sent; the pad restarts in ~0.1 s (USB re-enumerates)")
     else:
         print(__doc__)
 

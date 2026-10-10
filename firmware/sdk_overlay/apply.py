@@ -89,7 +89,8 @@ USB_MIDI_BOARD_EDITS = [
 ]
 
 
-SMCPAD_FILES = ("smcpad_logic.h", "smcpad_logic.c", "smcpad_board.h", "smcpad_hw.c", "smcpad_app.c", "smcpad_safe.c")
+SMCPAD_FILES = ("smcpad_logic.h", "smcpad_logic.c", "smcpad_board.h", "smcpad_hw.c", "smcpad_app.c", "smcpad_safe.c",
+                "smcpad_crash.c", "smcpad_crash.h")
 SMCPAD_BOARD_EDITS = [
     # PC4 is free on the SMC-PAD but nothing listens there; PC5 (TRS) is UART1, see smcpad_hw.c
     ("#define TCFG_UART0_ENABLE\t\t\t\t\tENABLE_THIS_MOUDLE ",

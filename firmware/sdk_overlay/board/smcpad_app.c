@@ -28,6 +28,7 @@
 #ifndef TCFG_SMCPAD_BLE_ENABLE
 #define TCFG_SMCPAD_BLE_ENABLE      0
 #endif
+#include "smcpad_crash.h"
 #if TCFG_SMCPAD_BLE_ENABLE
 #include "sinco_proto.h"
 #include "sinco_store.h"
@@ -56,7 +57,7 @@
 #define APP_PAD_HELD_RGB    0x606060
 #define APP_HOST_RGB        0x0040ff            /* colour for host-lit pads, scaled by vel */
 #define APP_TASK_PRIO       2
-#define APP_TASK_STACK      512                 /* u32 words */
+#define APP_TASK_STACK      1024                /* u32 words (908: 512) */
 #define APP_KNOB_PERIOD_MS  50                  /* stock: encoder deltas every 50 ms */
 #define APP_KNOB_TICK_MS    10                  /* knob value walker */
 #define APP_BT_LONG_MS      800                 /* stock long press: 41 x 20 ms (docs/pinmap.md) */
@@ -81,6 +82,8 @@ static struct {
     u8  bt_long_done;
     u8  bt_led;
     u8  seq_shown;                  /* the LEDs currently show the sequencer */
+    u8  diag_reset;                 /* 1 = reboot, 2 = test exception, after the reply went out */
+    u32 diag_reset_ms;
 } app;
 
 /* IRQ context, called from the RAM ISRs: keep it in RAM too (os_sem_post is in mask ROM) */
@@ -681,7 +684,7 @@ static u8 diag_writable(u32 a)
 /* req = whole SysEx F0 7D 53 50 cmd ... F7 */
 static void diag_reply(const u8 *req, u32 len)
 {
-    static u8 m[6 + SMCPAD_NUM_PADS * 6 + 1];
+    static u8 m[160];
     u8 cmd = req[4];
     u8 *p = m;
     *p++ = 0xF0; *p++ = 0x7D; *p++ = 0x53; *p++ = 0x50; *p++ = cmd;
@@ -721,6 +724,25 @@ static void diag_reply(const u8 *req, u32 len)
         put14(&p, seq.ext_err_max);
         put14(&p, undo_levels(&seq_undo));
 #endif
+    } else if (cmd == 0x04) {                       /* boot history + last exception record */
+        const struct smcpad_boot_hist *h = smcpad_crash_hist();
+        const struct smcpad_crash_rec *c = smcpad_crash_last();
+        put14(&p, h->boots);
+        *p++ = h->n;
+        for (u8 i = 0; i < SMCPAD_BOOT_HIST; i++) {
+            put14(&p, h->e[i].rst);
+            put14(&p, h->e[i].pwr);
+            *p++ = h->e[i].crash;
+            put32(&p, h->e[i].pc);
+        }
+        *p++ = c ? 1 : 0;
+        if (c) {
+            put32(&p, c->reti); put32(&p, c->rets); put32(&p, c->msg); put32(&p, c->emu);
+            put32(&p, c->mmu); put32(&p, c->wrl); put32(&p, c->ms); put32(&p, c->task);
+        }
+    } else if (cmd == 0x30 || cmd == 0x31) {        /* reboot / test exception, after the reply */
+        app.diag_reset = cmd == 0x30 ? 1 : 2;
+        app.diag_reset_ms = sys_timer_get_ms();
     } else if (cmd == 0x03) {                       /* raw key-matrix frame */
         u8 f[SMCPAD_KM_STEPS];
         struct smcpad_hw_status s;
@@ -844,6 +866,13 @@ static void smcpad_task(void *p)
         os_sem_pend(&app_sem, 1);                   /* events, or at least every tick */
         smcpad_hw_notified();
         u32 now = sys_timer_get_ms();
+        if (app.diag_reset && now - app.diag_reset_ms >= 100) {
+            if (app.diag_reset == 1) {
+                smcpad_crash_reboot();
+            }
+            app.diag_reset = 0;
+            smcpad_crash_test();
+        }
 
         if (!pads_started && smcpad_hw_pad_calibrated()) {
             smcpad_hw_pad_begin();                  /* hands off pads must be idle at boot */
@@ -882,6 +911,7 @@ void smcpad_start(void)
         return;
     }
     started = 1;
+    smcpad_crash_init();                            /* boot history + exception capture */
     memset(&app, 0, sizeof(app));
     os_sem_create(&app_sem, 0);
     smcpad_hw_init(app_notify);

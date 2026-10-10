@@ -93,7 +93,8 @@ u8 seq_ui_beat_led(const struct seq *s, u32 now_ms)
         return (u8)(s->pos % (4 * SEQ_PPQN) < SEQ_PPQN / 4 || s->pos % SEQ_PPQN < SEQ_PPQN / 8);
     }
     u32 c = s->sync && s->ext_seen && s->ext_interval_q8 ? seq_ext_centibpm(s) : s->centibpm;
-    u32 beat = 6000000u / (c ? c : 12000);
+    c = c < 2000 ? 2000 : (c > 40000 ? 40000 : c);      /* div0 traps on this CPU */
+    u32 beat = 6000000u / c;
     return (u8)(now_ms % beat < beat / 8);
 }
 
