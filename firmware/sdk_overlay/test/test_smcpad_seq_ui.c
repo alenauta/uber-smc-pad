@@ -257,13 +257,15 @@ static void test_knob_pages_and_leds(void)
     press(SUI_RIGHT);
     seq_ui_leds(&U, now, rgb);
     CHECK(rgb[P(3)] != 0 && rgb[P(4)] == 0);                   /* page 2: steps 17-20 only */
-    /* pattern K8: play early in 7 ms steps, persisted */
+    /* pattern K8: play early, 1 ms per slow knob report, faster when spun, persisted */
     press(SUI_KNOB_BANK);
     for (int i = 0; i < 3; i++) {
-        seq_ui_knob(&U, 7, 2, now);
+        seq_ui_knob(&U, 7, 2, now);                            /* slow: 1 ms each */
     }
-    CHECK(S.lead_ms == 21 && lead_seen == 21);
-    for (int i = 0; i < 10; i++) {
+    CHECK(S.lead_ms == 3 && lead_seen == 3);
+    seq_ui_knob(&U, 7, 5, now);                                /* spun: 5 ms */
+    CHECK(S.lead_ms == 8);
+    for (int i = 0; i < 20; i++) {
         seq_ui_knob(&U, 7, 5, now);
     }
     CHECK(S.lead_ms == SEQ_LEAD_MAX_MS);

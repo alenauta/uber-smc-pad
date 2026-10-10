@@ -21,6 +21,7 @@
 #if defined(CONFIG_BOARD_SMCPAD) && TCFG_SMCPAD_HW_ENABLE
 
 #include "system/includes.h"
+#include "syscfg_id.h"
 #include "smcpad_board.h"
 #if TCFG_USB_SLAVE_MIDI_ENABLE
 #include "usb_midi.h"
@@ -165,23 +166,38 @@ static void seq_midi(void *ctx, const u8 *m, u32 n)
     midi_out(m, n);
 }
 
-/* Play early lives in the stock note-repeat "time" byte (globals 3, 0..7, unused here),
- * offset so that the stock default 4 means 0 ms: lead = ((g + 4) & 7) * 7 ms. */
-static u8 seq_lead_from_global(u8 g)
-{
-    return (u8)(((g + 4) & 7) * SEQ_LEAD_STEP_MS);
-}
+/* Sequencer settings that don't fit the stock globals: own VM item, written 2 s after the last
+ * change (tempo / swing stay in globals 0-2). */
+#define SMCPAD_SEQCFG_VM_ID     43                  /* free user VM id */
+#define SEQCFG_VER              1
+#define SEQCFG_FLUSH_MS         2000
+static struct { u8 ver, lead_ms, rsv[2]; } seq_cfg;
+static u8 seq_cfg_dirty;
+static u32 seq_cfg_ms;
 
-static void seq_settings_store(void *ctx, u32 centibpm, u8 swing, u8 lead_ms)  /* globals 0-3 */
+static void seq_settings_store(void *ctx, u32 centibpm, u8 swing, u8 lead_ms)
 {
     (void)ctx;
     u32 bpm = (centibpm + 50) / 100;
     store.globals[GLOB_TEMPO_LO] = (u8)bpm;
     store.globals[GLOB_TEMPO_HI] = (u8)(bpm >> 8);
     store.globals[GLOB_SWING] = swing;
-    store.globals[GLOB_TIME] = (u8)((lead_ms / SEQ_LEAD_STEP_MS + 4) & 7);
     store.globals_dirty = 1;
     store.globals_gen++;
+    if (lead_ms != seq_cfg.lead_ms) {
+        seq_cfg.lead_ms = lead_ms;
+        seq_cfg_dirty = 1;
+        seq_cfg_ms = sys_timer_get_ms();
+    }
+}
+
+static void seq_cfg_flush(u32 now)
+{
+    if (seq_cfg_dirty && now - seq_cfg_ms >= SEQCFG_FLUSH_MS) {
+        seq_cfg.ver = SEQCFG_VER;
+        syscfg_write(SMCPAD_SEQCFG_VM_ID, (u8 *)&seq_cfg, sizeof(seq_cfg));
+        seq_cfg_dirty = 0;
+    }
 }
 
 static const struct seq_out seq_out = {NULL, seq_midi};
@@ -201,7 +217,11 @@ static void seq_app_init(void)
     seq_set_tempo(&seq, (bpm < 30 || bpm > 300 ? 120 : bpm) * 100);
     u8 sw = store.globals[GLOB_SWING];
     seq.swing = sw < 50 || sw > 75 ? 50 : sw;
-    seq.lead_ms = seq_lead_from_global(store.globals[GLOB_TIME]);
+    if (syscfg_read(SMCPAD_SEQCFG_VM_ID, (u8 *)&seq_cfg, sizeof(seq_cfg)) != sizeof(seq_cfg) ||
+        seq_cfg.ver != SEQCFG_VER || seq_cfg.lead_ms > SEQ_LEAD_MAX_MS) {
+        memset(&seq_cfg, 0, sizeof(seq_cfg));
+    }
+    seq.lead_ms = seq_cfg.lead_ms;
     seq_ui_init(&sui, &seq, &sui_io);
     undo_init(&seq_undo, (u8 *)&seq_pat, (u8 *)&seq_shadow, (u16)sizeof(seq_pat), seq_ui_undo_skip);
     sui.undo = &seq_undo;
@@ -462,6 +482,7 @@ static void service_seq(void)
     u32 ms = smcpad_hw_ms();
     seq_run(&seq, ms);
     seq_clock_timeout(&seq, ms);
+    seq_cfg_flush(sys_timer_get_ms());
     smcpad_hw_fast_wake(seq.running || seq.ext_seen || sui.active);
     if (sui.active != app.seq_shown) {             /* mode changed: repaint everything */
         app.seq_shown = sui.active;

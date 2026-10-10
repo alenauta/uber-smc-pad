@@ -56,8 +56,7 @@ enum { SEQ_COND_ALWAYS = 0,
 #define SEQ_GATES           15              /* gate table index 0..14 */
 #define SEQ_RATCHET_RATES   7               /* auto (split the step), 1/8 1/16 1/16T 1/32 1/32T 1/64 */
 #define SEQ_EXT_RING        24              /* F8 timestamps kept for the tempo (one beat) */
-#define SEQ_LEAD_MAX_MS     49              /* play early: 0..49 ms in 7 ms steps */
-#define SEQ_LEAD_STEP_MS    7
+#define SEQ_LEAD_MAX_MS     63              /* play early: 0..63 ms, 1 ms steps */
 
 struct seq_step {
     u8 vel;         /* 0 = off, 1..127 */

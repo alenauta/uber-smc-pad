@@ -205,8 +205,8 @@ def card():
   {knob_rows}</table>
   <h3>Reading the pads while turning a knob</h3>
   <ul>
-   <li><b>Amounts</b> (volume, velocity, probability, quantize, steps, tempo, swing): bar from pad 1, dim &rarr; full. Micro-timing: centre-out.</li>
-   <li><b>Choices</b> light one pad: rate (pads 1&ndash;8 = printed 1/4&hellip;1/32T), ratchet rate, trig condition, play early (pad 1 = 0 ms, +7 ms per pad).</li>
+   <li><b>Amounts</b> (volume, velocity, probability, quantize, steps, tempo, swing, play early 0&ndash;63 ms): bar from pad 1, dim &rarr; full. Micro-timing: centre-out.</li>
+   <li><b>Choices</b> light one pad: rate (pads 1&ndash;8 = printed 1/4&hellip;1/32T), ratchet rate, trig condition.</li>
    <li><b>Counts</b>: MIDI channel (1 pad = ch 1 &hellip; 16 = ch 16), gate.</li>
    <li>Notes: pads 1&ndash;12 = keyboard, top row = octave. Ratchet count: pads 1&ndash;4.</li>
    <li>Trig conditions (K7): always, 1:2, 2:2, 1:3, 2:3, 3:3, 1:4&hellip;4:4, first, fill, not fill.</li>

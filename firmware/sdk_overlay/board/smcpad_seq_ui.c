@@ -285,10 +285,10 @@ static void knob_pattern(struct seq_ui *u, u8 k, s32 d, u32 now)
         overlay(u, SUI_OV_BAR, u->track, t->chan, -1, 15, now);
         break;
     }
-    case 7: {                                   /* play early: pads 1..8 = 0, 7 ... 49 ms */
-        s32 v = clampi(s->lead_ms / SEQ_LEAD_STEP_MS + one(d), 0, SEQ_LEAD_MAX_MS / SEQ_LEAD_STEP_MS);
-        s->lead_ms = (u8)(v * SEQ_LEAD_STEP_MS);
-        overlay(u, SUI_OV_PICK, u->track, v, 0, SEQ_LEAD_MAX_MS / SEQ_LEAD_STEP_MS, now);
+    case 7: {                                   /* play early: 1 ms per report, faster when spun */
+        s32 step = (d >= 3 || d <= -3) ? d : one(d);
+        s->lead_ms = (u8)clampi(s->lead_ms + step, 0, SEQ_LEAD_MAX_MS);
+        overlay(u, SUI_OV_BAR, u->track, s->lead_ms, 0, SEQ_LEAD_MAX_MS, now);
         tempo_changed(u);
         break;
     }
