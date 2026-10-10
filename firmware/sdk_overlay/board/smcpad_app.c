@@ -35,6 +35,8 @@
 #include "ble_smcpad.h"
 #include "smcpad_store_port.h"
 #include "smcpad_preset.h"
+#include "smcpad_seq.h"
+#include "smcpad_seq_ui.h"
 #define APP_PRESETS         1                   /* preset interpreter (needs the store) */
 #else
 #define APP_PRESETS         0
@@ -78,6 +80,7 @@ static struct {
     u32 bt_press_ms;
     u8  bt_long_done;
     u8  bt_led;
+    u8  seq_shown;                  /* the LEDs currently show the sequencer */
 } app;
 
 /* IRQ context, called from the RAM ISRs: keep it in RAM too (os_sem_post is in mask ROM) */
@@ -138,6 +141,67 @@ static void preset_globals_changed(void *ctx)  /* pad-bank button: persist like 
 }
 
 static const struct smcpad_preset_io preset_io = {NULL, preset_midi, preset_midi_mcp, preset_globals_changed};
+
+/* ---- sequencer ------------------------------------------------------------------------ */
+#define APP_SEQ_LED_MS      20                  /* sequencer LED frame rate (playhead, blinks) */
+static struct seq_pattern seq_pat;              /* active pattern (6.3 KB) */
+static struct seq seq;
+static struct seq_ui sui;
+static u32 seq_led_ms, seq_rgb_last[SMCPAD_NUM_PADS];
+static u16 seq_btn_last;
+
+static void seq_midi(void *ctx, const u8 *m, u32 n)
+{
+    (void)ctx;
+    midi_out(m, n);
+}
+
+static void seq_tempo_store(void *ctx, u32 centibpm, u8 swing)  /* stock globals 0-2 */
+{
+    (void)ctx;
+    u32 bpm = (centibpm + 50) / 100;
+    store.globals[GLOB_TEMPO_LO] = (u8)bpm;
+    store.globals[GLOB_TEMPO_HI] = (u8)(bpm >> 8);
+    store.globals[GLOB_SWING] = swing;
+    store.globals_dirty = 1;
+    store.globals_gen++;
+}
+
+static const struct seq_out seq_out = {NULL, seq_midi};
+static const struct seq_ui_io sui_io = {NULL, seq_midi, seq_tempo_store};
+
+static void seq_app_init(void)
+{
+    u8 notes[SEQ_TRACKS], chans[SEQ_TRACKS];
+    for (u8 i = 0; i < SEQ_TRACKS; i++) {      /* tracks default to the active preset's pads */
+        u8 ch = 9, n = smcpad_preset_pad_note(&preset, i, &ch);
+        notes[i] = n == 0xFF ? (u8)(36 + i) : n;
+        chans[i] = n == 0xFF ? 9 : ch;
+    }
+    seq_pattern_default(&seq_pat, notes, chans);
+    seq_init(&seq, &seq_out, &seq_pat, sys_timer_get_ms() | 1);
+    u32 bpm = store.globals[GLOB_TEMPO_LO] | ((u32)store.globals[GLOB_TEMPO_HI] << 8);
+    seq_set_tempo(&seq, (bpm < 30 || bpm > 300 ? 120 : bpm) * 100);
+    u8 sw = store.globals[GLOB_SWING];
+    seq.swing = sw < 50 || sw > 75 ? 50 : sw;
+    seq_ui_init(&sui, &seq, &sui_io);
+}
+
+/* sequencer LED frame into the pad / button LEDs; only pushes changes */
+static u8 seq_leds(u32 ms, u16 *btn)
+{
+    u32 rgb[SMCPAD_NUM_PADS];
+    u8 changed = 0;
+    *btn = seq_ui_leds(&sui, ms, rgb);
+    for (u8 i = 0; i < SMCPAD_NUM_PADS; i++) {
+        if (rgb[i] != seq_rgb_last[i]) {
+            seq_rgb_last[i] = rgb[i];
+            smcpad_hw_rgb_set(i, rgb[i]);
+            changed = 1;
+        }
+    }
+    return changed;
+}
 
 static void sinco_midi_in(void *ctx, const u8 *b, u32 n)  /* cmd 0x15: raw MIDI bytes */
 {
@@ -273,6 +337,7 @@ static void sinco_start(void)
         }
     }
     smcpad_preset_init(&preset, &preset_io, presets_ram, store.globals);
+    seq_app_init();
     led_presets_gen = store.presets_gen;
     led_globals_gen = store.globals_gen;
     globals_gen_seen = store.globals_gen;
@@ -284,6 +349,7 @@ static void sinco_start(void)
     ble_smcpad_set_notify(app_notify);
 #if TCFG_USB_SLAVE_MIDI_ENABLE
     usb_midi_set_sysex_hook(on_usb_sysex_byte);
+    usb_midi_set_rx_notify(app_notify);         /* MIDI clock in: wake the task right away */
 #endif
 }
 #endif /* TCFG_SMCPAD_BLE_ENABLE */
@@ -322,6 +388,9 @@ static void pad_led_update(u8 pad)
 /* pad colours + button LEDs from the interpreter, when its state, a preset or the globals changed */
 static void refresh_leds(void)
 {
+    if (sui.active) {
+        return;                                     /* service_seq() draws the sequencer */
+    }
     if (!preset.led_dirty && led_presets_gen == store.presets_gen && led_globals_gen == store.globals_gen) {
         return;
     }
@@ -366,6 +435,37 @@ static void service_bt(u32 now)
         preset.led_dirty = 1;
     }
 }
+
+/* sequencer: clock, playback, LED frames; ms = the TIMER2 millisecond counter */
+static void service_seq(void)
+{
+    u32 ms = smcpad_hw_ms();
+    seq_run(&seq, ms);
+    seq_clock_timeout(&seq, ms);
+    smcpad_hw_fast_wake(seq.running || seq.ext_seen || sui.active);
+    if (sui.active != app.seq_shown) {             /* mode changed: repaint everything */
+        app.seq_shown = sui.active;
+        memset(seq_rgb_last, 0xFF, sizeof(seq_rgb_last));
+        seq_btn_last = 0xFFFF;
+        seq_led_ms = ms - APP_SEQ_LED_MS;
+        preset.led_dirty = 1;
+    }
+    if (sui.active && ms - seq_led_ms >= APP_SEQ_LED_MS) {
+        u16 btn;
+        seq_led_ms = ms;
+        if (seq_leds(ms, &btn)) {
+            app.rgb_dirty = 1;
+        }
+        btn &= (u16)~BIT(SMCPAD_HWBTN_BT);
+        if (app.bt_led) {
+            btn |= (u16)BIT(SMCPAD_HWBTN_BT);
+        }
+        if (btn != seq_btn_last) {
+            seq_btn_last = btn;
+            smcpad_hw_button_leds(btn);
+        }
+    }
+}
 #endif
 
 /* ---- input -> MIDI ------------------------------------------------------------------ */
@@ -374,6 +474,19 @@ static void service_pads(u32 now)
     struct smcpad_pad_ev e;
     while (smcpad_hw_pad_pop(&e)) {
 #if APP_PRESETS
+        if (sui.active) {                           /* sequencer mode: pads drive the sequencer */
+            u8 on = e.type == SMCPAD_EV_PAD_ON;
+            if (on) {
+                app.held |= (u16)BIT(e.pad);
+            } else {
+                app.held &= (u16)~BIT(e.pad);
+            }
+            if (e.type == SMCPAD_EV_PAD_ON || e.type == SMCPAD_EV_PAD_OFF) {
+                u8 v = on ? smcpad_preset_curve(e.velocity ? e.velocity : 1, store.globals[GLOB_PAD_CURVE]) : 0;
+                seq_ui_pad(&sui, e.pad, on, v, smcpad_hw_ms());
+            }
+            continue;
+        }
         if (e.type == SMCPAD_EV_PAD_ON) {
             app.held |= (u16)BIT(e.pad);
             smcpad_preset_pad(&preset, e.pad, 1, e.velocity ? e.velocity : 1);
@@ -400,6 +513,11 @@ static void service_pads(u32 now)
     }
 
     if (app.held && now - app.last_at_ms >= APP_AT_PERIOD_MS) {
+#if APP_PRESETS
+        if (sui.active) {
+            return;                                 /* no aftertouch from sequencer pads */
+        }
+#endif
         u16 p = 0;
         u8 strongest = 0;
         for (u8 i = 0; i < SMCPAD_NUM_PADS; i++) {
@@ -449,7 +567,11 @@ static void service_knobs(u32 now)
         }
         app.knob_rep[k] += steps * 2;
 #if APP_PRESETS
-        smcpad_preset_knob(&preset, k, steps);
+        if (sui.active) {
+            seq_ui_knob(&sui, k, steps, smcpad_hw_ms());
+        } else {
+            smcpad_preset_knob(&preset, k, steps);
+        }
 #else
         u8 v = smcpad_knob_value(app.knob_val[k], steps);
         if (v != app.knob_val[k]) {
@@ -479,7 +601,22 @@ static void service_buttons(u32 t)
     for (u8 b = 0; b < SMCPAD_NUM_BUTTONS; b++) {
         if (changed & BIT(b)) {
 #if APP_PRESETS
-            smcpad_preset_button(&preset, b, (now & BIT(b)) ? 1 : 0);
+            u8 pressed = (now & BIT(b)) ? 1 : 0;
+            if (sui.active) {
+                if (b == SMCPAD_HWBTN_SHIFT) {
+                    smcpad_preset_button(&preset, b, pressed);  /* keep the preset's Shift right */
+                }
+                seq_ui_button(&sui, b, pressed, smcpad_hw_ms());
+            } else if (b == SUI_NOTE_REPEAT && pressed && preset.shift) {
+                for (u8 i = 0; i < SMCPAD_NUM_PADS; i++) {      /* end notes held in the preset */
+                    if (app.held & BIT(i)) {
+                        smcpad_preset_pad(&preset, i, 0, 0);
+                    }
+                }
+                seq_ui_toggle(&sui);                /* Shift + Note Repeat: sequencer mode */
+            } else {
+                smcpad_preset_button(&preset, b, pressed);
+            }
 #else
             midi3(0xB0 | SMCPAD_MIDI_BTN_CH, (u8)(SMCPAD_MIDI_BTN_CC0 + b), (now & BIT(b)) ? 127 : 0);
 #endif
@@ -558,6 +695,14 @@ static void diag_reply(const u8 *req, u32 len)
         for (u8 k = 0; k < SMCPAD_NUM_KNOBS; k++) {
             put14(&p, (u32)smcpad_hw_knob_count(k));
         }
+#if APP_PRESETS
+        /* sequencer: state bits, late events, queue drops, tempo x10, external tempo x10 */
+        *p++ = (u8)((seq.running ? 1 : 0) | (seq.following ? 2 : 0) | (sui.active ? 4 : 0) | (seq.sync ? 8 : 0));
+        put14(&p, seq.late);
+        put14(&p, seq.dropped);
+        put14(&p, seq.centibpm / 10);
+        put14(&p, seq_ext_centibpm(&seq) / 10);
+#endif
     } else if (cmd == 0x03) {                       /* raw key-matrix frame */
         u8 f[SMCPAD_KM_STEPS];
         struct smcpad_hw_status s;
@@ -622,6 +767,10 @@ static void diag_reply(const u8 *req, u32 len)
 static void host_midi_in(const u8 *msg, u32 len)
 {
 #if APP_PRESETS
+    if (len == 1 && msg[0] >= 0xF8) {               /* clock / start / continue / stop */
+        seq_clock_in(&seq, msg[0], smcpad_hw_ms());
+        return;
+    }
     smcpad_preset_midi_in(&preset, msg, len);      /* Led bytes, 9F 7F 7F, knob values */
 #else
     if (len == 3 && (msg[0] & 0x0f) == SMCPAD_MIDI_PAD_CH &&
@@ -693,6 +842,7 @@ static void smcpad_task(void *p)
 #endif
 #if TCFG_SMCPAD_BLE_ENABLE
         service_ble(now);
+        service_seq();
 #endif
 #if APP_PRESETS
         refresh_leds();

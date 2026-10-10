@@ -284,6 +284,12 @@ static void test_external_clock(void)
     S.sync = 0;
     seq_clock_in(&S, 0xFA, now);
     CHECK(!S.running);
+    /* while we are the master, an echoed Start does not take over */
+    S.sync = 1;
+    seq_start(&S, now);
+    run_to(now + 100);
+    seq_clock_in(&S, 0xFA, now);
+    CHECK(S.running && !S.following && S.pos > 0);
 }
 
 static void test_record(void)

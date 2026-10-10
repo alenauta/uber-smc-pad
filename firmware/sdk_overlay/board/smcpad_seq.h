@@ -114,6 +114,7 @@ struct seq {
     u8  running;
     u8  sync;       /* follow external clock when a host sends Start/Continue */
     u8  following;  /* external clock drives the position */
+    u8  self_started; /* Play was pressed on the pad: ignore host Start (could be our own echo) */
     u8  fill;
     u8  swing;      /* 50..75 % */
     u32 centibpm;   /* internal tempo */

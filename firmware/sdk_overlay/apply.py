@@ -164,7 +164,10 @@ BLE_FILES = [("ble", "ble_smcpad.c"), ("ble", "ble_smcpad.h"), ("ble", "ble_smcp
              ("sinco", "sinco_store.c"), ("sinco", "sinco_store.h"),
              ("midi", "ble_midi.c"), ("midi", "ble_midi.h"),
              ("board", "smcpad_store_port.c"), ("board", "smcpad_store_port.h"),
-             ("board", "smcpad_preset.c"), ("board", "smcpad_preset.h")]
+             ("board", "smcpad_preset.c"), ("board", "smcpad_preset.h"),
+             ("board", "smcpad_seq.c"), ("board", "smcpad_seq.h"),
+             ("board", "smcpad_seq_ui.c"), ("board", "smcpad_seq_ui.h"),
+             ("board", "smcpad_scale.c"), ("board", "smcpad_scale.h")]
 BLE_TRANS_LINE = "\t../../../../apps/spp_and_le/examples/trans_data/ble_trans.c \\\n"
 BLE_BOARD_EDITS = [
     # BLE only, like stock: frees ~70 KB of code and the EDR heap (RCSP OTA runs over BLE)

@@ -287,6 +287,7 @@ void seq_start(struct seq *s, u32 now_ms)
     reset_tracks(s);
     s->running = 1;
     s->following = 0;
+    s->self_started = 1;
     s->last_ms = now_ms;
     send1(s, 0xFA);
     seq_run(s, now_ms);
@@ -299,6 +300,7 @@ void seq_continue(struct seq *s, u32 now_ms)
     }
     s->running = 1;
     s->following = 0;
+    s->self_started = 1;
     s->last_ms = now_ms;
     s->clock_next = (s->pos + SEQ_CLOCK_UNITS - 1) / SEQ_CLOCK_UNITS * SEQ_CLOCK_UNITS;
     send1(s, 0xFB);
@@ -312,6 +314,7 @@ void seq_stop(struct seq *s)
     }
     s->running = 0;
     s->following = 0;
+    s->self_started = 0;
     for (u8 i = 0; i < s->nactive; i++) {
         u8 m[3] = {(u8)(0x80 | s->active[i].chan), s->active[i].note, 0x40};
         send(s, m, 3);
@@ -386,6 +389,9 @@ void seq_clock_in(struct seq *s, u8 rt, u32 now_ms)
         }
         break;
     case 0xFA:
+        if (s->running && s->self_started) {
+            break;                              /* started on the pad: maybe our own FA echoed */
+        }
         seq_stop(s);
         reset_tracks(s);
         s->running = 1;

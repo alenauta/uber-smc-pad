@@ -132,6 +132,13 @@ def cmd_status(pad):
           f"pad_drops {u14(r,8)}  trs_drops {u14(r,10)}  buttons {u14(r,12):010b}  pads_running {r[14]}")
     knobs = [u14(r, 15 + 2 * k) for k in range(8)]
     print("knob counts", [k - 0x4000 if k & 0x2000 else k for k in knobs])
+    if len(r) >= 40:                                       # 907+: sequencer
+        f = r[31]
+        state = [n for b, n in ((1, "running"), (2, "following host clock"), (4, "seq mode"), (8, "sync on"))
+                 if f & b] or ["stopped"]
+        ext = u14(r, 38)
+        print(f"sequencer: {', '.join(state)}  tempo {u14(r, 36) / 10:.1f} BPM"
+              f"{f'  host {ext / 10:.1f} BPM' if ext else ''}  late events {u14(r, 32)}  queue drops {u14(r, 34)}")
 
 
 def cmd_frame(pad, n=1):

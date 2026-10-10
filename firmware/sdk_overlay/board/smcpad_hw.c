@@ -558,6 +558,49 @@ u32 smcpad_hw_trs_write(const u8 *d, u32 n)
 }
 
 /* ======================================================================================
+ * 1 ms timebase on TIMER2 (sequencer clock). TIMER0/1 belong to the SDK; no TIMER2-5 register
+ * access exists in our sdk.elf. Clock = 24 MHz osc (as cpu/br25/handshake_timer.c), so system
+ * clock changes don't affect it.
+ * ==================================================================================== */
+#define TMR_RUN         (BIT(0) | BIT(3))       /* count mode, osc clock, /1 */
+static volatile u32 tmr_ms;
+static volatile u8 tmr_wake;
+
+___interrupt
+SMCPAD_RAM_CODE
+static void smcpad_timer_isr(void)
+{
+    JL_TIMER2->CON |= BIT(14);                      /* clear pending */
+    tmr_ms++;
+    if (tmr_wake) {
+        notify_task();
+    }
+}
+
+static void tmr_init(void)
+{
+    u32 hz = (u32)clk_get("timer");
+    if (hz < 1000000) {
+        hz = 24000000;
+    }
+    JL_TIMER2->CON = BIT(14);
+    JL_TIMER2->CNT = 0;
+    JL_TIMER2->PRD = hz / 1000;
+    request_irq(IRQ_TIME2_IDX, 3, smcpad_timer_isr, 0);
+    JL_TIMER2->CON = TMR_RUN | BIT(14);
+}
+
+u32 smcpad_hw_ms(void)
+{
+    return tmr_ms;
+}
+
+void smcpad_hw_fast_wake(u8 on)
+{
+    tmr_wake = on;
+}
+
+/* ======================================================================================
  * clocks, init, status
  * ==================================================================================== */
 static u8 hw_up;
@@ -584,6 +627,7 @@ void smcpad_hw_init(void (*notify)(void))
     ws_init();
     km_init();
     pads_init();
+    tmr_init();
     hw_up = 1;
     log_info("hw up: lsb %d Hz, uart %d Hz", clk_get("lsb"), clk_get("uart"));
 }

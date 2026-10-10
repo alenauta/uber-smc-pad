@@ -86,6 +86,14 @@ u8   smcpad_hw_rgb_show(void);          /* 0 if the previous frame is still send
 u32  smcpad_hw_trs_write(const u8 *d, u32 n);
 void smcpad_hw_sync_sdk_adc(void);      /* VBAT / VBG / DTEMP -> SDK adc_api table */
 void smcpad_hw_status(struct smcpad_hw_status *s);
+u32  smcpad_hw_ms(void);                /* 1 ms counter (TIMER2) */
+void smcpad_hw_fast_wake(u8 on);        /* 1: notify the task every ms (sequencer running) */
+
+/* Flash layout since 907 (repack_oldchain.sh defaults): code 0x00000-0x2FFFF, sequencer
+ * patterns 0x30000-0x4FFFF (outside every JLFS area, untouched by updates), VM 0x50000-0x74FFF,
+ * BTIF 0x75000, EXIF 0x76000, presets (USRFLASH) 0x77000, USRTRIM 0x7E000, key_mac 0x7F000. */
+#define SMCPAD_PATTERN_FLASH    0x30000
+#define SMCPAD_PATTERN_FLASH_LEN 0x20000
 
 /* ---- application (smcpad_app.c) --------------------------------------------------- */
 void smcpad_start(void);                /* call once from the app, after usb_start() */
