@@ -58,7 +58,8 @@
 #define APP_KNOB_PERIOD_MS  50                  /* stock: encoder deltas every 50 ms */
 #define APP_KNOB_TICK_MS    10                  /* knob value walker */
 #define APP_BT_LONG_MS      800                 /* stock long press: 41 x 20 ms (docs/pinmap.md) */
-#define APP_BT_BLINK_MS     500                 /* BT LED half period while not connected */
+#define APP_BT_BLINK_MS     120                 /* BT LED while not connected: 2 blinks of this */
+#define APP_BT_PERIOD_MS    1200                /* length, then a pause (stock blinks evenly) */
 
 static OS_SEM app_sem;
 
@@ -357,7 +358,9 @@ static void service_bt(u32 now)
             log_error("bt toggle not queued");
         }
     }
-    u8 led = !ble_smcpad_enabled() ? 0 : ble_smcpad_connected() ? 1 : (u8)((now / APP_BT_BLINK_MS) & 1);
+    u32 ph = now % APP_BT_PERIOD_MS;                /* double blink: on, off, on, long off */
+    u8 blink = ph < APP_BT_BLINK_MS || (ph >= 2 * APP_BT_BLINK_MS && ph < 3 * APP_BT_BLINK_MS);
+    u8 led = !ble_smcpad_enabled() ? 0 : ble_smcpad_connected() ? 1 : blink;
     if (led != app.bt_led) {
         app.bt_led = led;
         preset.led_dirty = 1;
