@@ -6,6 +6,7 @@
 #include <string.h>
 #include "../board/smcpad_scale.c"
 #include "../board/smcpad_seq.c"
+#include "../board/smcpad_undo.c"
 #include "../board/smcpad_seq_ui.c"
 
 static int failures;
@@ -14,7 +15,7 @@ static int failures;
 static u8 last[3];
 static int nmidi, ntempo;
 static u32 tempo_seen;
-static u8 swing_seen;
+static u8 swing_seen, lead_seen;
 static void cap(void *ctx, const u8 *m, u32 n)
 {
     (void)ctx;
@@ -23,15 +24,17 @@ static void cap(void *ctx, const u8 *m, u32 n)
     }
     nmidi++;
 }
-static void cap_tempo(void *ctx, u32 c, u8 sw)
+static void cap_tempo(void *ctx, u32 c, u8 sw, u8 lead)
 {
     (void)ctx;
     ntempo++;
     tempo_seen = c;
     swing_seen = sw;
+    lead_seen = lead;
 }
 static const struct seq_out sout = {NULL, cap};
 static const struct seq_ui_io uio = {NULL, cap, cap_tempo};
+#define P(step) seq_ui_step_pad(step)                         /* pad of a step-view step */
 
 static struct seq_pattern pat;
 static struct seq S;
@@ -56,45 +59,54 @@ static void test_mode_and_steps(void)
 {
     setup();
     CHECK(U.active && !U.nr && !U.shift && U.view == SUI_VIEW_STEP);
-    tap(3);
+    /* step order reads like text: steps 0-3 = top row (pads 12-15), 12-15 = bottom row */
+    CHECK(P(0) == 12 && P(3) == 15 && P(4) == 8 && P(12) == 0 && P(15) == 3);
+    for (u8 i = 0; i < 16; i++) {
+        CHECK(P(P(i)) == i);
+    }
+    tap(12);                                                   /* top-left pad = step 1 */
+    CHECK(pat.track[0].step[0].vel == SUI_DEFAULT_VEL);
+    tap(12);
+    tap(P(3));
     CHECK(pat.track[0].step[3].vel == SUI_DEFAULT_VEL);       /* tap = on */
-    tap(3);
+    tap(P(3));
     CHECK(pat.track[0].step[3].vel == 0);                     /* tap again = off */
     /* hold + knob edits and keeps the step */
-    seq_ui_pad(&U, 5, 1, 90, now);
+    seq_ui_pad(&U, P(5), 1, 90, now);
     seq_ui_knob(&U, 0, -10, now);                              /* K1 velocity */
     seq_ui_knob(&U, 3, 2, now);                                /* K4 micro (small: no accel) */
     seq_ui_knob(&U, 2, 4, now);                                /* K3 probability nibble 4 */
     seq_ui_knob(&U, 6, 1, now);                                /* K7 condition 1:2 */
     seq_ui_knob(&U, 7, 1, now);                                /* K8 tie */
-    seq_ui_pad(&U, 5, 0, 0, now);
+    seq_ui_knob(&U, 5, 3, now);                                /* K6 ratchet rate: table 2 = 1/16 */
+    seq_ui_pad(&U, P(5), 0, 0, now);
     struct seq_step *st = &pat.track[0].step[5];
     CHECK(st->vel == SUI_DEFAULT_VEL - 40);                    /* accel: |10| >= 3 -> x4 */
     CHECK(st->micro == 2 && (st->prob_gate >> 4) == 4 && (st->cond & SEQ_COND_MASK) == SEQ_COND_1_2);
-    CHECK(st->cond & SEQ_COND_TIE);
+    CHECK((st->cond & SEQ_COND_TIE) && (st->ratchet & 0x0f) == 3);
     /* an existing step held + edited stays on */
-    seq_ui_pad(&U, 5, 1, 90, now);
+    seq_ui_pad(&U, P(5), 1, 90, now);
     seq_ui_knob(&U, 0, 1, now);
-    seq_ui_pad(&U, 5, 0, 0, now);
+    seq_ui_pad(&U, P(5), 0, 0, now);
     CHECK(st->vel == SUI_DEFAULT_VEL - 39);
     /* ratchet: hold step + Note Repeat cycles 2, 3, 4, 1 */
-    seq_ui_pad(&U, 5, 1, 90, now);
+    seq_ui_pad(&U, P(5), 1, 90, now);
     press(SUI_NOTE_REPEAT);
     CHECK((st->ratchet >> 4) == 1);
     press(SUI_NOTE_REPEAT); press(SUI_NOTE_REPEAT);
     CHECK((st->ratchet >> 4) == 3);
     press(SUI_NOTE_REPEAT);
     CHECK((st->ratchet >> 4) == 0);
-    seq_ui_pad(&U, 5, 0, 0, now);
+    seq_ui_pad(&U, P(5), 0, 0, now);
     CHECK(st->vel != 0);                                       /* ratchet edit kept it */
     /* steps past the track length do nothing */
     pat.track[0].len = 8;
-    tap(12);
+    tap(P(12));
     CHECK(pat.track[0].step[12].vel == 0);
     /* pages */
     pat.track[0].len = 64;
     press(SUI_RIGHT);
-    tap(0);
+    tap(P(0));
     CHECK(U.page == 1 && pat.track[0].step[16].vel == SUI_DEFAULT_VEL);
     press(SUI_LEFT); press(SUI_LEFT);
     CHECK(U.page == 0);
@@ -231,14 +243,88 @@ static void test_knob_pages_and_leds(void)
     pat.track[0].len = 20;
     pat.track[0].step[1].vel = 127;
     u16 b = seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[1] == palette[0] && rgb[2] == rgbs(palette[0], 1, 16));
+    CHECK(rgb[P(1)] == palette[0] && rgb[P(2)] == rgbs(palette[0], 1, 16) && rgb[1] != palette[0]);
     CHECK(b & (1u << SUI_RIGHT) && !(b & (1u << SUI_LEFT)) && !(b & (1u << SUI_PLAY)));
     press(SUI_PLAY);
     b = seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[0] == rgbs(WHITE, 1, 6) && (b & (1u << SUI_PLAY)));   /* playhead on step 0 */
+    CHECK(rgb[P(0)] == rgbs(WHITE, 1, 6) && (b & (1u << SUI_PLAY)));   /* playhead on step 0 */
     press(SUI_RIGHT);
     seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[3] != 0 && rgb[4] == 0);                         /* page 2: steps 17-20 only */
+    CHECK(rgb[P(3)] != 0 && rgb[P(4)] == 0);                   /* page 2: steps 17-20 only */
+    /* pattern K8: play early in 7 ms steps, persisted */
+    press(SUI_KNOB_BANK);
+    seq_ui_knob(&U, 7, 3, now);
+    CHECK(S.lead_ms == 21 && lead_seen == 21);
+    seq_ui_knob(&U, 7, 20, now);
+    CHECK(S.lead_ms == SEQ_LEAD_MAX_MS);
+}
+
+static void test_beat_led(void)
+{
+    setup();
+    /* stopped: flashes at the internal tempo (120 BPM = 500 ms, on for 1/8) */
+    CHECK(seq_ui_beat_led(&S, 1000) && seq_ui_beat_led(&S, 1060) && !seq_ui_beat_led(&S, 1070));
+    CHECK(seq_ui_beat_led(&S, 1500) && !seq_ui_beat_led(&S, 1250));
+    u16 b = seq_ui_leds(&U, 1000, rgb);
+    CHECK(b & (1u << SUI_NOTE_REPEAT));
+    b = seq_ui_leds(&U, 1200, rgb);
+    CHECK(!(b & (1u << SUI_NOTE_REPEAT)));
+    /* running: locked to the position, bar downbeat longer */
+    press(SUI_PLAY);
+    S.pos = 200;                                               /* beat 1, < 1/4 */
+    CHECK(seq_ui_beat_led(&S, 0));
+    S.pos = 960 + 200;                                         /* beat 2: only 1/8 */
+    CHECK(!seq_ui_beat_led(&S, 0));
+    S.pos = 960 + 100;
+    CHECK(seq_ui_beat_led(&S, 0));
+}
+
+static void test_undo(void)
+{
+    static struct seq_pattern shadow;
+    static struct undo un;
+    setup();
+    undo_init(&un, (u8 *)&pat, (u8 *)&shadow, (u16)sizeof(pat), seq_ui_undo_skip);
+    U.undo = &un;
+    tap(P(0));                                                 /* edit 1 */
+    now += SUI_UNDO_IDLE_MS;
+    seq_ui_leds(&U, now, rgb);                                 /* settles: committed */
+    CHECK(undo_levels(&un) == 1);
+    tap(P(1));                                                 /* edit 2: two quick taps = one step */
+    tap(P(2));
+    now += 10;
+    seq_ui_knob(&U, 6, -4, now);                               /* ... with a knob turn */
+    seq_ui_button(&U, SUI_STOP, 1, now);                       /* Stop + pad in kit view = mute: */
+    seq_ui_button(&U, SUI_STOP, 0, now);                       /* not journaled (step view: none) */
+    pat.track[3].mute = 1;
+    now += SUI_UNDO_IDLE_MS;
+    seq_ui_leds(&U, now, rgb);
+    CHECK(undo_levels(&un) == 2 && pat.track[0].len == 12);
+    /* Shift + Left: undo edit 2 (mute stays) */
+    seq_ui_button(&U, SUI_SHIFT, 1, now);
+    press(SUI_LEFT);
+    CHECK(pat.track[0].step[1].vel == 0 && pat.track[0].step[2].vel == 0 && pat.track[0].len == 16);
+    CHECK(pat.track[0].step[0].vel == SUI_DEFAULT_VEL && pat.track[3].mute == 1 && U.page == 0);
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[0] == rgbs(WHITE, 1, 6));                        /* confirmation flash */
+    press(SUI_LEFT);                                           /* undo edit 1 */
+    CHECK(pat.track[0].step[0].vel == 0);
+    press(SUI_LEFT);                                           /* nothing left: no change */
+    press(SUI_RIGHT); press(SUI_RIGHT);                        /* redo both */
+    seq_ui_button(&U, SUI_SHIFT, 0, now);
+    CHECK(pat.track[0].step[0].vel && pat.track[0].step[2].vel && pat.track[0].len == 12 && U.page == 0);
+    /* a new edit after undo drops the redo branch */
+    seq_ui_button(&U, SUI_SHIFT, 1, now);
+    press(SUI_LEFT);
+    seq_ui_button(&U, SUI_SHIFT, 0, now);
+    tap(P(9));
+    now += SUI_UNDO_IDLE_MS;
+    seq_ui_leds(&U, now, rgb);
+    seq_ui_button(&U, SUI_SHIFT, 1, now);
+    press(SUI_RIGHT);
+    CHECK(pat.track[0].len == 16 && pat.track[0].step[9].vel);  /* redo had nothing */
+    press(SUI_LEFT);
+    CHECK(!pat.track[0].step[9].vel && pat.track[0].step[0].vel);
 }
 
 int main(void)
@@ -248,6 +334,8 @@ int main(void)
     test_views_kit_keys();
     test_transport();
     test_knob_pages_and_leds();
+    test_beat_led();
+    test_undo();
     printf(failures ? "test_smcpad_seq_ui: %d FAILED\n" : "test_smcpad_seq_ui: ALL PASSED\n", failures);
     return failures != 0;
 }

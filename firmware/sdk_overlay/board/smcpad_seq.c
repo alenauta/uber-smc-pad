@@ -9,7 +9,7 @@
 
 const u16 seq_rate_units[SEQ_RATES] = {960, 640, 480, 320, 240, 160, 120, 80};
 const u8  seq_gate_eighths[SEQ_GATES] = {1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 16, 20, 24, 28, 32};
-const u8  seq_ratchet_div[SEQ_RATCHET_RATES] = {2, 3, 4, 6, 8};
+const u16 seq_ratchet_units[SEQ_RATCHET_RATES] = {0, 480, 240, 160, 120, 80, 60};
 
 #define TIE_OVERLAP     10              /* units a tied note overlaps the next step */
 #define EXT_TIMEOUT_MS  500             /* no F8 for this long: back to the internal clock */
@@ -56,7 +56,8 @@ void seq_pattern_default(struct seq_pattern *p, const u8 *notes, const u8 *chans
         t->gate = 3;                            /* 1/2 step */
         t->vol = 127;
         t->prob = 100;
-        t->ratchet_rate = 2;                    /* 1/4 step */
+        t->quantize = 100;                      /* live recording snaps to the step */
+        t->ratchet_rate = 0;                    /* auto: hits split the step */
         t->colour = i;
     }
 }
@@ -104,8 +105,7 @@ s32 seq_step_micro_units(const struct seq_track *t, const struct seq_step *st)
 {
     s32 m = st->micro;
     m = m > SEQ_MICRO_MAX ? SEQ_MICRO_MAX : (m < -SEQ_MICRO_MAX ? -SEQ_MICRO_MAX : m);
-    s32 q = t->quantize > 100 ? 100 : t->quantize;
-    return m * (s32)seq_step_units(t->rate) / 96 * (100 - q) / 100;
+    return m * (s32)seq_step_units(t->rate) / 96;
 }
 
 static u8 cond_ok(u8 cond, u16 loop, u8 fill)
@@ -171,13 +171,13 @@ static void active_del(struct seq *s, u8 chan, u8 note)
     }
 }
 
-static void emit(struct seq *s, u32 late_units)
+static void emit(struct seq *s, u32 upto, u32 late_units)
 {
     for (;;) {
         s8 best = -1;
         for (u8 i = 0; i < s->nq; i++) {
             const struct seq_event *e = &s->q[i];
-            if ((s32)(e->at - s->pos) > 0) {
+            if ((s32)(e->at - upto) > 0) {
                 continue;
             }
             if (best < 0) {
@@ -195,7 +195,7 @@ static void emit(struct seq *s, u32 late_units)
         }
         struct seq_event e = s->q[best];
         s->q[best] = s->q[--s->nq];
-        if ((s32)(s->pos - e.at) > (s32)late_units) {
+        if ((s32)(upto - e.at) > (s32)late_units) {
             s->late++;
         }
         u8 m[3] = {(u8)((e.on ? 0x90 : 0x80) | e.chan), e.note, e.on ? e.vel : 0x40};
@@ -233,7 +233,10 @@ static void schedule(struct seq *s, u8 ti)
         u8 count = (u8)((st->ratchet >> 4) + 1);
         u8 rr = st->ratchet & 0x0f;
         u8 ri = rr ? (u8)(rr - 1) : t->ratchet_rate;
-        u32 interval = u / seq_ratchet_div[ri < SEQ_RATCHET_RATES ? ri : 2];
+        u32 interval = ri < SEQ_RATCHET_RATES ? seq_ratchet_units[ri] : 0;
+        if (!interval) {
+            interval = u / count;               /* auto: the hits split the step */
+        }
         u32 gate = seq_step_gate_units(t, st);
         if (count > 1 && gate > interval * 3 / 4) {
             gate = interval * 3 / 4 ? interval * 3 / 4 : 1;
@@ -261,16 +264,26 @@ static void schedule(struct seq *s, u8 ti)
     }
 }
 
+/* play early: lead_ms in position units at the host's tempo (only while following) */
+static u32 lead_units(const struct seq *s)
+{
+    if (!s->following || !s->lead_ms || !s->ext_interval_q8) {
+        return 0;
+    }
+    return (u32)s->lead_ms * SEQ_CLOCK_UNITS * 256u / s->ext_interval_q8;
+}
+
 static void process(struct seq *s)
 {
+    u32 ahead = s->pos + lead_units(s);
     for (u8 i = 0; i < SEQ_TRACKS; i++) {
         u32 half = seq_step_units(s->pat->track[i].rate) / 2;
-        for (u8 guard = 0; guard < 8 && (s32)(s->pos + half - s->ts[i].next_grid) >= 0; guard++) {
+        for (u8 guard = 0; guard < 8 && (s32)(ahead + half - s->ts[i].next_grid) >= 0; guard++) {
             schedule(s, i);
         }
     }
     u32 late = (u32)((unsigned long long)s->centibpm * SEQ_PPQN * 2 / 6000000u);
-    emit(s, late ? late : 1);
+    emit(s, ahead, late ? late : 1);
 }
 
 static void reset_tracks(struct seq *s)
@@ -339,7 +352,8 @@ void seq_run(struct seq *s, u32 now_ms)
             unsigned long long acc = (unsigned long long)dt * SEQ_CLOCK_UNITS * 256 + s->rem;
             u32 adv = (u32)(acc / s->ext_interval_q8);
             s->rem = (u32)(acc % s->ext_interval_q8);
-            u32 cap = s->ext_pulses * SEQ_CLOCK_UNITS - 1;  /* never past the next F8 */
+            /* at most one pulse past the next expected F8: halts if the host clock pauses */
+            u32 cap = (s->ext_pulses + 1) * SEQ_CLOCK_UNITS;
             u32 np = s->pos + adv;
             if ((s32)(np - cap) > 0) {
                 np = (s32)(s->pos - cap) > 0 ? s->pos : cap;
@@ -360,6 +374,32 @@ void seq_run(struct seq *s, u32 now_ms)
 }
 
 /* ---- external clock ----------------------------------------------------------------- */
+static void ext_reset(struct seq *s)
+{
+    s->ext_n = s->ext_i = 0;
+    s->ext_interval_q8 = 0;
+}
+
+/* host tempo = average F8 spacing over the last SEQ_EXT_RING pulses */
+static void ext_tempo(struct seq *s, u32 now_ms)
+{
+    if (!s->ext_seen || now_ms - s->ext_last_ms >= EXT_TIMEOUT_MS) {
+        ext_reset(s);
+    }
+    if (s->ext_n) {
+        u8 oldest = s->ext_n < SEQ_EXT_RING ? 0 : s->ext_i;
+        u32 span = now_ms - s->ext_ts[oldest];
+        if (span) {
+            s->ext_interval_q8 = span * 256u / s->ext_n;
+        }
+    }
+    s->ext_ts[s->ext_i] = now_ms;
+    s->ext_i = (u8)((s->ext_i + 1) % SEQ_EXT_RING);
+    if (s->ext_n < SEQ_EXT_RING) {
+        s->ext_n++;
+    }
+}
+
 void seq_clock_in(struct seq *s, u8 rt, u32 now_ms)
 {
     if (!s->sync) {
@@ -367,20 +407,24 @@ void seq_clock_in(struct seq *s, u8 rt, u32 now_ms)
     }
     switch (rt) {
     case 0xF8:
-        if (s->ext_seen) {
-            u32 iv = now_ms - s->ext_last_ms;
-            if (iv > 0 && iv < EXT_TIMEOUT_MS) {
-                s32 q = (s32)(iv << 8);
-                s->ext_interval_q8 = s->ext_interval_q8 ?
-                    (u32)((s32)s->ext_interval_q8 + (q - (s32)s->ext_interval_q8) / 8) : (u32)q;
-            }
-        }
+        ext_tempo(s, now_ms);
         s->ext_seen = 1;
         s->ext_last_ms = now_ms;
         if (s->running && s->following) {
             u32 target = s->ext_pulses * SEQ_CLOCK_UNITS;
-            if ((s32)(target - s->pos) > 0) {
-                s->pos = target;
+            s32 err = (s32)(target - s->pos);
+            if (s->ext_pulses >= 4 && s->ext_interval_q8) {
+                s32 a = err < 0 ? -err : err;
+                s->ext_err = (s16)(err > 8191 ? 8191 : (err < -8191 ? -8191 : err));
+                if (a > s->ext_err_max) {
+                    s->ext_err_max = (u16)(a > 8191 ? 8191 : a);
+                }
+            }
+            if (s->ext_pulses < 4 || !s->ext_interval_q8 ||
+                err > 2 * SEQ_CLOCK_UNITS || err < -2 * SEQ_CLOCK_UNITS) {
+                s->pos = target;                /* starting, no tempo yet, or far off */
+            } else {                            /* pull gently (rounded): smooth over jitter */
+                s->pos = (u32)((s32)s->pos + (err + (err > 0 ? 2 : -2)) / 4);
             }
             s->rem = 0;
             s->ext_pulses++;
@@ -397,6 +441,8 @@ void seq_clock_in(struct seq *s, u8 rt, u32 now_ms)
         s->running = 1;
         s->following = 1;
         s->ext_pulses = 0;
+        s->ext_err = 0;
+        s->ext_err_max = 0;
         s->last_ms = now_ms;
         break;
     case 0xFB:
@@ -435,7 +481,7 @@ void seq_clock_timeout(struct seq *s, u32 now_ms)
             s->rem = 0;
             s->clock_next = (s->pos + SEQ_CLOCK_UNITS - 1) / SEQ_CLOCK_UNITS * SEQ_CLOCK_UNITS;
         }
-        s->ext_interval_q8 = 0;
+        ext_reset(s);
     }
 }
 
@@ -477,7 +523,8 @@ u8 seq_record(struct seq *s, u8 track, u8 vel, s8 note)
     s32 j = d >= 0 ? (d + u / 2) / u : -((-d + u / 2 - 1) / u);
     s32 off = d - j * u;
     u8 idx = (u8)(((s32)prev + j % len + len) % len);
-    s32 micro = off * 96 / u;
+    s32 q = t->quantize > 100 ? 100 : t->quantize;
+    s32 micro = off * 96 / u * (100 - q) / 100;
     struct seq_step *st = &t->step[idx];
     st->vel = vel ? (vel > 127 ? 127 : vel) : 1;
     st->note = note;

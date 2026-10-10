@@ -1,8 +1,8 @@
 /* SMC-PAD step sequencer engine (pure C, host-tested by test/test_smcpad_seq.c).
  *
  * Model: a pattern = 16 tracks x 64 steps. Every track has its own base note, MIDI channel,
- * loop length ("steps"), rate (1/4 .. 1/32T), gate, probability, quantize and ratchet rate;
- * steps can override gate / probability / ratchet rate and add micro-timing, a note offset
+ * loop length ("steps"), rate (1/4 .. 1/32T), gate, probability, record quantize and ratchet
+ * rate; steps can override gate / probability / ratchet rate and add micro-timing, a note offset
  * (in scale steps), a trig condition (A:B, first loop, FILL, NOT FILL) and tie.
  *
  * Time: the caller passes a millisecond clock (seq_run(now_ms)). The play position is kept in
@@ -12,8 +12,11 @@
  * grid time (negative micro-timing / swing), and sent when due.
  *
  * Clock: internal tempo (centi-BPM) or, after MIDI clock (F8) arrives, follows it: every F8 is
- * 40 units (24 PPQN); between pulses the position is interpolated from the measured interval
- * and never runs past the next expected pulse. Clock out (F8 / FA / FC) only while internal.
+ * 40 units (24 PPQN). The host tempo is measured over the last 24 pulses (one beat), so bunched
+ * Bluetooth packets do not upset it; between pulses the position runs at that tempo and each F8
+ * pulls it towards the pulse's position (snap if far off, otherwise a quarter of the error).
+ * "Play early" (lead_ms) sends notes that many ms ahead of the host's clock to cancel the
+ * round trip through the DAW. Clock out (F8 / FA / FC) only while internal.
  */
 #ifndef SMCPAD_SEQ_H
 #define SMCPAD_SEQ_H
@@ -51,7 +54,10 @@ enum { SEQ_COND_ALWAYS = 0,
 #define SEQ_COND_TIE        0x80
 
 #define SEQ_GATES           15              /* gate table index 0..14 */
-#define SEQ_RATCHET_RATES   5               /* 1/2 1/3 1/4 1/6 1/8 of a step */
+#define SEQ_RATCHET_RATES   7               /* auto (split the step), 1/8 1/16 1/16T 1/32 1/32T 1/64 */
+#define SEQ_EXT_RING        24              /* F8 timestamps kept for the tempo (one beat) */
+#define SEQ_LEAD_MAX_MS     49              /* play early: 0..49 ms in 7 ms steps */
+#define SEQ_LEAD_STEP_MS    7
 
 struct seq_step {
     u8 vel;         /* 0 = off, 1..127 */
@@ -70,8 +76,8 @@ struct seq_track {
     u8 gate;        /* gate table index */
     u8 vol;         /* 0..127, scales velocities */
     u8 prob;        /* 0..100 % */
-    u8 quantize;    /* 0..100 %: pulls micro-timing to the grid */
-    u8 ratchet_rate;/* 0..4 */
+    u8 quantize;    /* 0..100 %: how far live recording pulls hits to the grid */
+    u8 ratchet_rate;/* 0..SEQ_RATCHET_RATES-1, 0 = auto */
     u8 mute;
     u8 colour;      /* index into the UI palette */
     u8 rsv;
@@ -79,7 +85,7 @@ struct seq_track {
 };
 
 #define SEQ_PATTERN_MAGIC   0x5A
-#define SEQ_PATTERN_VER     1
+#define SEQ_PATTERN_VER     2
 struct seq_pattern {
     u8 magic, ver;
     u8 root;        /* scale root 0..11 */
@@ -124,9 +130,14 @@ struct seq {
     u32 clock_next; /* next F8 to send (internal) */
     u32 rng;
     /* external clock */
-    u32 ext_last_ms, ext_interval_q8;   /* ms << 8 between F8s, smoothed */
+    u32 ext_last_ms, ext_interval_q8;   /* ms << 8 between F8s, averaged over the ring */
     u32 ext_pulses;                     /* F8s since Start */
+    u32 ext_ts[SEQ_EXT_RING];           /* arrival times of the last F8s */
+    u8  ext_n, ext_i;                   /* entries in use, next slot */
     u8  ext_seen;
+    u8  lead_ms;                        /* play early while following (0..SEQ_LEAD_MAX_MS) */
+    s16 ext_err;                        /* diag: pulse position - play position at the last F8 */
+    u16 ext_err_max;                    /* diag: largest |ext_err| since the host's Start */
     struct seq_track_state ts[SEQ_TRACKS];
     struct seq_event q[SEQ_QUEUE];
     u8  nq;
@@ -140,7 +151,7 @@ struct seq {
 /* tables (exposed for UI and tests) */
 extern const u16 seq_rate_units[SEQ_RATES];    /* step length in units */
 extern const u8  seq_gate_eighths[SEQ_GATES];  /* gate length in 1/8 step */
-extern const u8  seq_ratchet_div[SEQ_RATCHET_RATES];
+extern const u16 seq_ratchet_units[SEQ_RATCHET_RATES];  /* hit spacing, 0 = auto (step / count) */
 u32  seq_step_units(u8 rate);
 
 void seq_pattern_default(struct seq_pattern *p, const u8 *notes, const u8 *chans);
@@ -160,8 +171,9 @@ u32  seq_step_gate_units(const struct seq_track *t, const struct seq_step *st);
 u8   seq_step_note(const struct seq_pattern *p, const struct seq_track *t, const struct seq_step *st);
 s32  seq_step_micro_units(const struct seq_track *t, const struct seq_step *st);
 
-/* live recording: writes the hit into the nearest step of the track at the current position,
- * keeping the offset as micro-timing. Returns the step index (0xFF when stopped). */
+/* live recording: writes the hit into the nearest step of the track at the current position;
+ * the offset is kept as micro-timing scaled by (100 - track quantize) %, so the default
+ * (100 %) snaps to the step. Returns the step index (0xFF when stopped). */
 u8   seq_record(struct seq *s, u8 track, u8 vel, s8 note);
 u8   seq_playhead(const struct seq *s, u8 track);   /* step whose grid time last passed */
 

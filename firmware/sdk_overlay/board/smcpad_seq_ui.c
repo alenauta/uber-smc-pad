@@ -76,8 +76,43 @@ static void all_live_off(struct seq_ui *u)
 
 static void tempo_changed(struct seq_ui *u)
 {
-    if (u->io && u->io->tempo) {
-        u->io->tempo(u->io->ctx, u->seq->centibpm, u->seq->swing);
+    if (u->io && u->io->save) {
+        u->io->save(u->io->ctx, u->seq->centibpm, u->seq->swing, u->seq->lead_ms);
+    }
+}
+
+/* step view: steps read like text, top row first (pad 12 = step 0); the map is an involution */
+u8 seq_ui_step_pad(u8 i)
+{
+    return (u8)((3 - ((i >> 2) & 3)) * 4 + (i & 3));
+}
+
+u8 seq_ui_beat_led(const struct seq *s, u32 now_ms)
+{
+    if (s->running) {                           /* locked to the play position: bar 1 longer */
+        return (u8)(s->pos % (4 * SEQ_PPQN) < SEQ_PPQN / 4 || s->pos % SEQ_PPQN < SEQ_PPQN / 8);
+    }
+    u32 c = s->sync && s->ext_seen && s->ext_interval_q8 ? seq_ext_centibpm(s) : s->centibpm;
+    u32 beat = 6000000u / (c ? c : 12000);
+    return (u8)(now_ms % beat < beat / 8);
+}
+
+/* undo journal: mutes are performance state, not edits */
+u8 seq_ui_undo_skip(u16 off)
+{
+    u32 base = (u32)__builtin_offsetof(struct seq_pattern, track);
+    if (off < base) {
+        return 0;
+    }
+    return (u8)((off - base) % sizeof(struct seq_track) == __builtin_offsetof(struct seq_track, mute));
+}
+
+static void undo_settle(struct seq_ui *u, u32 now)
+{
+    if (u->undo && u->dirty && !u->held && !(u->rec && u->seq->running) &&
+        now - u->act_ms >= SUI_UNDO_IDLE_MS) {
+        undo_commit(u->undo);
+        u->dirty = 0;
     }
 }
 
@@ -105,6 +140,10 @@ void seq_ui_init(struct seq_ui *u, struct seq *s, const struct seq_ui_io *io)
 
 void seq_ui_toggle(struct seq_ui *u)
 {
+    if (u->undo && u->dirty) {
+        undo_commit(u->undo);
+        u->dirty = 0;
+    }
     u->active ^= 1;
     all_live_off(u);
     u->held = u->keep = 0;
@@ -229,8 +268,15 @@ static void knob_pattern(struct seq_ui *u, u8 k, s32 d, u32 now)
         overlay(u, SUI_OV_BAR, u->track, t->chan, 0, 15, now);
         break;
     }
+    case 7: {                                   /* play early, 7 ms steps */
+        s32 v = clampi(s->lead_ms / SEQ_LEAD_STEP_MS + d, 0, SEQ_LEAD_MAX_MS / SEQ_LEAD_STEP_MS);
+        s->lead_ms = (u8)(v * SEQ_LEAD_STEP_MS);
+        overlay(u, SUI_OV_BAR, u->track, v, 0, SEQ_LEAD_MAX_MS / SEQ_LEAD_STEP_MS, now);
+        tempo_changed(u);
+        break;
+    }
     default:
-        break;                                  /* K5 / K6 / K8: later (chaining) */
+        break;                                  /* K5 / K6: later (chaining) */
     }
 }
 
@@ -239,6 +285,8 @@ void seq_ui_knob(struct seq_ui *u, u8 knob, s32 steps, u32 now_ms)
     if (!u->active || !steps || knob > 7) {
         return;
     }
+    u->dirty = 1;
+    u->act_ms = now_ms;
     if (u->held && u->view == SUI_VIEW_STEP) {
         knob_step(u, knob, steps, now_ms);
     } else if (u->knob_page == SUI_KNOBS_PATTERN) {
@@ -290,21 +338,25 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
     if (!u->active || pad > 15) {
         return;
     }
+    u->dirty = 1;
+    u->act_ms = now_ms;
     struct seq *s = u->seq;
     struct seq_pattern *p = s->pat;
     struct seq_track *t = &p->track[u->track];
     u16 bit = (u16)(1u << pad);
+    u8 sp = seq_ui_step_pad(pad);               /* step-view step of this pad */
+    u16 sbit = (u16)(1u << sp);
     if (!on) {
         if (pad == 13) {
             s->fill = 0;
         }
-        if (u->held & bit) {
-            u8 si = (u8)(u->page * 16 + pad);
-            if (!(u->keep & bit) && si < SEQ_STEPS) {
+        if (u->held & sbit) {
+            u8 si = (u8)(u->page * 16 + sp);
+            if (!(u->keep & sbit) && si < SEQ_STEPS) {
                 memset(&t->step[si], 0, sizeof(t->step[si]));
             }
-            u->held &= (u16)~bit;
-            u->keep &= (u16)~bit;
+            u->held &= (u16)~sbit;
+            u->keep &= (u16)~sbit;
             if (!u->held) {
                 live_off(u, 16);
             }
@@ -331,16 +383,16 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
         return;
     }
     if (u->view == SUI_VIEW_STEP) {
-        u8 si = (u8)(u->page * 16 + pad);
+        u8 si = (u8)(u->page * 16 + sp);
         if (si >= t->len) {
             return;
         }
-        u->held |= bit;
+        u->held |= sbit;
         if (!t->step[si].vel) {
             t->step[si].vel = SUI_DEFAULT_VEL;
-            u->keep |= bit;                     /* just created: stays on at release */
+            u->keep |= sbit;                    /* just created: stays on at release */
         } else {
-            u->keep &= (u16)~bit;
+            u->keep &= (u16)~sbit;
         }
         return;
     }
@@ -368,12 +420,27 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
 }
 
 /* ---- buttons -------------------------------------------------------------------------- */
+static void history_step(struct seq_ui *u, u8 redo, u32 now)
+{
+    if (!u->undo) {
+        return;
+    }
+    undo_commit(u->undo);                       /* pending edits become the newest step */
+    u->dirty = 0;
+    if (redo ? undo_redo(u->undo) : undo_undo(u->undo)) {
+        overlay(u, SUI_OV_FLASH, u->track, 0, 0, 0, now);
+        u->ov_until = now + SUI_FLASH_MS ? now + SUI_FLASH_MS : 1;
+    }
+}
+
 void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
 {
     struct seq *s = u->seq;
     if (!u->active) {
         return;
     }
+    u->dirty = 1;
+    u->act_ms = now_ms;
     switch (hw) {
     case SUI_SHIFT:
         u->shift = pressed;
@@ -421,12 +488,16 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
         }
         break;
     case SUI_LEFT:
-        if (pressed && u->page) {
+        if (pressed && u->shift) {
+            history_step(u, 0, now_ms);
+        } else if (pressed && u->page) {
             u->page--;
         }
         break;
     case SUI_RIGHT:
-        if (pressed && u->page < SEQ_STEPS / 16 - 1) {
+        if (pressed && u->shift) {
+            history_step(u, 1, now_ms);
+        } else if (pressed && u->page < SEQ_STEPS / 16 - 1) {
             u->page++;
         }
         break;
@@ -466,6 +537,12 @@ static void draw_overlay(const struct seq_ui *u, u32 rgb[16])
 {
     u32 c = palette[u->ov_colour & 15];
     s32 lo = u->ov_min, hi = u->ov_max, v = u->ov_val;
+    if (u->ov_kind == SUI_OV_FLASH) {           /* undo / redo done */
+        for (u8 i = 0; i < 16; i++) {
+            rgb[i] = rgbs(WHITE, 1, 6);
+        }
+        return;
+    }
     if (u->ov_kind == SUI_OV_SIGNED) {          /* centre-out: pads 9.. positive, 8.. negative */
         s32 m = hi > 0 ? hi : 1;
         s32 fill = (v < 0 ? -v : v) * 64 / m;   /* eighths over 8 pads */
@@ -530,6 +607,7 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
     if (!u->active) {
         return 0;
     }
+    undo_settle(u, now_ms);
     if (s->running) btn |= 1u << SUI_PLAY;
     if (u->rec) btn |= 1u << SUI_REC;
     if (u->page) btn |= 1u << SUI_LEFT;
@@ -537,7 +615,7 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
     if (u->view == SUI_VIEW_KIT || (u->view == SUI_VIEW_KEYS && (now_ms / 400) & 1)) btn |= 1u << SUI_PAD_BANK;
     if (u->knob_page) btn |= 1u << SUI_KNOB_BANK;
     if (u->shift) btn |= 1u << SUI_SHIFT;
-    if (u->nr) btn |= 1u << SUI_NOTE_REPEAT;
+    if (seq_ui_beat_led(s, now_ms)) btn |= 1u << SUI_NOTE_REPEAT;   /* sequencer mode + tempo */
     if (u->stop) btn |= 1u << SUI_STOP;
 
     if (u->ov_until && (s32)(u->ov_until - now_ms) > 0) {
@@ -571,19 +649,20 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
     u32 c = palette[u->track & 15];
     if (u->view == SUI_VIEW_STEP) {
         u8 ph = seq_playhead(s, u->track);
-        for (u8 i = 0; i < 16; i++) {
+        for (u8 i = 0; i < 16; i++) {           /* i = step on the page */
             u8 si = (u8)(u->page * 16 + i);
+            u8 pad = seq_ui_step_pad(i);
             const struct seq_step *st = &t->step[si];
             if (si >= t->len) {
-                rgb[i] = 0;
+                rgb[pad] = 0;
             } else if (u->held & (1u << i)) {
-                rgb[i] = WHITE;
+                rgb[pad] = WHITE;
             } else if (ph == si) {
-                rgb[i] = st->vel ? WHITE : rgbs(WHITE, 1, 6);
+                rgb[pad] = st->vel ? WHITE : rgbs(WHITE, 1, 6);
             } else if (st->vel) {
-                rgb[i] = rgbs(c, 24 + (u32)st->vel * 104 / 127, 128);
+                rgb[pad] = rgbs(c, 24 + (u32)st->vel * 104 / 127, 128);
             } else {
-                rgb[i] = rgbs(c, 1, 16);
+                rgb[pad] = rgbs(c, 1, 16);
             }
         }
     } else if (u->view == SUI_VIEW_KIT) {

@@ -139,6 +139,10 @@ def cmd_status(pad):
         ext = u14(r, 38)
         print(f"sequencer: {', '.join(state)}  tempo {u14(r, 36) / 10:.1f} BPM"
               f"{f'  host {ext / 10:.1f} BPM' if ext else ''}  late events {u14(r, 32)}  queue drops {u14(r, 34)}")
+    if len(r) >= 47:                                       # 908+: play early, clock phase, undo
+        err, emax = u14(r, 41) - 8192, u14(r, 43)
+        print(f"play early {r[40]} ms  host F8 phase error last {err:+d} max {emax} (1/960 beat, 40 = 1 clock)"
+              f"  undo levels {u14(r, 45)}")
 
 
 def cmd_frame(pad, n=1):

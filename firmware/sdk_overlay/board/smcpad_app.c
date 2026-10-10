@@ -145,6 +145,8 @@ static const struct smcpad_preset_io preset_io = {NULL, preset_midi, preset_midi
 /* ---- sequencer ------------------------------------------------------------------------ */
 #define APP_SEQ_LED_MS      20                  /* sequencer LED frame rate (playhead, blinks) */
 static struct seq_pattern seq_pat;              /* active pattern (6.3 KB) */
+static struct seq_pattern seq_shadow;           /* undo: the pattern at the last commit */
+static struct undo seq_undo;                    /* undo: changed bytes (1.5 KB) */
 static struct seq seq;
 static struct seq_ui sui;
 static u32 seq_led_ms, seq_rgb_last[SMCPAD_NUM_PADS];
@@ -156,19 +158,27 @@ static void seq_midi(void *ctx, const u8 *m, u32 n)
     midi_out(m, n);
 }
 
-static void seq_tempo_store(void *ctx, u32 centibpm, u8 swing)  /* stock globals 0-2 */
+/* Play early lives in the stock note-repeat "time" byte (globals 3, 0..7, unused here),
+ * offset so that the stock default 4 means 0 ms: lead = ((g + 4) & 7) * 7 ms. */
+static u8 seq_lead_from_global(u8 g)
+{
+    return (u8)(((g + 4) & 7) * SEQ_LEAD_STEP_MS);
+}
+
+static void seq_settings_store(void *ctx, u32 centibpm, u8 swing, u8 lead_ms)  /* globals 0-3 */
 {
     (void)ctx;
     u32 bpm = (centibpm + 50) / 100;
     store.globals[GLOB_TEMPO_LO] = (u8)bpm;
     store.globals[GLOB_TEMPO_HI] = (u8)(bpm >> 8);
     store.globals[GLOB_SWING] = swing;
+    store.globals[GLOB_TIME] = (u8)((lead_ms / SEQ_LEAD_STEP_MS + 4) & 7);
     store.globals_dirty = 1;
     store.globals_gen++;
 }
 
 static const struct seq_out seq_out = {NULL, seq_midi};
-static const struct seq_ui_io sui_io = {NULL, seq_midi, seq_tempo_store};
+static const struct seq_ui_io sui_io = {NULL, seq_midi, seq_settings_store};
 
 static void seq_app_init(void)
 {
@@ -184,7 +194,10 @@ static void seq_app_init(void)
     seq_set_tempo(&seq, (bpm < 30 || bpm > 300 ? 120 : bpm) * 100);
     u8 sw = store.globals[GLOB_SWING];
     seq.swing = sw < 50 || sw > 75 ? 50 : sw;
+    seq.lead_ms = seq_lead_from_global(store.globals[GLOB_TIME]);
     seq_ui_init(&sui, &seq, &sui_io);
+    undo_init(&seq_undo, (u8 *)&seq_pat, (u8 *)&seq_shadow, (u16)sizeof(seq_pat), seq_ui_undo_skip);
+    sui.undo = &seq_undo;
 }
 
 /* sequencer LED frame into the pad / button LEDs; only pushes changes */
@@ -702,6 +715,11 @@ static void diag_reply(const u8 *req, u32 len)
         put14(&p, seq.dropped);
         put14(&p, seq.centibpm / 10);
         put14(&p, seq_ext_centibpm(&seq) / 10);
+        /* 908+: play early ms, F8 phase error (last, signed + 8192; max) in 1/960 beat, undo levels */
+        *p++ = (u8)(seq.lead_ms & 0x7f);
+        put14(&p, (u32)(seq.ext_err + 8192));
+        put14(&p, seq.ext_err_max);
+        put14(&p, undo_levels(&seq_undo));
 #endif
     } else if (cmd == 0x03) {                       /* raw key-matrix frame */
         u8 f[SMCPAD_KM_STEPS];

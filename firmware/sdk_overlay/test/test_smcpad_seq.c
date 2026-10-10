@@ -153,10 +153,15 @@ static void test_swing_micro_ratchet(void)
     pat.track[1].step[4].vel = 100;
     pat.track[1].step[4].micro = -48;                          /* half a step early */
     pat.track[2].step[0].vel = 100;
-    pat.track[2].step[0].ratchet = (3 << 4) | 3;               /* 4 hits, 1/4 step apart */
+    pat.track[2].step[0].ratchet = (3 << 4);                   /* 4 hits, track rate auto: 1/4 step */
     pat.track[3].step[2].vel = 100;
-    pat.track[3].step[2].micro = 24;
-    pat.track[3].quantize = 100;                               /* fully quantized: on grid */
+    pat.track[3].step[2].micro = 24;                           /* a quarter step late */
+    pat.track[3].quantize = 100;                               /* record-only: playback keeps it */
+    pat.track[4].step[0].vel = 100;
+    pat.track[4].step[0].ratchet = (1 << 4) | 5;               /* 2 hits, fixed 1/32 (table 4) */
+    pat.track[5].ratchet_rate = 1;                             /* track: fixed 1/8 */
+    pat.track[5].step[0].vel = 100;
+    pat.track[5].step[0].ratchet = (2 << 4);                   /* 3 hits, 250 ms apart */
     seq_start(&S, now);
     run_to(1000 + 600);
     CHECK(near(nth_on(36, 0), 1188, 1));
@@ -164,7 +169,9 @@ static void test_swing_micro_ratchet(void)
     CHECK(nth_on(38, 0) == 1000 && near(nth_on(38, 1), 1031, 1) && near(nth_on(38, 2), 1063, 1) &&
           near(nth_on(38, 3), 1094, 1));
     CHECK(near(nth_off(38, 0), 1000 + 23, 1));                 /* ratchet gate 3/4 of interval */
-    CHECK(near(nth_on(39, 0), 1250, 1));
+    CHECK(near(nth_on(39, 0), 1281, 1));
+    CHECK(nth_on(40, 0) == 1000 && near(nth_on(40, 1), 1063, 1) && count_on(40, 1000, 1125) == 2);
+    CHECK(nth_on(41, 0) == 1000 && near(nth_on(41, 1), 1250, 1) && near(nth_on(41, 2), 1500, 1));
 }
 
 static void test_probability(void)
@@ -292,9 +299,61 @@ static void test_external_clock(void)
     CHECK(S.running && !S.following && S.pos > 0);
 }
 
+/* play early + a Bluetooth-like clock: pulses arrive in 15 ms connection events */
+static void test_external_clock_lead_jitter(void)
+{
+    setup();
+    struct seq_track *t = &pat.track[0];
+    for (int k = 0; k < 16; k += 4) {
+        t->step[k].vel = 100;
+    }
+    S.lead_ms = 21;
+    seq_clock_in(&S, 0xFA, now);
+    int pulse = 0;
+    while (now < 1000 + 3000) {
+        while (1000 + (u32)pulse * 25 <= now) {                /* due pulses, delivered on USB time */
+            seq_clock_in(&S, 0xF8, now);
+            pulse++;
+        }
+        now++;
+        seq_run(&S, now);
+        seq_clock_timeout(&S, now);
+    }
+    /* beats at 1600, 2200, 2800 ms, sent 21 ms early (the first one can't be: Start just came) */
+    CHECK(near(nth_on(36, 1), 1579, 2) && near(nth_on(36, 2), 2179, 2) && near(nth_on(36, 3), 2779, 2));
+    CHECK(S.ext_err_max <= 4);
+
+    setup();
+    for (int k = 0; k < 16; k += 4) {
+        pat.track[0].step[k].vel = 100;
+    }
+    seq_clock_in(&S, 0xFA, now);
+    pulse = 0;
+    while (now < 1000 + 6000) {
+        if (now % 15 == 0) {                                   /* connection event: all pending pulses */
+            while (1000 + (u32)pulse * 25 <= now) {
+                seq_clock_in(&S, 0xF8, now);
+                pulse++;
+            }
+        }
+        now++;
+        seq_run(&S, now);
+        seq_clock_timeout(&S, now);
+    }
+    CHECK(near((int)seq_ext_centibpm(&S), 10000, 100));        /* tempo steady despite bunching */
+    int worst = 0;
+    for (int b = 4; b < 10; b++) {                             /* beats 4..9: settled */
+        int d = nth_on(36, b) - (1000 + b * 600);
+        worst = d > worst ? d : (-d > worst ? -d : worst);
+    }
+    CHECK(worst <= 15);                                        /* within one connection interval */
+    CHECK(S.following && S.running);
+}
+
 static void test_record(void)
 {
     setup();
+    pat.track[5].quantize = 0;                                 /* keep the feel */
     seq_start(&S, now);
     run_to(1000 + 2 * 125 + 10);                               /* 10 ms after step 2 */
     u8 k = seq_record(&S, 5, 90, 0);
@@ -304,6 +363,13 @@ static void test_record(void)
     k = seq_record(&S, 5, 80, 3);
     CHECK(k == 4 && pat.track[5].step[4].micro == -15 && pat.track[5].step[4].note == 3);
     CHECK(seq_playhead(&S, 5) == 3);
+    /* default quantize 100 %: snapped to the nearest step; 50 %: half the offset */
+    run_to(1000 + 6 * 125 + 30);
+    k = seq_record(&S, 6, 70, 0);
+    CHECK(k == 6 && pat.track[6].step[6].vel == 70 && pat.track[6].step[6].micro == 0);
+    pat.track[7].quantize = 50;
+    k = seq_record(&S, 7, 70, 0);
+    CHECK(k == 6 && pat.track[7].step[6].micro == 11);         /* 30/125 x 96 = 23 -> 11 */
     seq_stop(&S);
     CHECK(seq_record(&S, 5, 80, 0) == 0xFF && seq_playhead(&S, 5) == 0xFF);
 }
@@ -318,6 +384,7 @@ int main(void)
     test_conditions_tie();
     test_stop_flush_retrigger();
     test_external_clock();
+    test_external_clock_lead_jitter();
     test_record();
     printf(failures ? "test_smcpad_seq: %d FAILED\n" : "test_smcpad_seq: ALL PASSED\n", failures);
     return failures != 0;
