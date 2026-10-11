@@ -130,11 +130,12 @@ SDK_LD = "cpu/br25/sdk_ld.c"
 SDK_LD_EDITS = [
     ("\tdata_code_limit_end = .;\n\n\t_HEAP_BEGIN = .;\n",
      "\tdata_code_limit_end = .;\n\n"
-     "\t.smcpad_keep (NOLOAD) : ALIGN(16)\n"
+     # explicit address: with '> ram0' ld used the region pointer, i.e. inside the overlays (913 try 1)
+     "\t.smcpad_keep ALIGN(data_code_limit_end, 16) (NOLOAD) :\n"
      "\t{\n"
      "\t\t*(.smcpad_keep)\n"
      "\t\t. = ALIGN(16);\n"
-     "\t} > ram0\n\n"
+     "\t}\n\n"
      "\t_HEAP_BEGIN = .;\n"),
 ]
 # smcpad_hw.c owns the SARADC; it hands VBAT / LDOREF / DTEMP results back through this
