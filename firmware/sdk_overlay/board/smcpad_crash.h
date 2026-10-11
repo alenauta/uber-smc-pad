@@ -11,7 +11,9 @@
  *    cpu0_sstack_begin - 16, which turned out to be wiped at boot.)
  * smcdiag.py "boots" shows the ring; "reboot" / "crashtest" produce known resets.
  * (909 also replaced the CPU exception handlers to record faults; that build boot-looped, so
- * the SDK handlers stay.)
+ * the SDK handlers stay.) Since 916 the SDK's weak hook exception_analyze_release() (cpu.a
+ * debug.c, called by its exception handler; default = chip_reset) is overridden instead: it
+ * stores the cause and return addresses in .smcpad_keep, then resets as before.
  */
 #ifndef SMCPAD_CRASH_H
 #define SMCPAD_CRASH_H
@@ -35,6 +37,22 @@ struct smcpad_boot_entry {
     u8  ev_kind, ev_id; /* last user event of the previous run */
     u8  vbat2;          /* battery voltage / 20 mV (e.g. 210 = 4.20 V), 0 = unknown */
     u8  ev_age;         /* that event's age in 100 ms (255 = older) */
+    u8  crash;          /* 1 = the previous run ended in a CPU exception (hist.crash) */
+    u8  rsv[3];
+};
+
+/* what the exception hook saw (registers as read in the SDK's exception handler) */
+struct smcpad_crash_rec {
+    u32 magic;
+    u32 emu_msg;        /* q32DSP EMU_MSG: CPU exception cause bits */
+    u32 dbg_msg;        /* JL_DEBUG MSG: bus / memory protection cause */
+    u32 prp_mmu, prp_wrl;   /* peripheral MMU / write-limit messages */
+    u32 rete, reti, rets, retx; /* exception / interrupt / call / ... return addresses */
+    u32 psr, sp;
+    u32 etm[4];         /* last branch PCs (if the trace is running) */
+    u32 ms;             /* breadcrumb uptime when it happened */
+    u8  stage, rsv[3];  /* breadcrumb stage */
+    char task[12];      /* running task */
 };
 
 struct smcpad_boot_hist {
@@ -42,10 +60,7 @@ struct smcpad_boot_hist {
     u8  n;              /* entries used, newest first */
     u8  ver;
     struct smcpad_boot_entry e[SMCPAD_BOOT_HIST];
-};
-
-struct smcpad_crash_rec {               /* unused since 910 (kept for the diag format) */
-    u32 magic, reti, rets, msg, emu, mmu, wrl, ms, task, check;
+    struct smcpad_crash_rec crash;          /* the latest exception (magic 0 = none yet) */
 };
 
 void smcpad_crash_init(void);                               /* early in smcpad_start() */

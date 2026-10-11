@@ -305,6 +305,22 @@ def cmd_boots(pad):
         else:
             line += "\n        previous run: no breadcrumb (power was off, or older firmware)"
         print(line)
+    try:
+        c = pad.request([0x05])                            # 916+: latest CPU exception
+    except TimeoutError:
+        return
+    if not c or not c[0]:
+        print("latest exception: none captured")
+        return
+    names = ("EMU_MSG", "DEBUG_MSG", "PRP_MMU", "PRP_WRL", "RETE", "RETI", "RETS", "RETX", "PSR", "SP",
+             "ETM0", "ETM1", "ETM2", "ETM3")
+    w = [dec32(c, 1 + 5 * i) for i in range(15)]
+    stage = c[76]
+    task = bytes(c[77:89]).split(b"\0")[0].decode(errors="replace")
+    print(f"latest exception: at uptime {w[14] / 1000:.1f} s, stage "
+          f"'{STAGES[stage] if stage < len(STAGES) else stage}', task '{task}'")
+    for i in range(0, 14, 4):
+        print("   " + "  ".join(f"{names[j]} 0x{w[j]:08X}" for j in range(i, min(i + 4, 14))))
 
 
 def main():

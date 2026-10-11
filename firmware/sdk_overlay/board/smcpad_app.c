@@ -857,6 +857,20 @@ static void diag_reply(const u8 *req, u32 len)
             put14(&p, e->vbat2);
             put14(&p, e->ev_age);
         }
+    } else if (cmd == 0x05) {                       /* latest CPU exception (916+) */
+        const struct smcpad_crash_rec *c = smcpad_crash_last();
+        *p++ = c ? 1 : 0;
+        if (c) {
+            const u32 w[] = {c->emu_msg, c->dbg_msg, c->prp_mmu, c->prp_wrl, c->rete, c->reti, c->rets,
+                             c->retx, c->psr, c->sp, c->etm[0], c->etm[1], c->etm[2], c->etm[3], c->ms};
+            for (u8 i = 0; i < sizeof(w) / sizeof(w[0]); i++) {
+                put32(&p, w[i]);
+            }
+            *p++ = (u8)(c->stage & 0x7f);
+            for (u8 i = 0; i < sizeof(c->task); i++) {
+                *p++ = (u8)(c->task[i] & 0x7f);
+            }
+        }
     } else if (cmd == 0x30 || cmd == 0x31) {        /* reboot / test exception, after the reply */
         app.diag_reset = cmd == 0x30 ? 1 : 2;
         app.diag_reset_ms = sys_timer_get_ms();
