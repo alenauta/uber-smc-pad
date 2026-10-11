@@ -75,8 +75,10 @@ struct seq_step {
 struct seq_track {
     u8 chan;        /* 0..15 */
     u8 note;        /* base note */
-    u8 len;         /* 1..64 steps */
-    u8 rate;        /* SEQ_RATE_* */
+    u8 len;         /* 1..64 steps (of res) */
+    u8 rate;        /* SEQ_RATE_*: the editing grid (step view, recording); a multiple of res */
+    u8 res;         /* SEQ_RATE_*: how long a stored step is (playback). Changing the grid to a
+                     * coarser rate keeps res, so notes between grid steps stay (seq_set_rate) */
     u8 gate;        /* gate table index */
     u8 vol;         /* 0..127, scales velocities */
     u8 prob;        /* 0..100 % */
@@ -157,6 +159,14 @@ extern const u16 seq_rate_units[SEQ_RATES];    /* step length in units */
 extern const u8  seq_gate_eighths[SEQ_GATES];  /* gate length in 1/8 step */
 extern const u16 seq_ratchet_units[SEQ_RATCHET_RATES];  /* hit spacing, 0 = auto (step / count) */
 u32  seq_step_units(u8 rate);
+/* stored steps per grid step (rate / res, >= 1) */
+u8   seq_track_grid(const struct seq_track *t);
+/* change a track's rate. keep_timing = 1: the notes stay where they are in time (finer: the
+ * stored steps are spread out, coarser: only the grid changes, so notes between grid steps stay;
+ * straight <-> triplet via a resolution both divide). keep_timing = 0: the same steps play at
+ * the new rate (faster / slower). Returns 0 (nothing changed) if it would need > 64 steps or no
+ * common resolution exists (1/32 <-> triplets). */
+u8   seq_set_rate(struct seq *s, u8 track, u8 rate, u8 keep_timing);
 
 void seq_pattern_default(struct seq_pattern *p, const u8 *notes, const u8 *chans);
 void seq_init(struct seq *s, const struct seq_out *out, struct seq_pattern *pat, u32 seed);

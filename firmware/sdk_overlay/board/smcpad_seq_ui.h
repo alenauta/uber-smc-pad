@@ -16,7 +16,11 @@
  *                              + Stop + pad = mute, + Shift + Stop + pad = clear that track
  *   Left / Right               page; Shift + Left / Right = undo / redo
  *   Play / Stop                (Stop on release; twice = to the start); Rec = live record
- *   KNOB BANK                  knob page: track / pattern (K3 / K4 = track root / scale)
+ *   KNOB BANK                  knob page: track / pattern (K3 / K4 = track root / scale,
+ *                              K6 = track colour)
+ *   K8 (track page) / timing   rate = the editing grid: notes keep their timing (seq_set_rate);
+ *   pads 1-8                   a coarser grid keeps the notes between its steps (dim white);
+ *                              Shift + K8 = old speed change (same steps, faster / slower)
  *   Shift + K3 / K4            global root / scale (shared with normal mode)
  *   Shift + pad                the normal-mode Shift menu (preset, curve, transpose, octave;
  *                              drawn and handled by the caller, see seq_ui_shift_page());
@@ -59,6 +63,7 @@ struct seq_ui {
     u16 lit_pads;                           /* play-view pads held (white) */
     u8  live_note[17], live_chan[17];       /* notes sounding: pads 0-15, 16 = knob preview */
     s8  play_oct, play_tr;                  /* play view: octaves / scale steps (Shift menu) */
+    u8  colour[16];                         /* palette index per track (KNOB BANK K6), saved */
     /* note-length recording: the step a held play-view pad wrote (0xFF = none) */
     u8  rec_step[16], rec_trk[16];
     u32 rec_pos[16];
@@ -81,7 +86,7 @@ struct seq_ui {
 /* PICK: one pad per choice from pad 1 (ov_min = value of pad 1); a value below ov_min ("follow")
  * leaves every pad dark */
 enum { SUI_OV_NONE = 0, SUI_OV_BAR, SUI_OV_SIGNED, SUI_OV_KEYS, SUI_OV_COUNT, SUI_OV_FLASH,
-       SUI_OV_PICK };
+       SUI_OV_PICK, SUI_OV_COLOUR };
 
 void seq_ui_init(struct seq_ui *u, struct seq *s, const struct seq_ui_io *io);
 void seq_ui_toggle(struct seq_ui *u);                       /* enter / leave sequencer mode */
@@ -91,7 +96,8 @@ void seq_ui_knob(struct seq_ui *u, u8 knob, s32 steps, u32 now_ms);
 /* LED frame: rgb[16] = 0x00RRGGBB per pad, returns the button LED mask (bit = hw button).
  * Also commits pending edits to the undo journal once they settle. */
 u16  seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16]);
-u32  seq_ui_track_rgb(u8 track);                             /* palette */
+u32  seq_ui_track_rgb(const struct seq_ui *u, u8 track);     /* the track's colour */
+void seq_ui_default_colours(u8 colour[16]);
 u8   seq_ui_step_pad(u8 i);         /* step i (0-15 on a page) <-> pad; its own inverse */
 u8   seq_ui_beat_led(const struct seq *s, u32 now_ms);       /* 1 = beat flash on */
 u8   seq_ui_undo_skip(u16 off);     /* undo_init() skip rule over struct seq_pattern: mutes */

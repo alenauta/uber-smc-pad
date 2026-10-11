@@ -14,15 +14,30 @@
 #define C_SYNC      0x0040FF
 #define C_TAP       0xFF0020
 
+/* track colours (KNOB BANK K6): mostly pure / two-channel hues, so they still differ when dimmed;
+ * no plain white (held pads and the playhead are white) */
 static const u32 palette[16] = {
-    0xFF2000, 0xFF6000, 0xFFB000, 0xC0FF00, 0x40FF00, 0x00FF40, 0x00FFB0, 0x00C0FF,
-    0x0060FF, 0x2000FF, 0x8000FF, 0xD000FF, 0xFF00B0, 0xFF0050, 0xFF8080, 0x80FFC0,
+    0xFF0000, 0xFF3800, 0xFF9000, 0xFFFF00, 0x80FF00, 0x00FF00, 0x00FF70, 0x00FFFF,
+    0x0070FF, 0x0000FF, 0x5000FF, 0xA000FF, 0xFF00FF, 0xFF0070, 0xA080FF, 0xFF8060,
 };
+/* default colour per track: neighbours far apart on the wheel */
+static const u8 colour_default[16] = {0, 5, 9, 3, 12, 7, 2, 11, 4, 13, 8, 1, 10, 6, 15, 14};
 static const u8 swing_levels[5] = {50, 56, 62, 68, 75};
 
-u32 seq_ui_track_rgb(u8 t)
+u32 seq_ui_track_rgb(const struct seq_ui *u, u8 t)
 {
-    return palette[t & 15];
+    return palette[u->colour[t & 15] & 15];
+}
+
+void seq_ui_default_colours(u8 colour[16])
+{
+    memcpy(colour, colour_default, sizeof(colour_default));
+}
+
+static u8 view_len(const struct seq_track *t)    /* grid steps in the loop (last may be partial) */
+{
+    u8 k = seq_track_grid(t), len = t->len ? (t->len > SEQ_STEPS ? SEQ_STEPS : t->len) : 1;
+    return (u8)((len + k - 1) / k);
 }
 
 static u32 rgbs(u32 c, u32 num, u32 den)
@@ -131,6 +146,12 @@ static void overlay(struct seq_ui *u, u8 kind, u8 colour, s32 v, s32 lo, s32 hi,
     }
 }
 
+static void flash(struct seq_ui *u, u32 now)    /* short white blink: done (undo) / refused */
+{
+    overlay(u, SUI_OV_FLASH, u->track, 0, 0, 0, now);
+    u->ov_until = now + SUI_FLASH_MS ? now + SUI_FLASH_MS : 1;
+}
+
 void seq_ui_init(struct seq_ui *u, struct seq *s, const struct seq_ui_io *io)
 {
     memset(u, 0, sizeof(*u));
@@ -139,6 +160,7 @@ void seq_ui_init(struct seq_ui *u, struct seq *s, const struct seq_ui_io *io)
     u->at_start = 1;
     memset(u->live_note, 0xFF, sizeof(u->live_note));
     memset(u->rec_step, 0xFF, sizeof(u->rec_step));
+    seq_ui_default_colours(u->colour);
 }
 
 u8 seq_ui_shift_page(const struct seq_ui *u)
@@ -185,12 +207,13 @@ static void knob_step(struct seq_ui *u, u8 k, s32 d, u32 now)
 {
     struct seq_pattern *p = u->seq->pat;
     struct seq_track *t = &p->track[u->track];
+    u8 grid = seq_track_grid(t);
     u8 first = 1;
     for (u8 i = 0; i < 16; i++) {
         if (!(u->held & (1u << i))) {
             continue;
         }
-        u8 si = (u8)(u->page * 16 + i);
+        u32 si = (u32)(u->page * 16 + i) * grid;   /* the grid step's stored step */
         if (si >= SEQ_STEPS) {
             continue;
         }
@@ -271,8 +294,28 @@ static void knob_track(struct seq_ui *u, u8 k, s32 d, u32 now)
         overlay(u, SUI_OV_KEYS, c, t->note, 0, 127, now);
         break;
     case 5: t->ratchet_rate = (u8)clampi(t->ratchet_rate + one(d), 0, SEQ_RATCHET_RATES - 1); overlay(u, SUI_OV_PICK, c, t->ratchet_rate, 0, SEQ_RATCHET_RATES - 1, now); break;
-    case 6: t->len = (u8)clampi(t->len + d, 1, SEQ_STEPS); overlay(u, SUI_OV_BAR, c, t->len, 0, SEQ_STEPS, now); break;
-    default: t->rate = (u8)clampi(t->rate + one(d), 0, SEQ_RATES - 1); overlay(u, SUI_OV_PICK, c, t->rate, 0, SEQ_RATES - 1, now); break;
+    case 6: {                                   /* K7 length, in grid steps */
+        u8 g = seq_track_grid(t);
+        s32 vl = clampi(view_len(t) + d, 1, SEQ_STEPS / g);
+        t->len = (u8)(vl * g);
+        overlay(u, SUI_OV_BAR, c, vl, 0, SEQ_STEPS / g, now);
+        break;
+    }
+    default: {                                  /* K8 rate: notes keep their timing; Shift = speed */
+        s32 dir = one(d), r = t->rate;
+        u8 ok = 0, tried = 0;
+        while (dir && !ok && r + dir >= 0 && r + dir < SEQ_RATES) {
+            r += dir;                           /* skip rates the track can't take */
+            tried = 1;
+            ok = seq_set_rate(u->seq, u->track, (u8)r, (u8)!u->shift);
+        }
+        if (tried && !ok) {
+            flash(u, now);                      /* nothing further that way */
+            break;
+        }
+        overlay(u, SUI_OV_PICK, c, t->rate, 0, SEQ_RATES - 1, now);
+        break;
+    }
     }
 }
 
@@ -316,8 +359,13 @@ static void knob_pattern(struct seq_ui *u, u8 k, s32 d, u32 now)
         tempo_changed(u);
         break;
     }
+    case 5:                                     /* K6 track colour */
+        u->colour[u->track] = (u8)((u->colour[u->track] + 16 + one(d)) % 16);
+        overlay(u, SUI_OV_COLOUR, u->track, u->colour[u->track], 0, 15, now);
+        tempo_changed(u);
+        break;
     default:
-        break;                                  /* K5 / K6: later (chaining) */
+        break;                                  /* K5: later (chaining) */
     }
 }
 
@@ -382,8 +430,10 @@ static void tap_tempo(struct seq_ui *u, u32 now)
 static void timing_pad(struct seq_ui *u, u8 pad, u32 now)
 {
     struct seq *s = u->seq;
-    if (pad < 8) {
-        s->pat->track[u->track].rate = pad;
+    if (pad < 8) {                              /* rate: notes keep their timing */
+        if (pad != s->pat->track[u->track].rate && !seq_set_rate(s, u->track, pad, 1)) {
+            flash(u, now);
+        }
     } else if (pad < 13) {
         s->swing = swing_levels[pad - 8];
         tempo_changed(u);
@@ -410,7 +460,7 @@ static void rec_gate(struct seq_ui *u, u8 pad)
     struct seq_track *t = &s->pat->track[u->rec_trk[pad] & 15];
     struct seq_step *st = &t->step[si];
     u32 held = s->pos - u->rec_pos[pad];
-    u32 su = seq_step_units(t->rate);           /* never 0 */
+    u32 su = seq_step_units(t->res);            /* stored step; never 0 */
     if (!st->vel || held > 0x01000000u) {
         return;                                 /* cleared meanwhile / position jumped back */
     }
@@ -448,7 +498,7 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
             s->fill = 0;
         }
         if (u->held & sbit) {
-            u8 si = (u8)(u->page * 16 + sp);
+            u32 si = (u32)(u->page * 16 + sp) * seq_track_grid(t);
             if (!(u->keep & sbit) && si < SEQ_STEPS) {
                 memset(&t->step[si], 0, sizeof(t->step[si]));
             }
@@ -485,9 +535,10 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
         u->padbank_used = 1;
         return;
     }
-    if (u->view == SUI_VIEW_STEP) {
-        u8 si = (u8)(u->page * 16 + sp);
-        if (si >= t->len) {
+    if (u->view == SUI_VIEW_STEP) {             /* pad = grid step; its stored step = vi * grid */
+        u8 vi = (u8)(u->page * 16 + sp);
+        u32 si = (u32)vi * seq_track_grid(t);
+        if (vi >= view_len(t) || si >= SEQ_STEPS) {
             return;
         }
         u->held |= sbit;
@@ -527,8 +578,7 @@ static void history_step(struct seq_ui *u, u8 redo, u32 now)
     undo_commit(u->undo);                       /* pending edits become the newest step */
     u->dirty = 0;
     if (redo ? undo_redo(u->undo) : undo_undo(u->undo)) {
-        overlay(u, SUI_OV_FLASH, u->track, 0, 0, 0, now);
-        u->ov_until = now + SUI_FLASH_MS ? now + SUI_FLASH_MS : 1;
+        flash(u, now);
     }
 }
 
@@ -554,7 +604,7 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
             struct seq_track *t = &s->pat->track[u->track];
             u8 c = 0;
             for (u8 i = 0; i < 16; i++) {
-                u8 si = (u8)(u->page * 16 + i);
+                u32 si = (u32)(u->page * 16 + i) * seq_track_grid(t);
                 if ((u->held & (1u << i)) && si < SEQ_STEPS) {
                     struct seq_step *st = &t->step[si];
                     c = (u8)((((st->ratchet >> 4) & 3) + 1) & 3);   /* bits 6-7 = chord: keep */
@@ -635,11 +685,17 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
 /* ---- LEDs ----------------------------------------------------------------------------- */
 static void draw_overlay(const struct seq_ui *u, u32 rgb[16])
 {
-    u32 c = palette[u->ov_colour & 15];
+    u32 c = seq_ui_track_rgb(u, u->ov_colour);
     s32 lo = u->ov_min, hi = u->ov_max, v = u->ov_val;
-    if (u->ov_kind == SUI_OV_FLASH) {           /* undo / redo done */
+    if (u->ov_kind == SUI_OV_FLASH) {           /* undo / redo done, or refused */
         for (u8 i = 0; i < 16; i++) {
             rgb[i] = rgbs(WHITE, 1, 6);
+        }
+        return;
+    }
+    if (u->ov_kind == SUI_OV_COLOUR) {          /* every colour on its pad, the chosen one full */
+        for (u8 i = 0; i < 16; i++) {
+            rgb[i] = i == v ? palette[i] : rgbs(palette[i], 1, 6);
         }
         return;
     }
@@ -707,10 +763,14 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
         return 0;
     }
     undo_settle(u, now_ms);
+    u8 vlen = view_len(t), grid = seq_track_grid(t);
+    if (u->page && u->page * 16 >= vlen) {
+        u->page = (u8)((vlen - 1) / 16);        /* the grid got coarser */
+    }
     if (s->running) btn |= 1u << SUI_PLAY;
     if (u->rec) btn |= 1u << SUI_REC;
     if (u->page) btn |= 1u << SUI_LEFT;
-    if ((u->page + 1) * 16 < t->len) btn |= 1u << SUI_RIGHT;
+    if ((u->page + 1) * 16 < vlen) btn |= 1u << SUI_RIGHT;
     if (u->view == SUI_VIEW_PLAY) btn |= 1u << SUI_PAD_BANK;
     if (u->knob_page) btn |= 1u << SUI_KNOB_BANK;
     if (u->shift) btn |= 1u << SUI_SHIFT;
@@ -741,7 +801,7 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
     }
     if (u->padbank) {                           /* track layer: activity, mutes, selection */
         for (u8 i = 0; i < 16; i++) {
-            u32 pc = i == u->track ? WHITE : palette[i];
+            u32 pc = i == u->track ? WHITE : seq_ui_track_rgb(u, i);
             if (u->hit_ms[i] && now_ms - u->hit_ms[i] < 80) {
                 rgb[i] = pc;
             } else {
@@ -750,21 +810,31 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
         }
         return btn;
     }
-    u32 c = palette[u->track & 15];
+    u32 c = seq_ui_track_rgb(u, u->track);
     if (u->view == SUI_VIEW_STEP) {
         u8 ph = seq_playhead(s, u->track);
-        for (u8 i = 0; i < 16; i++) {           /* i = step on the page */
-            u8 si = (u8)(u->page * 16 + i);
+        u8 len = t->len ? (t->len > SEQ_STEPS ? SEQ_STEPS : t->len) : 1;
+        for (u8 i = 0; i < 16; i++) {           /* i = grid step on the page */
+            u8 vi = (u8)(u->page * 16 + i);
+            u32 si = (u32)vi * grid;
             u8 pad = seq_ui_step_pad(i);
-            const struct seq_step *st = &t->step[si];
-            if (si >= t->len) {
+            if (vi >= vlen || si >= SEQ_STEPS) {
                 rgb[pad] = 0;
-            } else if (u->held & (1u << i)) {
+                continue;
+            }
+            const struct seq_step *st = &t->step[si];
+            u8 between = 0;                     /* notes off the grid inside this grid step */
+            for (u32 j = si + 1; j < si + grid && j < len; j++) {
+                between |= (u8)(t->step[j].vel != 0);
+            }
+            if (u->held & (1u << i)) {
                 rgb[pad] = WHITE;
-            } else if (ph == si) {
+            } else if (ph != 0xFF && ph / grid == vi) {
                 rgb[pad] = st->vel ? WHITE : rgbs(WHITE, 1, 6);
             } else if (st->vel) {
                 rgb[pad] = rgbs(c, 24 + (u32)st->vel * 104 / 127, 128);
+            } else if (between) {
+                rgb[pad] = rgbs(WHITE, 1, 12);
             } else {
                 rgb[pad] = rgbs(c, 1, 16);
             }

@@ -185,6 +185,10 @@ static void seq_midi(void *ctx, const u8 *m, u32 n)
 static struct { u8 ver, lead_ms, groot, gscale; } seq_cfg;
 static u8 seq_cfg_dirty;
 static u32 seq_cfg_ms;
+/* track colours (KNOB BANK K6): own item so the seq_cfg layout stays; 42 is free in spp_and_le
+ * (user_cfg_id.h uses 1-14, 17-36, 47-49; we use 43-46) */
+#define SMCPAD_COLOURS_VM_ID    42
+static struct { u8 ver, colour[SEQ_TRACKS]; } seq_colours;
 
 static void seq_cfg_set(u8 lead_ms, u8 groot, u8 gscale)
 {
@@ -192,6 +196,11 @@ static void seq_cfg_set(u8 lead_ms, u8 groot, u8 gscale)
         seq_cfg.lead_ms = lead_ms;
         seq_cfg.groot = groot;
         seq_cfg.gscale = gscale;
+        seq_cfg_dirty = 1;
+        seq_cfg_ms = sys_timer_get_ms();
+    }
+    if (memcmp(seq_colours.colour, sui.colour, sizeof(seq_colours.colour))) {
+        memcpy(seq_colours.colour, sui.colour, sizeof(seq_colours.colour));
         seq_cfg_dirty = 1;
         seq_cfg_ms = sys_timer_get_ms();
     }
@@ -219,6 +228,8 @@ static void seq_cfg_flush(u32 now)
     if (seq_cfg_dirty && now - seq_cfg_ms >= SEQCFG_FLUSH_MS) {
         seq_cfg.ver = SEQCFG_VER;
         syscfg_write(SMCPAD_SEQCFG_VM_ID, (u8 *)&seq_cfg, sizeof(seq_cfg));
+        seq_colours.ver = 1;
+        syscfg_write(SMCPAD_COLOURS_VM_ID, (u8 *)&seq_colours, sizeof(seq_colours));
         seq_cfg_dirty = 0;
     }
 }
@@ -260,6 +271,13 @@ static void seq_app_init(void)
     seq.groot = preset.root = seq_cfg.groot;
     seq.gscale = preset.scale = seq_cfg.gscale;
     seq_ui_init(&sui, &seq, &sui_io);
+    if (syscfg_read(SMCPAD_COLOURS_VM_ID, (u8 *)&seq_colours, sizeof(seq_colours)) == sizeof(seq_colours) &&
+        seq_colours.ver == 1) {
+        for (u8 i = 0; i < SEQ_TRACKS; i++) {
+            sui.colour[i] = (u8)(seq_colours.colour[i] & 15);
+        }
+    }
+    memcpy(seq_colours.colour, sui.colour, sizeof(seq_colours.colour));
     undo_init(&seq_undo, (u8 *)&seq_pat, (u8 *)&seq_shadow, (u16)sizeof(seq_pat), seq_ui_undo_skip);
     sui.undo = &seq_undo;
 }

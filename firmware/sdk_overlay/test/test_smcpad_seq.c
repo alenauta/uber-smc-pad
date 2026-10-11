@@ -136,7 +136,7 @@ static void test_polymeter_rate(void)
     setup();
     pat.track[1].len = 3;
     pat.track[1].step[0].vel = 90;                             /* note 37 every 3 steps */
-    pat.track[2].rate = SEQ_RATE_8;
+    pat.track[2].rate = pat.track[2].res = SEQ_RATE_8;
     pat.track[2].step[1].vel = 90;                             /* note 38: 1/8 grid, step 1 */
     seq_start(&S, now);
     run_to(1000 + 1200);
@@ -180,7 +180,7 @@ static void test_probability(void)
     seq_set_tempo(&S, 30000);
     struct seq_track *t = &pat.track[0];
     t->len = 1;
-    t->rate = SEQ_RATE_32T;                                    /* 60 steps per second */
+    t->rate = t->res = SEQ_RATE_32T;                           /* 60 steps per second */
     t->step[0].vel = 100;
     t->step[0].prob_gate = (u8)(8 << 4);                       /* (8-1)*100/14 = 50 % */
     CHECK(seq_step_prob(t, &t->step[0]) == 50);
@@ -484,6 +484,81 @@ static void test_queue_load(void)
     CHECK(stuck == 0);
 }
 
+/* rate = the editing grid: changing it keeps every note where it is in time */
+static void test_rate_grid(void)
+{
+    setup();
+    struct seq_track *t = &pat.track[0];
+    for (u8 k = 0; k < 16; k += 2) {
+        t->step[k].vel = 100;                                  /* every 1/8 at a 1/16 rate */
+    }
+    CHECK(seq_set_rate(&S, 0, SEQ_RATE_32, 1));
+    CHECK(t->rate == SEQ_RATE_32 && t->res == SEQ_RATE_32 && t->len == 32 && t->step[4].vel && !t->step[2].vel);
+    seq_start(&S, now);
+    run_to(1000 + 600);
+    CHECK(nth_on(36, 0) == 1000 && near(nth_on(36, 1), 1250, 1) && near(nth_on(36, 2), 1500, 1));
+    CHECK(near(nth_off(36, 0), 1000 + 63, 1));                 /* gate length kept */
+    seq_stop(&S);
+
+    setup();
+    for (u8 k = 0; k < 16; k++) {
+        pat.track[0].step[k].vel = 100;                        /* every 1/16 */
+    }
+    CHECK(seq_set_rate(&S, 0, SEQ_RATE_4, 1));                 /* coarser: notes between stay */
+    CHECK(t->rate == SEQ_RATE_4 && t->res == SEQ_RATE_16 && seq_track_grid(t) == 4 && t->len == 16);
+    seq_start(&S, now);
+    run_to(1000 + 300);
+    CHECK(near(nth_on(36, 1), 1125, 1) && near(nth_on(36, 2), 1250, 1));
+    seq_stop(&S);
+    /* empty track: same loop time at the new rate */
+    CHECK(seq_set_rate(&S, 1, SEQ_RATE_8, 1) && pat.track[1].len == 8 && pat.track[1].res == SEQ_RATE_8);
+    /* straight -> triplet through the coarsest exact resolution (a lone note: 1/16T itself), and back */
+    struct seq_track *t2 = &pat.track[2];
+    t2->step[4].vel = 100;
+    CHECK(seq_set_rate(&S, 2, SEQ_RATE_16T, 1));
+    CHECK(t2->res == SEQ_RATE_16T && t2->len == 24 && t2->step[6].vel && seq_track_grid(t2) == 1);
+    CHECK(seq_set_rate(&S, 2, SEQ_RATE_16, 1));
+    CHECK(t2->res == SEQ_RATE_16 && t2->len == 16 && t2->step[4].vel && t2->gate == 3);
+    /* every 1/16 filled: 1/16T needs the common 1/32T */
+    struct seq_track *t8 = &pat.track[8];
+    for (u8 k = 0; k < 16; k++) {
+        t8->step[k].vel = 100;
+    }
+    CHECK(seq_set_rate(&S, 8, SEQ_RATE_16T, 1));
+    CHECK(t8->res == SEQ_RATE_32T && t8->len == 48 && t8->step[3].vel && !t8->step[1].vel && seq_track_grid(t8) == 2);
+    /* micro-timing beyond half a new step moves the note to the neighbouring step */
+    struct seq_track *t3 = &pat.track[3];
+    seq_set_rate(&S, 3, SEQ_RATE_8, 0);                        /* speed change: res = rate = 1/8 */
+    t3->step[1].vel = 100;
+    t3->step[1].micro = 40;
+    CHECK(seq_set_rate(&S, 3, SEQ_RATE_32, 1));
+    CHECK(t3->step[6].vel && t3->step[6].micro == -32 && !t3->step[4].vel);   /* 4 + 160/96 */
+    /* refused, untouched: 64 steps of 1/16 can't become 1/32 */
+    struct seq_track *t4 = &pat.track[4];
+    t4->len = 64;
+    for (u8 k = 0; k < 64; k++) {
+        t4->step[k].vel = 100;
+    }
+    CHECK(!seq_set_rate(&S, 4, SEQ_RATE_32, 1) && t4->res == SEQ_RATE_16 && t4->len == 64 && t4->step[1].vel);
+    /* 1/32 <-> triplets with notes on every 1/32: no common resolution */
+    struct seq_track *t5 = &pat.track[5];
+    seq_set_rate(&S, 5, SEQ_RATE_32, 0);
+    t5->step[0].vel = t5->step[1].vel = 100;
+    CHECK(!seq_set_rate(&S, 5, SEQ_RATE_32T, 1) && t5->rate == SEQ_RATE_32 && t5->step[1].vel);
+    /* an auto ratchet keeps its hit spacing when the steps get finer */
+    struct seq_track *t6 = &pat.track[6];
+    t6->step[0].vel = 100;
+    t6->step[0].ratchet = 1 << 4;                              /* 2 hits, auto: 120 units apart */
+    CHECK(seq_set_rate(&S, 6, SEQ_RATE_32, 1) && (t6->step[0].ratchet & 0x0f) == 5);   /* table 120 */
+    /* recording snaps to the grid, stored at the resolution */
+    struct seq_track *t7 = &pat.track[7];
+    t7->step[1].vel = 100;                                     /* off the 1/4 grid: res stays 1/16 */
+    CHECK(seq_set_rate(&S, 7, SEQ_RATE_4, 1) && t7->res == SEQ_RATE_16);
+    seq_start(&S, now);
+    run_to(now + 5 * 125 + 10);                                /* nearest 1/4: stored step 4 */
+    CHECK(seq_record(&S, 7, 90, 0) == 4 && t7->step[4].vel == 90);
+}
+
 int main(void)
 {
     test_scale();
@@ -499,6 +574,7 @@ int main(void)
     test_record_chord();
     test_chords_scales();
     test_queue_load();
+    test_rate_grid();
     printf(failures ? "test_smcpad_seq: %d FAILED\n" : "test_smcpad_seq: ALL PASSED\n", failures);
     return failures != 0;
 }

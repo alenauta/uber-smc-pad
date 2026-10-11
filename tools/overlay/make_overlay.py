@@ -33,9 +33,9 @@ KNOBS = {
     3: ("Base note", "Note (chord)", "Track root"),
     4: ("Rec quantize", "Micro-timing", "Track scale"),
     5: ("Probability", "Probability", ""),
-    6: ("Ratchet rate", "Ratchet rate", ""),
+    6: ("Ratchet rate", "Ratchet rate", "Track colour"),
     7: ("Steps (length)", "Trig condition", "MIDI channel"),
-    8: ("Rate", "Tie", "Play early"),
+    8: ("Rate (\u21e7 speed)", "Tie", "Play early"),
 }
 KNOB_POS = {7: (0, 0), 8: (1, 0), 5: (0, 1), 6: (1, 1), 3: (0, 2), 4: (1, 2), 1: (0, 3), 2: (1, 3)}
 
@@ -228,6 +228,11 @@ def card():
    <li>Trig conditions (K7): always, 1:2, 2:2, 1:3, 2:3, 3:3, 1:4&hellip;4:4, first, fill, not fill.</li>
    <li>Ratchet rate (K6): auto (split the step), 1/8, 1/16, 1/16T, 1/32, 1/32T, 1/64.</li>
   </ul>
+  <h3>Rate = the editing grid</h3>
+  <ul>
+   <li>K8 / timing pads 1&ndash;8: notes keep their timing. A coarser grid keeps the notes in between
+    (pad dim white). <b>Shift + K8</b>: the same steps faster / slower.</li>
+  </ul>
   <p class="foot">&dagger; pattern memory: Shift + Rec = save (later build).</p>
  </div>
 </div>"""
@@ -300,7 +305,7 @@ def build():
 the grey holes. The left strip goes over the knobs (pull the knob caps off if they don't pass through), the right
 strip next to the buttons. The pads stay uncovered: their printed timing labels already match the timing page,
 except pad 14 (FILL, use the sticker).</p>
-<p>The sizes come from the drawing in the manual. Measure your unit before you cut. Firmware 914 and later.</p></div>"""
+<p>The sizes come from the drawing in the manual. Measure your unit before you cut. Firmware 915 and later.</p></div>"""
     sticker = ('<div class="sticker">FILL</div><div class="stickerlab">&larr; sticker for pad 14: covers the '
                'printed &ldquo;LATCH&rdquo; label</div>')
     page = f'<div class="page">{left}{right}{head}{ruler()}{sticker}{card()}</div>'

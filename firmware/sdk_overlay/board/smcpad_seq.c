@@ -54,6 +54,7 @@ void seq_pattern_default(struct seq_pattern *p, const u8 *notes, const u8 *chans
         t->note = notes ? (u8)(notes[i] & 0x7f) : (u8)(36 + i);
         t->len = 16;
         t->rate = SEQ_RATE_16;
+        t->res = SEQ_RATE_16;
         t->gate = 3;                            /* 1/2 step */
         t->vol = 127;
         t->prob = 100;
@@ -92,7 +93,7 @@ u32 seq_step_gate_units(const struct seq_track *t, const struct seq_step *st)
     if (idx >= SEQ_GATES) {
         idx = SEQ_GATES - 1;
     }
-    u32 u = seq_step_units(t->rate) * seq_gate_eighths[idx] / 8;
+    u32 u = seq_step_units(t->res) * seq_gate_eighths[idx] / 8;
     return u ? u : 1;
 }
 
@@ -132,7 +133,227 @@ s32 seq_step_micro_units(const struct seq_track *t, const struct seq_step *st)
 {
     s32 m = st->micro;
     m = m > SEQ_MICRO_MAX ? SEQ_MICRO_MAX : (m < -SEQ_MICRO_MAX ? -SEQ_MICRO_MAX : m);
-    return m * (s32)seq_step_units(t->rate) / 96;
+    return m * (s32)seq_step_units(t->res) / 96;
+}
+
+/* ---- grid / resolution ---------------------------------------------------------------- */
+u8 seq_track_grid(const struct seq_track *t)
+{
+    u32 ur = seq_step_units(t->res), ug = seq_step_units(t->rate);
+    return (u8)((ug >= ur && ug % ur == 0) ? ug / ur : 1);     /* table units: never 0 */
+}
+
+static u8 gate_nearest(u32 eighths)             /* gate table index closest to eighths */
+{
+    u8 best = 0;
+    for (u8 i = 1; i < SEQ_GATES; i++) {
+        u32 db = eighths > seq_gate_eighths[best] ? eighths - seq_gate_eighths[best] : seq_gate_eighths[best] - eighths;
+        u32 di = eighths > seq_gate_eighths[i] ? eighths - seq_gate_eighths[i] : seq_gate_eighths[i] - eighths;
+        if (di < db) {
+            best = i;
+        }
+    }
+    return best;
+}
+
+/* put st at index i, or add its notes to the chord already there (up to SEQ_CHORD) */
+static void step_place(struct seq_step *dst, const struct seq_step *st)
+{
+    if (!dst->vel) {
+        *dst = *st;
+        return;
+    }
+    for (u8 n = 0; n < seq_step_count(st); n++) {
+        s8 o = seq_step_offset(st, n);
+        u8 c = seq_step_count(dst), dup = 0;
+        for (u8 j = 0; j < c; j++) {
+            dup |= (u8)(seq_step_offset(dst, j) == o);
+        }
+        if (!dup && c < SEQ_CHORD) {
+            dst->extra[c - 1] = o;
+            dst->ratchet = (u8)((dst->ratchet & 0x3F) | (c << 6));
+        }
+    }
+}
+
+static struct seq_step rescale_buf[SEQ_STEPS];  /* seq_set_rate scratch (not on the task stack) */
+static struct seq_track rate_backup;            /* seq_set_rate: undo a refused change */
+
+static u8 gate_exact(u32 eighths)               /* table index with exactly this many eighths, 0xFF */
+{
+    for (u8 i = 0; i < SEQ_GATES; i++) {
+        if (seq_gate_eighths[i] == eighths) {
+            return i;
+        }
+    }
+    return 0xFF;
+}
+
+static u8 ratchet_auto(const struct seq_track *t, const struct seq_step *st)   /* hits split the step */
+{
+    u8 rr = st->ratchet & 0x0f;
+    return (u8)(SEQ_RATCHET_HITS(st->ratchet) > 1 && (rr ? rr == 1 : t->ratchet_rate == 0));
+}
+
+/* stored steps m times finer: step i moves to i * m (micro-timing beyond half a step moves it to
+ * the neighbouring step), gates keep their length (up to 4 steps), auto ratchets their spacing */
+static u8 expand(struct seq *s, u8 ti, u8 m)
+{
+    struct seq_track *t = &s->pat->track[ti];
+    u8 len = t->len ? (t->len > SEQ_STEPS ? SEQ_STEPS : t->len) : 1;
+    u32 nlen = (u32)len * m;
+    u32 uold = seq_step_units(t->res);
+    if (m < 2 || nlen > SEQ_STEPS) {
+        return m == 1;
+    }
+    memcpy(rescale_buf, t->step, sizeof(rescale_buf));
+    memset(t->step, 0, sizeof(t->step));
+    for (u8 i = 0; i < len; i++) {
+        struct seq_step st = rescale_buf[i];
+        if (!st.vel) {
+            continue;
+        }
+        if (ratchet_auto(t, &st)) {             /* keep the hit spacing if the table has it */
+            u32 iv = uold / SEQ_RATCHET_HITS(st.ratchet);
+            for (u8 j = 1; j < SEQ_RATCHET_RATES; j++) {
+                if (seq_ratchet_units[j] == iv) {
+                    st.ratchet = (u8)((st.ratchet & 0xF0) | (j + 1));
+                }
+            }
+        }
+        s32 off = (s32)st.micro * m;            /* 1/96 of a new step */
+        s32 sh = off >= 0 ? (off + 48) / 96 : -((-off + 48) / 96);
+        st.micro = (s8)(off - sh * 96);
+        u8 g = st.prob_gate & 0x0f;
+        if (g) {
+            st.prob_gate = (u8)((st.prob_gate & 0xF0) | (gate_nearest((u32)seq_gate_eighths[g - 1] * m) + 1));
+        }
+        s32 ni = ((s32)i * m + sh) % (s32)nlen;
+        step_place(&t->step[ni < 0 ? ni + (s32)nlen : ni], &st);
+    }
+    t->gate = gate_nearest((u32)seq_gate_eighths[t->gate < SEQ_GATES ? t->gate : SEQ_GATES - 1] * m);
+    t->len = (u8)nlen;
+    s->ts[ti].step = (u8)(s->ts[ti].step * m);  /* same point in time (next_grid unchanged) */
+    return 1;
+}
+
+/* stored steps m times coarser, only if nothing changes: every note on a multiple of m, its
+ * micro-timing and gate divide exactly, no auto ratchet (its spacing would change) */
+static u8 shrink(struct seq *s, u8 ti, u8 m)
+{
+    struct seq_track *t = &s->pat->track[ti];
+    u8 len = t->len ? (t->len > SEQ_STEPS ? SEQ_STEPS : t->len) : 1;
+    u8 tg = t->gate < SEQ_GATES ? t->gate : SEQ_GATES - 1;
+    if (m < 2 || len % m || seq_gate_eighths[tg] % m || gate_exact(seq_gate_eighths[tg] / m) == 0xFF) {
+        return 0;
+    }
+    for (u8 i = 0; i < len; i++) {
+        const struct seq_step *st = &t->step[i];
+        u8 g = st->prob_gate & 0x0f;
+        if (st->vel && (i % m || st->micro % m || ratchet_auto(t, st) ||
+                        (g && (seq_gate_eighths[g - 1] % m || gate_exact(seq_gate_eighths[g - 1] / m) == 0xFF)))) {
+            return 0;
+        }
+    }
+    u8 nlen = (u8)(len / m);
+    for (u8 i = 0; i < nlen; i++) {             /* ascending: i * m >= i */
+        struct seq_step st = t->step[i * m];
+        if (st.vel) {
+            u8 g = st.prob_gate & 0x0f;
+            st.micro = (s8)(st.micro / m);
+            if (g) {
+                st.prob_gate = (u8)((st.prob_gate & 0xF0) | (gate_exact(seq_gate_eighths[g - 1] / m) + 1));
+            }
+        }
+        t->step[i] = st;
+    }
+    memset(&t->step[nlen], 0, sizeof(t->step[0]) * (SEQ_STEPS - nlen));
+    t->gate = gate_exact(seq_gate_eighths[tg] / m);
+    t->len = nlen;
+    struct seq_track_state *ts = &s->ts[ti];    /* next step: the next coarse one, at its grid */
+    u32 ns = ((u32)ts->step + m - 1) / m;
+    ts->next_grid += (ns * m - ts->step) * seq_step_units(t->res);
+    if (ns >= nlen) {
+        ns = 0;
+        ts->loop++;
+    }
+    ts->step = (u8)ns;
+    return 1;
+}
+
+/* make the stored steps as coarse as possible without changing anything; limit = a rate the
+ * result must divide (the grid), SEQ_RATES = any */
+static void compact(struct seq *s, u8 ti, u8 limit)
+{
+    struct seq_track *t = &s->pat->track[ti];
+    u32 ur = seq_step_units(t->res);
+    for (u8 r = 0; r < SEQ_RATES; r++) {        /* coarsest first */
+        u32 uc = seq_step_units(r);
+        if (uc <= ur || uc % ur || (limit < SEQ_RATES && seq_step_units(limit) % uc)) {
+            continue;
+        }
+        if (shrink(s, ti, (u8)(uc / ur))) {
+            t->res = r;
+            return;
+        }
+    }
+}
+
+/* storage -> a resolution the new grid is a multiple of (expanding as needed) */
+static u8 convert(struct seq *s, u8 ti, u8 rate)
+{
+    struct seq_track *t = &s->pat->track[ti];
+    u32 ur = seq_step_units(t->res), un = seq_step_units(rate);
+    if (un % ur == 0) {                         /* coarser grid: storage stays, notes stay */
+        return 1;
+    }
+    for (u8 r = 0; r < SEQ_RATES; r++) {        /* finer / straight <-> triplet: coarsest common */
+        u32 ug = seq_step_units(r);
+        if (ur % ug == 0 && un % ug == 0) {
+            if (!expand(s, ti, (u8)(ur / ug))) {
+                return 0;
+            }
+            t->res = r;
+            return 1;
+        }
+    }
+    return 0;                                   /* 1/32 <-> triplets: no common resolution */
+}
+
+u8 seq_set_rate(struct seq *s, u8 ti, u8 rate, u8 keep_timing)
+{
+    if (ti >= SEQ_TRACKS || rate >= SEQ_RATES) {
+        return 0;
+    }
+    struct seq_track *t = &s->pat->track[ti];
+    if (!keep_timing) {                         /* same steps, new speed */
+        t->rate = t->res = rate;
+        return 1;
+    }
+    u32 ur = seq_step_units(t->res), un = seq_step_units(rate);
+    u8 empty = 1;
+    for (u8 i = 0; i < SEQ_STEPS && empty; i++) {
+        empty = (u8)!t->step[i].vel;
+    }
+    if (empty) {                                /* nothing to keep: same loop time at the new rate */
+        u32 len = t->len ? t->len : 1;
+        u32 nl = (len * ur + un / 2) / un;
+        t->len = (u8)(nl < 1 ? 1 : (nl > SEQ_STEPS ? SEQ_STEPS : nl));
+        s->ts[ti].step = (u8)((u32)s->ts[ti].step * ur / un % t->len);
+        t->rate = t->res = rate;
+        return 1;
+    }
+    struct seq_track_state bts = s->ts[ti];
+    rate_backup = *t;
+    compact(s, ti, SEQ_RATES);                  /* undo what earlier rate changes spread out */
+    if (!convert(s, ti, rate)) {
+        *t = rate_backup;                       /* refused: exactly as before */
+        s->ts[ti] = bts;
+        return 0;
+    }
+    t->rate = rate;
+    compact(s, ti, rate);                       /* as coarse as the grid allows */
+    return 1;
 }
 
 static u8 cond_ok(u8 cond, u16 loop, u8 fill)
@@ -252,7 +473,7 @@ static void schedule(struct seq *s, u8 ti)
 {
     struct seq_track *t = &s->pat->track[ti];
     struct seq_track_state *ts = &s->ts[ti];
-    u32 u = seq_step_units(t->rate);
+    u32 u = seq_step_units(t->res);
     u8 len = t->len ? (t->len > SEQ_STEPS ? SEQ_STEPS : t->len) : 1;
     u8 k = ts->step < len ? ts->step : 0;
     const struct seq_step *st = &t->step[k];
@@ -322,7 +543,7 @@ static void process(struct seq *s)
 {
     u32 ahead = s->pos + lead_units(s);
     for (u8 i = 0; i < SEQ_TRACKS; i++) {
-        u32 half = seq_step_units(s->pat->track[i].rate) / 2;
+        u32 half = seq_step_units(s->pat->track[i].res) / 2;
         for (u8 guard = 0; guard < 8 && (s32)(ahead + half - s->ts[i].next_grid) >= 0; guard++) {
             schedule(s, i);
         }
@@ -541,7 +762,7 @@ u8 seq_playhead(const struct seq *s, u8 track)
     const struct seq_track *t = &s->pat->track[track];
     const struct seq_track_state *ts = &s->ts[track];
     u8 len = t->len ? (t->len > SEQ_STEPS ? SEQ_STEPS : t->len) : 1;
-    u32 u = seq_step_units(t->rate);
+    u32 u = seq_step_units(t->res);
     u8 prev = ts->step ? (u8)(ts->step - 1) : (u8)(len - 1);
     if (ts->next_grid == 0) {
         return 0;
@@ -561,18 +782,19 @@ u8 seq_record(struct seq *s, u8 track, u8 vel, s8 note)
     struct seq_track *t = &s->pat->track[track];
     struct seq_track_state *ts = &s->ts[track];
     u8 len = t->len ? (t->len > SEQ_STEPS ? SEQ_STEPS : t->len) : 1;
-    s32 u = (s32)seq_step_units(t->rate);
-    u8 prev = ts->step ? (u8)(ts->step - 1) : (u8)(len - 1);
-    s32 d = (s32)(s->pos - (ts->next_grid - (u32)u));  /* from the last scheduled step's grid */
-    if (ts->next_grid == 0) {
-        prev = 0;
-        d = (s32)s->pos;
-    }
-    s32 j = d >= 0 ? (d + u / 2) / u : -((-d + u / 2 - 1) / u);
-    s32 off = d - j * u;
-    u8 idx = (u8)(((s32)prev + j % len + len) % len);
+    s32 u = (s32)seq_step_units(t->res);        /* stored step */
+    s32 g = u * seq_track_grid(t);              /* grid step (rate) */
+    s32 loop = u * len;
+    /* time since the loop started: the next step to schedule (ts->step) starts at next_grid */
+    s32 rel = ts->next_grid ? (s32)(s->pos - ts->next_grid) + (s32)ts->step * u : (s32)s->pos;
+    rel = ((rel % loop) + loop) % loop;
+    s32 j = (rel + g / 2) / g;                  /* nearest grid step */
+    s32 off = rel - j * g;
     s32 q = t->quantize > 100 ? 100 : t->quantize;
-    s32 micro = off * 96 / u * (100 - q) / 100;
+    s32 at = j * g + off * (100 - q) / 100;     /* pulled towards the grid by quantize % */
+    s32 i2 = at >= 0 ? (at + u / 2) / u : -((-at + u / 2) / u);
+    s32 micro = (at - i2 * u) * 96 / u;
+    u8 idx = (u8)(((i2 % len) + len) % len);
     struct seq_step *st = &t->step[idx];
     if (!st->vel) {                             /* empty step: this hit defines it */
         memset(st, 0, sizeof(*st));

@@ -201,8 +201,8 @@ static void test_views_play_and_tracks(void)
     S.active[0].note = 61;
     S.nactive = 1;
     seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[2] == WHITE && rgb[0] == rgbs(palette[5], 1, 3) && rgb[12] == rgbs(palette[5], 1, 3));
-    CHECK(rgb[1] == palette[5] && rgb[3] == rgbs(palette[5], 1, 12));
+    CHECK(rgb[2] == WHITE && rgb[0] == rgbs(seq_ui_track_rgb(&U, 5), 1, 3) && rgb[12] == rgbs(seq_ui_track_rgb(&U, 5), 1, 3));
+    CHECK(rgb[1] == seq_ui_track_rgb(&U, 5) && rgb[3] == rgbs(seq_ui_track_rgb(&U, 5), 1, 12));
     S.nactive = 0;
     seq_ui_pad(&U, 2, 0, 0, now);
     /* live record while running: an empty step takes the hit, the same step adds chord notes */
@@ -228,7 +228,7 @@ static void test_views_play_and_tracks(void)
     /* its LEDs: activity flash, mutes dim, selected track white */
     S.hits = 1u << 6;
     seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[6] == palette[6] && rgb[4] == rgbs(palette[4], 1, 32) && rgb[7] == rgbs(palette[7], 1, 6));
+    CHECK(rgb[6] == seq_ui_track_rgb(&U, 6) && rgb[4] == rgbs(seq_ui_track_rgb(&U, 4), 1, 32) && rgb[7] == rgbs(seq_ui_track_rgb(&U, 7), 1, 6));
     CHECK(rgb[5] == WHITE || rgb[5] == rgbs(WHITE, 1, 4));
     /* Shift + Stop + pad clears a track */
     seq_ui_button(&U, SUI_SHIFT, 1, now);
@@ -254,18 +254,18 @@ static void test_global_scale(void)
     CHECK(rgb[0] == 0 && rgb[1] == 0 && rgb[11] == 0);         /* follow: no pad lit */
     seq_ui_knob(&U, 2, 1, now);                                /* C = pad 1 */
     seq_ui_leds(&U, now, rgb);
-    CHECK(S.groot == 1 && rgb[0] == palette[0] && rgb[1] == rgbs(palette[0], 1, 12));
+    CHECK(S.groot == 1 && rgb[0] == seq_ui_track_rgb(&U, 0) && rgb[1] == rgbs(seq_ui_track_rgb(&U, 0), 1, 12));
     seq_ui_knob(&U, 2, 3, now);                                /* one per report: C# = pad 2 */
     CHECK(S.groot == 2 && groot_seen == 2 && pat.track[0].note == 36);   /* not the base note */
     seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[1] == palette[0] && rgb[0] == rgbs(palette[0], 1, 12) && rgb[11] != 0 && rgb[12] == 0);
+    CHECK(rgb[1] == seq_ui_track_rgb(&U, 0) && rgb[0] == rgbs(seq_ui_track_rgb(&U, 0), 1, 12) && rgb[11] != 0 && rgb[12] == 0);
     CHECK(seq_track_root(&S, &pat.track[0]) == 1);
     seq_ui_knob(&U, 3, 1, now);
     CHECK(S.gscale == SCALE_CHROMATIC + 1 && gscale_seen == 1);
     seq_ui_knob(&U, 3, 1, now);
     CHECK(S.gscale == SCALE_MAJOR + 1);
     seq_ui_leds(&U, now, rgb);                                 /* major = pad 2 */
-    CHECK(rgb[1] == palette[0] && rgb[0] == rgbs(palette[0], 1, 12) && rgb[11] != 0 && rgb[12] == 0);
+    CHECK(rgb[1] == seq_ui_track_rgb(&U, 0) && rgb[0] == rgbs(seq_ui_track_rgb(&U, 0), 1, 12) && rgb[11] != 0 && rgb[12] == 0);
     for (int i = 0; i < 20; i++) {
         seq_ui_knob(&U, 3, 1, now);
     }
@@ -375,14 +375,14 @@ static void test_knob_pages_and_leds(void)
     seq_ui_knob(&U, 7, -2, now);                               /* K8 rate: one per report, 1/16 -> 1/8T */
     CHECK(pat.track[0].rate == SEQ_RATE_8T);
     seq_ui_leds(&U, now, rgb);                                 /* pick: pad 4 (printed 1/8T) bright */
-    CHECK(rgb[3] == palette[0] && rgb[4] == rgbs(palette[0], 1, 12) && rgb[8] == 0);
+    CHECK(rgb[3] == seq_ui_track_rgb(&U, 0) && rgb[4] == rgbs(seq_ui_track_rgb(&U, 0), 1, 12) && rgb[8] == 0);
     seq_ui_knob(&U, 2, 2, now);                                /* K3 base note + preview */
     CHECK(pat.track[0].note == 37 && last[0] == 0x99 && last[1] == 37);
     /* overlay for K1 volume (bar) */
     seq_ui_knob(&U, 0, -64, now);                              /* 127 -> 0 (accel) */
     CHECK(pat.track[0].vol == 0);
     seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[0] == rgbs(palette[0], 1, 24));                  /* empty bar */
+    CHECK(rgb[0] == rgbs(seq_ui_track_rgb(&U, 0), 1, 24));                  /* empty bar */
     now += SUI_OVERLAY_MS + 1;
     /* pattern page */
     press(SUI_KNOB_BANK);
@@ -396,7 +396,7 @@ static void test_knob_pages_and_leds(void)
     CHECK(pat.track[0].root == 3 && pat.track[0].scale == SCALE_MAJOR + 1);
     CHECK(seq_track_root(&S, &pat.track[0]) == 2 && seq_track_scale(&S, &pat.track[0]) == SCALE_MAJOR);
     seq_ui_leds(&U, now, rgb);                                 /* pick: major = pad 2 */
-    CHECK(rgb[1] == palette[0] && rgb[0] == rgbs(palette[0], 1, 12) && rgb[11] != 0 && rgb[12] == 0);
+    CHECK(rgb[1] == seq_ui_track_rgb(&U, 0) && rgb[0] == rgbs(seq_ui_track_rgb(&U, 0), 1, 12) && rgb[11] != 0 && rgb[12] == 0);
     now += SUI_OVERLAY_MS + 1;
     press(SUI_KNOB_BANK);
     /* step view LEDs */
@@ -404,7 +404,7 @@ static void test_knob_pages_and_leds(void)
     pat.track[0].len = 20;
     pat.track[0].step[1].vel = 127;
     u16 b = seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[P(1)] == palette[0] && rgb[P(2)] == rgbs(palette[0], 1, 16) && rgb[1] != palette[0]);
+    CHECK(rgb[P(1)] == seq_ui_track_rgb(&U, 0) && rgb[P(2)] == rgbs(seq_ui_track_rgb(&U, 0), 1, 16) && rgb[1] != seq_ui_track_rgb(&U, 0));
     CHECK(b & (1u << SUI_RIGHT) && !(b & (1u << SUI_LEFT)) && !(b & (1u << SUI_PLAY)));
     press(SUI_PLAY);
     b = seq_ui_leds(&U, now, rgb);
@@ -428,11 +428,11 @@ static void test_knob_pages_and_leds(void)
     pat.track[0].chan = 0;
     seq_ui_knob(&U, 6, 3, now);                                /* -> ch 2 */
     seq_ui_leds(&U, now, rgb);
-    CHECK(pat.track[0].chan == 1 && rgb[0] == palette[0] && rgb[1] == palette[0] && rgb[2] == rgbs(palette[0], 1, 24));
+    CHECK(pat.track[0].chan == 1 && rgb[0] == seq_ui_track_rgb(&U, 0) && rgb[1] == seq_ui_track_rgb(&U, 0) && rgb[2] == rgbs(seq_ui_track_rgb(&U, 0), 1, 24));
     pat.track[0].chan = 14;
     seq_ui_knob(&U, 6, 1, now);                                /* -> ch 16: all lit */
     seq_ui_leds(&U, now, rgb);
-    CHECK(pat.track[0].chan == 15 && rgb[15] == palette[0]);
+    CHECK(pat.track[0].chan == 15 && rgb[15] == seq_ui_track_rgb(&U, 0));
 }
 
 static void test_stop_mute_running(void)
@@ -518,6 +518,65 @@ static void test_undo(void)
     CHECK(!pat.track[0].step[9].vel && pat.track[0].step[0].vel);
 }
 
+/* rate = editing grid: a coarser grid keeps the notes between its steps; Shift + K8 = speed;
+ * KNOB BANK K6 = track colour */
+static void test_grid_rate_colour(void)
+{
+    setup();
+    struct seq_track *t = &pat.track[0];
+    for (u8 i = 0; i < 16; i++) {
+        t->step[i].vel = 100;                                  /* every 1/16 */
+    }
+    for (int i = 0; i < 4; i++) {
+        seq_ui_knob(&U, 7, -1, now);                           /* K8: 1/16 -> 1/4, one per report */
+    }
+    CHECK(t->rate == SEQ_RATE_4 && t->res == SEQ_RATE_16 && seq_track_grid(t) == 4 && t->len == 16);
+    now += SUI_OVERLAY_MS + 1;
+    t->step[8].vel = 0;                                        /* grid step 3 now only has notes between */
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[P(0)] != 0 && rgb[P(1)] != rgbs(WHITE, 1, 12) && rgb[P(2)] == rgbs(WHITE, 1, 12));
+    CHECK(rgb[P(4)] == 0 && rgb[P(15)] == 0);                  /* 4 grid steps in the loop */
+    tap(P(2));                                                 /* grid step 3 = stored step 8 */
+    CHECK(t->step[8].vel == SUI_DEFAULT_VEL && t->step[9].vel == 100);
+    seq_ui_knob(&U, 6, 1, now);                                /* K7 length in grid steps: 4 -> 5 */
+    CHECK(t->len == 20);
+    seq_ui_knob(&U, 6, 20, now);
+    CHECK(t->len == 64);                                       /* 16 grid steps of 4 */
+    t->len = 16;
+    /* finer than the stored steps: they spread out; passing the triplet rates doesn't pile up */
+    for (int i = 0; i < 6; i++) {
+        seq_ui_knob(&U, 7, 1, now);                            /* 1/4 -> 1/32 */
+    }
+    CHECK(t->rate == SEQ_RATE_32 && t->res == SEQ_RATE_32 && t->len == 32 && t->step[2].vel && !t->step[1].vel);
+    /* a rate the track can't take is skipped: 64 steps of 1/32 -> 1/16T would need 96 */
+    t->len = 64;
+    seq_ui_knob(&U, 7, -1, now);
+    CHECK(t->rate == SEQ_RATE_16 && t->res == SEQ_RATE_16 && t->len == 32 && t->step[1].vel);
+    /* picked directly on the timing page: refused, nothing changes, pads flash */
+    t->len = 64;
+    seq_ui_button(&U, SUI_NOTE_REPEAT, 1, now);
+    tap(5);                                                    /* 1/16T */
+    seq_ui_button(&U, SUI_NOTE_REPEAT, 0, now);
+    CHECK(t->rate == SEQ_RATE_16 && t->len == 64 && U.ov_kind == SUI_OV_FLASH);
+    t->len = 16;
+    /* Shift + K8: the old speed change, steps unchanged */
+    seq_ui_button(&U, SUI_SHIFT, 1, now);
+    seq_ui_knob(&U, 7, -2, now);                               /* 1/16 -> 1/8T */
+    seq_ui_button(&U, SUI_SHIFT, 0, now);
+    CHECK(t->rate == SEQ_RATE_8T && t->res == SEQ_RATE_8T && t->len == 16 && t->step[1].vel);
+    /* colour: KNOB BANK K6, every colour shown on its pad */
+    now += SUI_OVERLAY_MS + 1;
+    press(SUI_KNOB_BANK);
+    int n0 = ntempo;
+    seq_ui_knob(&U, 5, 1, now);
+    CHECK(U.colour[0] == 1 && seq_ui_track_rgb(&U, 0) == palette[1] && ntempo == n0 + 1);
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[1] == palette[1] && rgb[0] == rgbs(palette[0], 1, 6) && rgb[15] == rgbs(palette[15], 1, 6));
+    seq_ui_knob(&U, 5, -1, now);
+    seq_ui_knob(&U, 5, -3, now);                               /* one per report, wraps */
+    CHECK(U.colour[0] == 15);
+}
+
 int main(void)
 {
     test_mode_and_steps();
@@ -530,6 +589,7 @@ int main(void)
     test_stop_mute_running();
     test_beat_led();
     test_undo();
+    test_grid_rate_colour();
     printf(failures ? "test_smcpad_seq_ui: %d FAILED\n" : "test_smcpad_seq_ui: ALL PASSED\n", failures);
     return failures != 0;
 }
