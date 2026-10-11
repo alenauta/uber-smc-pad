@@ -374,6 +374,116 @@ static void test_record(void)
     CHECK(seq_record(&S, 5, 80, 0) == 0xFF && seq_playhead(&S, 5) == 0xFF);
 }
 
+/* recording onto a step that already plays builds a chord (max 4, no duplicates) */
+static void test_record_chord(void)
+{
+    setup();
+    seq_start(&S, now);
+    run_to(1000 + 2 * 125 + 5);
+    struct seq_step *st = &pat.track[3].step[2];
+    CHECK(seq_record(&S, 3, 90, 0) == 2 && seq_step_count(st) == 1);
+    CHECK(seq_record(&S, 3, 50, 4) == 2 && seq_step_count(st) == 2 && st->extra[0] == 4);
+    CHECK(st->vel == 90);                                      /* one velocity per step */
+    seq_record(&S, 3, 50, 4);                                  /* already there */
+    seq_record(&S, 3, 50, 0);
+    CHECK(seq_step_count(st) == 2);
+    seq_record(&S, 3, 50, 7);
+    seq_record(&S, 3, 50, 11);
+    seq_record(&S, 3, 50, 12);                                 /* a 5th note: full */
+    CHECK(seq_step_count(st) == 4 && st->extra[1] == 7 && st->extra[2] == 11);
+    CHECK(SEQ_RATCHET_HITS(st->ratchet) == 1);                 /* chord bits don't touch ratchets */
+}
+
+static void test_chords_scales(void)
+{
+    setup();
+    /* track 0: C E G chord, offsets in the effective scale (global "follow preset" = chromatic) */
+    pat.track[0].note = 60;
+    pat.track[0].step[0].vel = 100;
+    pat.track[0].step[0].ratchet = (2 << 6) | (1 << 4);       /* 3 notes x 2 hits */
+    pat.track[0].step[0].extra[0] = 4;
+    pat.track[0].step[0].extra[1] = 7;
+    seq_start(&S, now);
+    run_to(1000 + 120);
+    CHECK(count_on(60, 1000, 1001) == 1 && count_on(64, 1000, 1001) == 1 && count_on(67, 1000, 1001) == 1);
+    CHECK(count_on(60, 1000, 1120) == 2 && count_on(67, 1000, 1120) == 2);   /* each note ratcheted */
+    seq_stop(&S);
+    /* global major: following tracks move in the scale, a chromatic (drum) track does not */
+    setup();
+    S.gscale = SCALE_MAJOR + 1;
+    pat.track[0].note = 60;
+    pat.track[0].step[0].vel = 100;
+    pat.track[0].step[0].ratchet = 1 << 6;
+    pat.track[0].step[0].extra[0] = 2;                        /* 2 scale steps = E */
+    pat.track[1].note = 36;
+    pat.track[1].scale = SCALE_CHROMATIC + 1;
+    pat.track[1].step[0].vel = 100;
+    pat.track[1].step[0].note = 1;                             /* 37, not D */
+    pat.track[2].note = 62;
+    pat.track[2].root = 3;                                     /* own root D, follows global major */
+    pat.track[2].step[0].vel = 100;
+    pat.track[2].step[0].note = 2;                             /* D E F# */
+    seq_start(&S, now);
+    run_to(1000 + 50);
+    CHECK(count_on(60, 1000, 1050) == 1 && count_on(64, 1000, 1050) == 1);
+    CHECK(count_on(37, 1000, 1050) == 1 && count_on(66, 1000, 1050) == 1);
+    CHECK(seq_track_scale(&S, &pat.track[1]) == SCALE_CHROMATIC && seq_track_scale(&S, &pat.track[0]) == SCALE_MAJOR);
+    S.gscale = SCALE_CHROMATIC + 1;                            /* global chromatic forces it */
+    CHECK(seq_track_note(&S, &pat.track[0], 2) == 62);
+    S.gscale = SCALE_COUNT + 5;                                /* bad value: chromatic, no crash */
+    CHECK(seq_track_scale(&S, &pat.track[0]) == SCALE_CHROMATIC);
+}
+
+/* queue: events leave in time order; an overload drops whole hits (never a lone note off) */
+static void test_queue_load(void)
+{
+    setup();
+    for (u8 t = 0; t < SEQ_TRACKS; t++) {                      /* 16 tracks x 4-note chords, every step */
+        pat.track[t].chan = t;
+        for (u8 k = 0; k < 16; k++) {
+            struct seq_step *st = &pat.track[t].step[k];
+            st->vel = 100;
+            st->ratchet = 3 << 6;
+            st->extra[0] = 3; st->extra[1] = 7; st->extra[2] = 10;
+            st->micro = (s8)((k * 7 + t * 5) % 40 - 20);       /* mixed micro-timing */
+        }
+    }
+    seq_start(&S, now);
+    run_to(1000 + 4000);
+    CHECK(S.dropped == 0 && S.late == 0);
+    int ons = 0;
+    for (int i = 0; i < nlg; i++) {
+        ons += lg[i].n == 3 && (lg[i].m[0] & 0xF0) == 0x90;
+    }
+    CHECK(ons >= 16 * 4 * 32 - 64);                            /* 32 steps in 4 s, all notes */
+    /* add 4 ratchets everywhere: far over the queue; hits drop, every on still gets its off */
+    for (u8 t = 0; t < SEQ_TRACKS; t++) {
+        for (u8 k = 0; k < 16; k++) {
+            pat.track[t].step[k].ratchet |= 3 << 4;
+        }
+    }
+    run_to(now + 2000);
+    CHECK(S.dropped > 0 && S.nq <= SEQ_QUEUE);
+    for (int i = S.qh + 1; i < S.qh + S.nq; i++) {
+        CHECK((s32)(S.q[i].at - S.q[i - 1].at) >= 0);
+    }
+    seq_stop(&S);
+    int bal[16][128];
+    memset(bal, 0, sizeof(bal));
+    for (int i = 0; i < nlg; i++) {
+        if (lg[i].n == 3) {
+            bal[lg[i].m[0] & 15][lg[i].m[1]] += (lg[i].m[0] & 0xF0) == 0x90 ? 1 : -1;
+        }
+    }
+    int stuck = 0;
+    for (int c = 0; c < 16; c++) {
+        for (int n = 0; n < 128; n++) {
+            stuck += bal[c][n] > 0;
+        }
+    }
+    CHECK(stuck == 0);
+}
+
 int main(void)
 {
     test_scale();
@@ -386,6 +496,9 @@ int main(void)
     test_external_clock();
     test_external_clock_lead_jitter();
     test_record();
+    test_record_chord();
+    test_chords_scales();
+    test_queue_load();
     printf(failures ? "test_smcpad_seq: %d FAILED\n" : "test_smcpad_seq: ALL PASSED\n", failures);
     return failures != 0;
 }

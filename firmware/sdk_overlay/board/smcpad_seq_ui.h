@@ -6,14 +6,18 @@
  *
  *   Shift + Note Repeat        enter / leave (seq_ui_toggle); Note Repeat LED flashes on the beat
  *   step view pads             tap = step on / off; hold + knobs = step parameters
+ *   play view pads             play the track in its scale from its base note (chromatic = drum
+ *                              kit); with Rec on and running they record (same step = chord)
  *   hold step + Note Repeat    ratchet count 1 -> 2 -> 3 -> 4 -> 1
  *   hold Note Repeat           timing page: 1-8 track rate, 9-13 swing, 14 fill (hold),
  *                              15 sync on/off, 16 tap tempo
- *   PAD BANK tap / hold + pad  view step -> kit -> keyboard / select track
+ *   PAD BANK tap               view step <-> play
+ *   hold PAD BANK              track layer (activity, mutes): pad = select track,
+ *                              + Stop + pad = mute, + Shift + Stop + pad = clear that track
  *   Left / Right               page; Shift + Left / Right = undo / redo
  *   Play / Stop                (Stop on release; twice = to the start); Rec = live record
- *   Stop + pad (kit view)      mute (playback continues); Shift + Stop + pad = clear that track
- *   KNOB BANK                  knob page: track / pattern
+ *   KNOB BANK                  knob page: track / pattern (K3 / K4 = track root / scale)
+ *   Shift + K3 / K4            global root / scale (shared with normal mode)
  */
 #ifndef SMCPAD_SEQ_UI_H
 #define SMCPAD_SEQ_UI_H
@@ -24,7 +28,7 @@
 /* hardware buttons (smcpad_hw_buttons() bit = stock button id) */
 enum { SUI_BT = 0, SUI_PAD_BANK, SUI_KNOB_BANK, SUI_LEFT, SUI_RIGHT, SUI_PLAY, SUI_STOP,
        SUI_REC, SUI_SHIFT, SUI_NOTE_REPEAT };
-enum { SUI_VIEW_STEP = 0, SUI_VIEW_KIT, SUI_VIEW_KEYS, SUI_VIEWS };
+enum { SUI_VIEW_STEP = 0, SUI_VIEW_PLAY, SUI_VIEWS };
 enum { SUI_KNOBS_TRACK = 0, SUI_KNOBS_PATTERN };
 
 #define SUI_OVERLAY_MS      1000            /* knob value shown on the pads after the last turn */
@@ -34,8 +38,9 @@ enum { SUI_KNOBS_TRACK = 0, SUI_KNOBS_PATTERN };
 
 struct seq_ui_io {
     void *ctx;
-    void (*midi)(void *ctx, const u8 *m, u32 n);           /* live notes from kit / keyboard */
-    void (*save)(void *ctx, u32 centibpm, u8 swing, u8 lead_ms);  /* persist (globals) */
+    void (*midi)(void *ctx, const u8 *m, u32 n);           /* live notes from the play view */
+    /* persist tempo, swing, play early, global root / scale */
+    void (*save)(void *ctx, const struct seq *s);
 };
 
 struct seq_ui {
@@ -48,7 +53,7 @@ struct seq_ui {
     u8  nr_used, padbank_used, stop_used;   /* a combination happened while held */
     u16 held;                               /* step-view pads held */
     u16 keep;                               /* held pads that must not toggle on release */
-    u16 lit_pads;                           /* kit / keyboard pads held (white) */
+    u16 lit_pads;                           /* play-view pads held (white) */
     u8  live_note[17], live_chan[17];       /* notes sounding: pads 0-15, 16 = knob preview */
     /* knob value overlay */
     u32 ov_until;
@@ -58,7 +63,7 @@ struct seq_ui {
     /* tap tempo */
     u32 tap[4];
     u8  ntap;
-    /* kit-view hit flashes */
+    /* track-layer hit flashes */
     u32 hit_ms[16];
     /* undo: optional journal over the pattern (NULL = off) */
     struct undo *undo;
@@ -66,7 +71,8 @@ struct seq_ui {
     u32 act_ms;                             /* last pad / knob / button event */
 };
 
-enum { SUI_OV_NONE = 0, SUI_OV_BAR, SUI_OV_SIGNED, SUI_OV_KEYS, SUI_OV_SCALE, SUI_OV_COUNT, SUI_OV_FLASH,
+/* PICK: one pad per choice from pad 1 (ov_min = value of pad 1; values below 0 stay dark) */
+enum { SUI_OV_NONE = 0, SUI_OV_BAR, SUI_OV_SIGNED, SUI_OV_KEYS, SUI_OV_COUNT, SUI_OV_FLASH,
        SUI_OV_PICK };
 
 void seq_ui_init(struct seq_ui *u, struct seq *s, const struct seq_ui_io *io);

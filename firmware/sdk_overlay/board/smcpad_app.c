@@ -39,6 +39,7 @@
 #include "smcpad_preset.h"
 #include "smcpad_seq.h"
 #include "smcpad_seq_ui.h"
+#include "smcpad_scale.h"
 #define APP_PRESETS         1                   /* preset interpreter (needs the store) */
 #else
 #define APP_PRESETS         0
@@ -148,11 +149,13 @@ static void preset_globals_changed(void *ctx)  /* pad-bank button: persist like 
     store.globals_gen++;
 }
 
-static const struct smcpad_preset_io preset_io = {NULL, preset_midi, preset_midi_mcp, preset_globals_changed};
+static void preset_scale_changed(void *ctx);
+static const struct smcpad_preset_io preset_io = {NULL, preset_midi, preset_midi_mcp, preset_globals_changed,
+                                                  preset_scale_changed};
 
 /* ---- sequencer ------------------------------------------------------------------------ */
 #define APP_SEQ_LED_MS      20                  /* sequencer LED frame rate (playhead, blinks) */
-static struct seq_pattern seq_pat;              /* active pattern (6.3 KB) */
+static struct seq_pattern seq_pat;              /* active pattern (9.4 KB) */
 static struct seq_pattern seq_shadow;           /* undo: the pattern at the last commit */
 static struct undo seq_undo;                    /* undo: changed bytes (1.5 KB) */
 static struct seq seq;
@@ -167,28 +170,41 @@ static void seq_midi(void *ctx, const u8 *m, u32 n)
 }
 
 /* Sequencer settings that don't fit the stock globals: own VM item, written 2 s after the last
- * change (tempo / swing stay in globals 0-2). */
+ * change (tempo / swing stay in globals 0-2). groot / gscale = the global root / scale, shared
+ * by normal mode and the sequencer (were reserved zeros: old items read as C / follow preset). */
 #define SMCPAD_SEQCFG_VM_ID     43                  /* free user VM id */
 #define SEQCFG_VER              1
 #define SEQCFG_FLUSH_MS         2000
-static struct { u8 ver, lead_ms, rsv[2]; } seq_cfg;
+static struct { u8 ver, lead_ms, groot, gscale; } seq_cfg;
 static u8 seq_cfg_dirty;
 static u32 seq_cfg_ms;
 
-static void seq_settings_store(void *ctx, u32 centibpm, u8 swing, u8 lead_ms)
+static void seq_cfg_set(u8 lead_ms, u8 groot, u8 gscale)
 {
-    (void)ctx;
-    u32 bpm = (centibpm + 50) / 100;
-    store.globals[GLOB_TEMPO_LO] = (u8)bpm;
-    store.globals[GLOB_TEMPO_HI] = (u8)(bpm >> 8);
-    store.globals[GLOB_SWING] = swing;
-    store.globals_dirty = 1;
-    store.globals_gen++;
-    if (lead_ms != seq_cfg.lead_ms) {
+    if (lead_ms != seq_cfg.lead_ms || groot != seq_cfg.groot || gscale != seq_cfg.gscale) {
         seq_cfg.lead_ms = lead_ms;
+        seq_cfg.groot = groot;
+        seq_cfg.gscale = gscale;
         seq_cfg_dirty = 1;
         seq_cfg_ms = sys_timer_get_ms();
     }
+}
+
+static void seq_settings_store(void *ctx, const struct seq *s)
+{
+    (void)ctx;
+    u32 bpm = (s->centibpm + 50) / 100;
+    if (store.globals[GLOB_TEMPO_LO] != (u8)bpm || store.globals[GLOB_TEMPO_HI] != (u8)(bpm >> 8) ||
+        store.globals[GLOB_SWING] != s->swing) {
+        store.globals[GLOB_TEMPO_LO] = (u8)bpm;
+        store.globals[GLOB_TEMPO_HI] = (u8)(bpm >> 8);
+        store.globals[GLOB_SWING] = s->swing;
+        store.globals_dirty = 1;
+        store.globals_gen++;
+    }
+    preset.root = s->groot;                     /* normal mode plays the same scale */
+    preset.scale = s->gscale;
+    seq_cfg_set(s->lead_ms, s->groot, s->gscale);
 }
 
 static void seq_cfg_flush(u32 now)
@@ -202,6 +218,14 @@ static void seq_cfg_flush(u32 now)
 
 static const struct seq_out seq_out = {NULL, seq_midi};
 static const struct seq_ui_io sui_io = {NULL, seq_midi, seq_settings_store};
+
+static void preset_scale_changed(void *ctx)     /* Shift + K3 / K4 in normal mode */
+{
+    (void)ctx;
+    seq.groot = preset.root;
+    seq.gscale = preset.scale;
+    seq_cfg_set(seq.lead_ms, seq.groot, seq.gscale);
+}
 
 static void seq_app_init(void)
 {
@@ -221,7 +245,12 @@ static void seq_app_init(void)
         seq_cfg.ver != SEQCFG_VER || seq_cfg.lead_ms > SEQ_LEAD_MAX_MS) {
         memset(&seq_cfg, 0, sizeof(seq_cfg));
     }
+    if (seq_cfg.groot > 11 || seq_cfg.gscale > SCALE_COUNT) {
+        seq_cfg.groot = seq_cfg.gscale = 0;
+    }
     seq.lead_ms = seq_cfg.lead_ms;
+    seq.groot = preset.root = seq_cfg.groot;
+    seq.gscale = preset.scale = seq_cfg.gscale;
     seq_ui_init(&sui, &seq, &sui_io);
     undo_init(&seq_undo, (u8 *)&seq_pat, (u8 *)&seq_shadow, (u16)sizeof(seq_pat), seq_ui_undo_skip);
     sui.undo = &seq_undo;

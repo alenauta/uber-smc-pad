@@ -15,7 +15,7 @@ static int failures;
 static u8 last[3];
 static int nmidi, ntempo;
 static u32 tempo_seen;
-static u8 swing_seen, lead_seen;
+static u8 swing_seen, lead_seen, groot_seen, gscale_seen;
 static void cap(void *ctx, const u8 *m, u32 n)
 {
     (void)ctx;
@@ -24,13 +24,15 @@ static void cap(void *ctx, const u8 *m, u32 n)
     }
     nmidi++;
 }
-static void cap_tempo(void *ctx, u32 c, u8 sw, u8 lead)
+static void cap_tempo(void *ctx, const struct seq *s)
 {
     (void)ctx;
     ntempo++;
-    tempo_seen = c;
-    swing_seen = sw;
-    lead_seen = lead;
+    tempo_seen = s->centibpm;
+    swing_seen = s->swing;
+    lead_seen = s->lead_ms;
+    groot_seen = s->groot;
+    gscale_seen = s->gscale;
 }
 static const struct seq_out sout = {NULL, cap};
 static const struct seq_ui_io uio = {NULL, cap, cap_tempo};
@@ -92,14 +94,19 @@ static void test_mode_and_steps(void)
     seq_ui_knob(&U, 0, 1, now);
     seq_ui_pad(&U, P(5), 0, 0, now);
     CHECK(st->vel == SUI_DEFAULT_VEL - 39);
-    /* ratchet: hold step + Note Repeat cycles 2, 3, 4, 1 */
+    /* ratchet: hold step + Note Repeat cycles 2, 3, 4, 1; the chord bits stay */
+    st->ratchet |= 1u << 6;                                    /* a 2-note chord */
+    st->extra[0] = 4;
     seq_ui_pad(&U, P(5), 1, 90, now);
     press(SUI_NOTE_REPEAT);
-    CHECK((st->ratchet >> 4) == 1);
+    CHECK(((st->ratchet >> 4) & 3) == 1 && seq_step_count(st) == 2);
     press(SUI_NOTE_REPEAT); press(SUI_NOTE_REPEAT);
-    CHECK((st->ratchet >> 4) == 3);
+    CHECK(((st->ratchet >> 4) & 3) == 3 && SEQ_RATCHET_HITS(st->ratchet) == 4);
     press(SUI_NOTE_REPEAT);
-    CHECK((st->ratchet >> 4) == 0);
+    CHECK(((st->ratchet >> 4) & 3) == 0 && seq_step_count(st) == 2 && (st->ratchet & 0x0f) == 2);
+    /* K3 on a held step moves the whole chord (preview = the first note) */
+    seq_ui_knob(&U, 2, 1, now);
+    CHECK(st->note == 1 && st->extra[0] == 5 && last[0] == 0x99 && last[1] == 37);
     seq_ui_pad(&U, P(5), 0, 0, now);
     CHECK(st->vel != 0);                                       /* ratchet edit kept it */
     /* steps past the track length do nothing */
@@ -149,7 +156,7 @@ static void test_timing_page(void)
     CHECK(!U.nr && pat.track[0].step[2].vel == 0);             /* page taps did not edit steps */
 }
 
-static void test_views_kit_keys(void)
+static void test_views_play_and_tracks(void)
 {
     setup();
     /* PAD BANK hold + pad selects a track without changing the view */
@@ -157,19 +164,48 @@ static void test_views_kit_keys(void)
     tap(5);
     seq_ui_button(&U, SUI_PAD_BANK, 0, now);
     CHECK(U.track == 5 && U.view == SUI_VIEW_STEP);
-    press(SUI_PAD_BANK);
-    CHECK(U.view == SUI_VIEW_KIT);
-    /* kit: pad plays its track's note, release stops it */
+    press(SUI_PAD_BANK);                                       /* tap: step <-> play */
+    u16 b = seq_ui_leds(&U, now, rgb);
+    CHECK(U.view == SUI_VIEW_PLAY && (b & (1u << SUI_PAD_BANK)));
+    /* global "follow preset" = chromatic here: pad n = base + n (a drum kit) */
     seq_ui_pad(&U, 2, 1, 77, now);
-    CHECK(last[0] == 0x99 && last[1] == 38 && last[2] == 77 && U.track == 2);
+    CHECK(last[0] == 0x99 && last[1] == 43 && last[2] == 77 && U.track == 5);
     seq_ui_pad(&U, 2, 0, 0, now);
-    CHECK(last[0] == 0x89 && last[1] == 38);
-    /* Stop + pad mutes */
-    seq_ui_button(&U, SUI_STOP, 1, now);
-    tap(4);
-    seq_ui_button(&U, SUI_STOP, 0, now);
-    CHECK(pat.track[4].mute == 1);
-    /* live record while running */
+    CHECK(last[0] == 0x89 && last[1] == 43);
+    /* global C major: a following track plays it */
+    S.gscale = SCALE_MAJOR + 1;
+    pat.track[5].note = 60;
+    seq_ui_pad(&U, 2, 1, 80, now);
+    CHECK(last[1] == 64);
+    seq_ui_pad(&U, 2, 0, 0, now);
+    /* track set to chromatic (drum track): stays chromatic whatever the global scale */
+    pat.track[5].scale = SCALE_CHROMATIC + 1;
+    seq_ui_pad(&U, 2, 1, 80, now);
+    CHECK(last[1] == 62);
+    seq_ui_pad(&U, 2, 0, 0, now);
+    /* track's own root D + major from D */
+    pat.track[5].scale = SCALE_MAJOR + 1;
+    pat.track[5].root = 3;
+    pat.track[5].note = 62;
+    seq_ui_pad(&U, 2, 1, 80, now);
+    CHECK(last[1] == 66 && seq_track_root(&S, &pat.track[5]) == 2);
+    seq_ui_pad(&U, 2, 0, 0, now);
+    /* global chromatic forces following tracks chromatic */
+    pat.track[5].scale = pat.track[5].root = 0;
+    pat.track[5].note = 60;
+    S.gscale = SCALE_CHROMATIC + 1;
+    seq_ui_pad(&U, 2, 1, 80, now);
+    CHECK(last[1] == 62);
+    /* play-view LEDs: held white, root (C) brighter, a sounding note full colour */
+    S.active[0].chan = 9;
+    S.active[0].note = 61;
+    S.nactive = 1;
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[2] == WHITE && rgb[0] == rgbs(palette[5], 1, 3) && rgb[12] == rgbs(palette[5], 1, 3));
+    CHECK(rgb[1] == palette[5] && rgb[3] == rgbs(palette[5], 1, 12));
+    S.nactive = 0;
+    seq_ui_pad(&U, 2, 0, 0, now);
+    /* live record while running: an empty step takes the hit, the same step adds chord notes */
     press(SUI_REC);
     press(SUI_PLAY);
     CHECK(S.running && U.rec);
@@ -177,26 +213,58 @@ static void test_views_kit_keys(void)
         now++;
         seq_run(&S, now);
     }
-    tap(7);                                                    /* ~step 2 */
-    CHECK(pat.track[7].step[2].vel == 90);
-    /* keyboard: C major from 60 */
-    pat.root = 0;
-    pat.scale = SCALE_MAJOR;
-    pat.track[7].note = 60;
-    press(SUI_PAD_BANK);
-    CHECK(U.view == SUI_VIEW_KEYS && U.track == 7);
-    seq_ui_pad(&U, 2, 1, 80, now);
-    CHECK(last[1] == 64);
-    seq_ui_pad(&U, 2, 0, 0, now);
-    press(SUI_PAD_BANK);
-    CHECK(U.view == SUI_VIEW_STEP);
+    tap(3);                                                    /* ~step 2 */
+    struct seq_step *st = &pat.track[5].step[2];
+    CHECK(st->vel == 90 && st->note == 3 && seq_step_count(st) == 1);
+    tap(7);
+    tap(3);                                                    /* already there: not added */
+    CHECK(seq_step_count(st) == 2 && st->extra[0] == 7);
+    /* track layer (hold PAD BANK): Stop + pad mutes, playback continues */
+    seq_ui_button(&U, SUI_PAD_BANK, 1, now);
+    seq_ui_button(&U, SUI_STOP, 1, now);
+    tap(4);
+    seq_ui_button(&U, SUI_STOP, 0, now);
+    CHECK(pat.track[4].mute == 1 && S.running);
+    /* its LEDs: activity flash, mutes dim, selected track white */
+    S.hits = 1u << 6;
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[6] == palette[6] && rgb[4] == rgbs(palette[4], 1, 32) && rgb[7] == rgbs(palette[7], 1, 6));
+    CHECK(rgb[5] == WHITE || rgb[5] == rgbs(WHITE, 1, 4));
     /* Shift + Stop + pad clears a track */
     seq_ui_button(&U, SUI_SHIFT, 1, now);
     seq_ui_button(&U, SUI_STOP, 1, now);
-    tap(7);
+    tap(5);
     seq_ui_button(&U, SUI_STOP, 0, now);
     seq_ui_button(&U, SUI_SHIFT, 0, now);
-    CHECK(pat.track[7].step[2].vel == 0);
+    seq_ui_button(&U, SUI_PAD_BANK, 0, now);
+    CHECK(st->vel == 0 && U.view == SUI_VIEW_PLAY && S.running);
+    press(SUI_PAD_BANK);
+    CHECK(U.view == SUI_VIEW_STEP);
+}
+
+/* Shift + K3 / K4: global root / scale, persisted through the save callback */
+static void test_global_scale(void)
+{
+    setup();
+    seq_ui_button(&U, SUI_SHIFT, 1, now);
+    seq_ui_knob(&U, 2, -1, now);                               /* clamped at C */
+    CHECK(S.groot == 0);
+    seq_ui_knob(&U, 2, 1, now);
+    seq_ui_knob(&U, 2, 3, now);                                /* one per report */
+    CHECK(S.groot == 2 && groot_seen == 2 && pat.track[0].note == 36);   /* not the base note */
+    seq_ui_leds(&U, now, rgb);                                 /* pad 1 dark, C = pad 2: D = pad 4 */
+    CHECK(rgb[0] == 0 && rgb[3] == palette[0] && rgb[1] == rgbs(palette[0], 1, 12) && rgb[13] == 0);
+    seq_ui_knob(&U, 3, 1, now);
+    CHECK(S.gscale == SCALE_CHROMATIC + 1 && gscale_seen == 1);
+    seq_ui_knob(&U, 3, 1, now);
+    CHECK(S.gscale == SCALE_MAJOR + 1);
+    seq_ui_leds(&U, now, rgb);                                 /* pad 1 = follow preset, 3 = major */
+    CHECK(rgb[2] == palette[0] && rgb[0] == rgbs(palette[0], 1, 12) && rgb[12] != 0 && rgb[13] == 0);
+    for (int i = 0; i < 20; i++) {
+        seq_ui_knob(&U, 3, 1, now);
+    }
+    CHECK(S.gscale == SCALE_COUNT);
+    seq_ui_button(&U, SUI_SHIFT, 0, now);
 }
 
 static void test_transport(void)
@@ -236,12 +304,15 @@ static void test_knob_pages_and_leds(void)
     press(SUI_KNOB_BANK);
     seq_ui_knob(&U, 0, 1, now);
     CHECK(S.centibpm == 12100 && tempo_seen == 12100);
-    seq_ui_knob(&U, 2, 2, now);
+    seq_ui_knob(&U, 2, 2, now);                                /* K3 track root: one per report */
     seq_ui_knob(&U, 2, 1, now);
+    seq_ui_knob(&U, 2, 1, now);
+    seq_ui_knob(&U, 3, 1, now);                                /* K4 track scale: chromatic, major */
     seq_ui_knob(&U, 3, 1, now);
-    CHECK(pat.root == 2 && pat.scale == SCALE_MAJOR);
-    seq_ui_leds(&U, now, rgb);                                 /* scale overlay: D major */
-    CHECK(rgb[2] == palette[0] && rgb[4] != 0 && rgb[3] == 0 && rgb[1] != 0);
+    CHECK(pat.track[0].root == 3 && pat.track[0].scale == SCALE_MAJOR + 1);
+    CHECK(seq_track_root(&S, &pat.track[0]) == 2 && seq_track_scale(&S, &pat.track[0]) == SCALE_MAJOR);
+    seq_ui_leds(&U, now, rgb);                                 /* pick: pad 1 = follow global */
+    CHECK(rgb[2] == palette[0] && rgb[0] == rgbs(palette[0], 1, 12) && rgb[12] != 0 && rgb[13] == 0);
     now += SUI_OVERLAY_MS + 1;
     press(SUI_KNOB_BANK);
     /* step view LEDs */
@@ -283,13 +354,14 @@ static void test_knob_pages_and_leds(void)
 static void test_stop_mute_running(void)
 {
     setup();
-    press(SUI_PAD_BANK);                                       /* kit view */
     press(SUI_PLAY);
+    seq_ui_button(&U, SUI_PAD_BANK, 1, now);                   /* track layer */
     seq_ui_button(&U, SUI_STOP, 1, now);
     CHECK(S.running);                                          /* Stop acts on release */
     tap(3);
     seq_ui_button(&U, SUI_STOP, 0, now);
-    CHECK(S.running && pat.track[3].mute == 1);                /* muted, still playing */
+    seq_ui_button(&U, SUI_PAD_BANK, 0, now);
+    CHECK(S.running && pat.track[3].mute == 1 && U.view == SUI_VIEW_STEP);   /* muted, playing */
     press(SUI_STOP);
     CHECK(!S.running);
 }
@@ -329,8 +401,8 @@ static void test_undo(void)
     tap(P(2));
     now += 10;
     seq_ui_knob(&U, 6, -4, now);                               /* ... with a knob turn */
-    seq_ui_button(&U, SUI_STOP, 1, now);                       /* Stop + pad in kit view = mute: */
-    seq_ui_button(&U, SUI_STOP, 0, now);                       /* not journaled (step view: none) */
+    seq_ui_button(&U, SUI_STOP, 1, now);                       /* mutes (track layer) are */
+    seq_ui_button(&U, SUI_STOP, 0, now);                       /* not journaled: set directly */
     pat.track[3].mute = 1;
     now += SUI_UNDO_IDLE_MS;
     seq_ui_leds(&U, now, rgb);
@@ -366,7 +438,8 @@ int main(void)
 {
     test_mode_and_steps();
     test_timing_page();
-    test_views_kit_keys();
+    test_views_play_and_tracks();
+    test_global_scale();
     test_transport();
     test_knob_pages_and_leds();
     test_stop_mute_running();

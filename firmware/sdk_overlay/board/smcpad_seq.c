@@ -48,7 +48,6 @@ void seq_pattern_default(struct seq_pattern *p, const u8 *notes, const u8 *chans
     memset(p, 0, sizeof(*p));
     p->magic = SEQ_PATTERN_MAGIC;
     p->ver = SEQ_PATTERN_VER;
-    p->scale = SCALE_CHROMATIC;
     for (u8 i = 0; i < SEQ_TRACKS; i++) {
         struct seq_track *t = &p->track[i];
         t->chan = chans ? (u8)(chans[i] & 0x0f) : 9;
@@ -60,7 +59,6 @@ void seq_pattern_default(struct seq_pattern *p, const u8 *notes, const u8 *chans
         t->prob = 100;
         t->quantize = 100;                      /* live recording snaps to the step */
         t->ratchet_rate = 0;                    /* auto: hits split the step */
-        t->colour = i;
     }
 }
 
@@ -98,9 +96,30 @@ u32 seq_step_gate_units(const struct seq_track *t, const struct seq_step *st)
     return u ? u : 1;
 }
 
-u8 seq_step_note(const struct seq_pattern *p, const struct seq_track *t, const struct seq_step *st)
+u8 seq_track_scale(const struct seq *s, const struct seq_track *t)
 {
-    return smcpad_scale_note(t->note, st->note, p->root, p->scale);
+    u8 v = t->scale ? t->scale : s->gscale;     /* track, else global; 0 = chromatic */
+    return (v && v - 1 < SCALE_COUNT) ? (u8)(v - 1) : SCALE_CHROMATIC;
+}
+
+u8 seq_track_root(const struct seq *s, const struct seq_track *t)
+{
+    return (u8)((t->root ? t->root - 1 : s->groot) % 12);
+}
+
+u8 seq_track_note(const struct seq *s, const struct seq_track *t, s8 offset)
+{
+    return smcpad_scale_note(t->note, offset, seq_track_root(s, t), seq_track_scale(s, t));
+}
+
+u8 seq_step_count(const struct seq_step *st)
+{
+    return SEQ_CHORD_NOTES(st->ratchet);
+}
+
+s8 seq_step_offset(const struct seq_step *st, u8 i)
+{
+    return i == 0 ? st->note : st->extra[(i - 1) % (SEQ_CHORD - 1)];
 }
 
 s32 seq_step_micro_units(const struct seq_track *t, const struct seq_step *st)
@@ -125,28 +144,54 @@ static u8 cond_ok(u8 cond, u16 loop, u8 fill)
     }
 }
 
-/* ---- event queue -------------------------------------------------------------------- */
-static void push(struct seq *s, u32 at, u8 on, u8 chan, u8 note, u8 vel, u8 track)
+/* ---- event queue: q[qh .. qh+nq-1], earliest first, offs before ons at the same time ---- */
+static void q_remove(struct seq *s, u8 i)               /* i = index into q[] */
 {
-    if (on) {                                   /* an earlier note on the same key ends here */
-        for (u8 i = 0; i < s->nq; i++) {
-            struct seq_event *e = &s->q[i];
-            if (!e->on && e->chan == chan && e->note == note && (s32)(e->at - at) > 0) {
-                e->at = at;
-            }
-        }
-    }
+    u8 end = (u8)(s->qh + s->nq);
+    memmove(&s->q[i], &s->q[i + 1], (u32)(end - i - 1) * sizeof(s->q[0]));
+    s->nq--;
+}
+
+static void q_insert(struct seq *s, const struct seq_event *ev)
+{
     if (s->nq >= SEQ_QUEUE) {
         s->dropped++;
         return;
     }
-    struct seq_event *e = &s->q[s->nq++];
-    e->at = at;
-    e->on = on;
-    e->chan = chan;
-    e->note = note;
-    e->vel = vel;
-    e->track = track;
+    if (s->qh + s->nq >= SEQ_QUEUE) {                  /* no room at the end: compact */
+        memmove(&s->q[0], &s->q[s->qh], (u32)s->nq * sizeof(s->q[0]));
+        s->qh = 0;
+    }
+    u8 i = (u8)(s->qh + s->nq);
+    while (i > s->qh) {                                 /* new events are late: search from the end */
+        const struct seq_event *p = &s->q[i - 1];
+        s32 d = (s32)(p->at - ev->at);
+        if (d < 0 || (d == 0 && (!p->on || ev->on))) {
+            break;
+        }
+        i--;
+    }
+    memmove(&s->q[i + 1], &s->q[i], (u32)(s->qh + s->nq - i) * sizeof(s->q[0]));
+    s->q[i] = *ev;
+    s->nq++;
+}
+
+static void push(struct seq *s, u32 at, u8 on, u8 chan, u8 note, u8 vel, u8 track)
+{
+    if (on) {                                   /* an earlier note on the same key ends here */
+        for (u8 i = s->qh; i < s->qh + s->nq; i++) {
+            const struct seq_event *e = &s->q[i];
+            if (!e->on && e->chan == chan && e->note == note && (s32)(e->at - at) > 0) {
+                struct seq_event m = *e;
+                m.at = at;
+                q_remove(s, i);
+                q_insert(s, &m);
+                i = (u8)(s->qh - 1);            /* rescan (the moved off no longer matches) */
+            }
+        }
+    }
+    struct seq_event e = {at, on, chan, note, vel, track};
+    q_insert(s, &e);
 }
 
 static void active_add(struct seq *s, u8 chan, u8 note)
@@ -175,28 +220,13 @@ static void active_del(struct seq *s, u8 chan, u8 note)
 
 static void emit(struct seq *s, u32 upto, u32 late_units)
 {
-    for (;;) {
-        s8 best = -1;
-        for (u8 i = 0; i < s->nq; i++) {
-            const struct seq_event *e = &s->q[i];
-            if ((s32)(e->at - upto) > 0) {
-                continue;
-            }
-            if (best < 0) {
-                best = (s8)i;
-                continue;
-            }
-            const struct seq_event *b = &s->q[best];
-            s32 d = (s32)(e->at - b->at);
-            if (d < 0 || (d == 0 && !e->on && b->on)) {     /* earliest first, offs before ons */
-                best = (s8)i;
-            }
+    while (s->nq && (s32)(s->q[s->qh].at - upto) <= 0) {
+        struct seq_event e = s->q[s->qh];
+        s->qh++;
+        s->nq--;
+        if (!s->nq) {
+            s->qh = 0;
         }
-        if (best < 0) {
-            return;
-        }
-        struct seq_event e = s->q[best];
-        s->q[best] = s->q[--s->nq];
         if ((s32)(upto - e.at) > (s32)late_units) {
             s->late++;
         }
@@ -232,7 +262,7 @@ static void schedule(struct seq *s, u8 ti)
         if ((s32)(at - s->pos) < 0) {
             at = s->pos;                        /* negative micro-timing at the very start */
         }
-        u8 count = (u8)((st->ratchet >> 4) + 1);
+        u8 count = SEQ_RATCHET_HITS(st->ratchet);
         u8 rr = st->ratchet & 0x0f;
         u8 ri = rr ? (u8)(rr - 1) : t->ratchet_rate;
         u32 interval = ri < SEQ_RATCHET_RATES ? seq_ratchet_units[ri] : 0;
@@ -244,18 +274,25 @@ static void schedule(struct seq *s, u8 ti)
             gate = interval * 3 / 4 ? interval * 3 / 4 : 1;
         }
         u32 vel = (u32)st->vel * (t->vol > 127 ? 127 : t->vol) / 127;
-        u8 note = seq_step_note(s->pat, t, st);
-        for (u8 h = 0; h < count; h++) {
-            u32 on = at + h * interval;
-            u32 g_off = on + gate;
-            if (h == count - 1 && (st->cond & SEQ_COND_TIE)) {
-                g_off = g + u + TIE_OVERLAP;    /* legato into the next step */
-                if ((s32)(g_off - on) <= 0) {
-                    g_off = on + 1;
+        u8 notes = seq_step_count(st);
+        for (u8 n = 0; n < notes; n++) {
+            u8 note = seq_track_note(s, t, seq_step_offset(st, n));
+            for (u8 h = 0; h < count; h++) {
+                u32 on = at + h * interval;
+                u32 g_off = on + gate;
+                if (h == count - 1 && (st->cond & SEQ_COND_TIE)) {
+                    g_off = g + u + TIE_OVERLAP;    /* legato into the next step */
+                    if ((s32)(g_off - on) <= 0) {
+                        g_off = on + 1;
+                    }
                 }
+                if (s->nq + 2 > SEQ_QUEUE) {    /* full: drop the whole hit, never an off alone */
+                    s->dropped++;
+                    continue;
+                }
+                push(s, on, 1, t->chan & 0x0f, note, (u8)(vel ? vel : 1), ti);
+                push(s, g_off, 0, t->chan & 0x0f, note, 0, ti);
             }
-            push(s, on, 1, t->chan & 0x0f, note, (u8)(vel ? vel : 1), ti);
-            push(s, g_off, 0, t->chan & 0x0f, note, 0, ti);
         }
     }
     ts->next_grid = g + u;
@@ -336,6 +373,7 @@ void seq_stop(struct seq *s)
     }
     s->nactive = 0;
     s->nq = 0;
+    s->qh = 0;
 }
 
 void seq_run(struct seq *s, u32 now_ms)
@@ -529,8 +567,22 @@ u8 seq_record(struct seq *s, u8 track, u8 vel, s8 note)
     s32 q = t->quantize > 100 ? 100 : t->quantize;
     s32 micro = off * 96 / u * (100 - q) / 100;
     struct seq_step *st = &t->step[idx];
-    st->vel = vel ? (vel > 127 ? 127 : vel) : 1;
-    st->note = note;
-    st->micro = (s8)(micro > SEQ_MICRO_MAX ? SEQ_MICRO_MAX : (micro < -SEQ_MICRO_MAX ? -SEQ_MICRO_MAX : micro));
+    if (!st->vel) {                             /* empty step: this hit defines it */
+        memset(st, 0, sizeof(*st));
+        st->vel = vel ? (vel > 127 ? 127 : vel) : 1;
+        st->note = note;
+        st->micro = (s8)(micro > SEQ_MICRO_MAX ? SEQ_MICRO_MAX : (micro < -SEQ_MICRO_MAX ? -SEQ_MICRO_MAX : micro));
+        return idx;
+    }
+    u8 n = seq_step_count(st);                  /* playing step: add to its chord */
+    for (u8 i = 0; i < n; i++) {
+        if (seq_step_offset(st, i) == note) {
+            return idx;
+        }
+    }
+    if (n < SEQ_CHORD) {
+        st->extra[n - 1] = note;
+        st->ratchet = (u8)((st->ratchet & 0x3F) | (n << 6));
+    }
     return idx;
 }
