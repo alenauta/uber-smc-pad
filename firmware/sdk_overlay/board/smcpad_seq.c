@@ -104,7 +104,13 @@ u8 seq_track_scale(const struct seq *s, const struct seq_track *t)
 
 u8 seq_track_root(const struct seq *s, const struct seq_track *t)
 {
-    return (u8)((t->root ? t->root - 1 : s->groot) % 12);
+    if (t->root) {                              /* track's own */
+        return (u8)((t->root - 1) % 12);
+    }
+    if (s->groot) {                             /* global */
+        return (u8)((s->groot - 1) % 12);
+    }
+    return (u8)(t->note % 12);                  /* follow the preset: the track's base note */
 }
 
 u8 seq_track_note(const struct seq *s, const struct seq_track *t, s8 offset)
@@ -548,6 +554,7 @@ u8 seq_playhead(const struct seq *s, u8 track)
 
 u8 seq_record(struct seq *s, u8 track, u8 vel, s8 note)
 {
+    s->rec_created = 0;
     if (!s->running || track >= SEQ_TRACKS) {
         return 0xFF;
     }
@@ -572,6 +579,7 @@ u8 seq_record(struct seq *s, u8 track, u8 vel, s8 note)
         st->vel = vel ? (vel > 127 ? 127 : vel) : 1;
         st->note = note;
         st->micro = (s8)(micro > SEQ_MICRO_MAX ? SEQ_MICRO_MAX : (micro < -SEQ_MICRO_MAX ? -SEQ_MICRO_MAX : micro));
+        s->rec_created = 1;
         return idx;
     }
     u8 n = seq_step_count(st);                  /* playing step: add to its chord */

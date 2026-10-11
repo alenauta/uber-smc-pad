@@ -124,7 +124,7 @@ struct seq {
     u8  self_started; /* Play was pressed on the pad: ignore host Start (could be our own echo) */
     u8  fill;
     u8  swing;      /* 50..75 % */
-    u8  groot;      /* global scale root 0..11 */
+    u8  groot;      /* global root: 0 = follow the preset (each track's base note), 1..12 = C..B */
     u8  gscale;     /* global scale: 0 = follow the preset (chromatic here), 1.. = smcpad_scale index + 1 */
     u32 centibpm;   /* internal tempo */
     u32 pos;        /* current position */
@@ -149,6 +149,7 @@ struct seq {
     u16 hits;       /* bit t: track t sent a note on since the UI last cleared it */
     u32 late;       /* events emitted more than ~2 ms late (diagnostics) */
     u32 dropped;    /* queue overflows */
+    u8  rec_created;/* the last seq_record() call started a new step (vs. added a chord note) */
 };
 
 /* tables (exposed for UI and tests) */

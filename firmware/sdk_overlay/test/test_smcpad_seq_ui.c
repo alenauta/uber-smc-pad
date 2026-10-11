@@ -242,29 +242,113 @@ static void test_views_play_and_tracks(void)
     CHECK(U.view == SUI_VIEW_STEP);
 }
 
-/* Shift + K3 / K4: global root / scale, persisted through the save callback */
+/* Shift + K3 / K4: global root / scale, persisted through the save callback. Picks: no pad lit =
+ * follow the preset, pads 1..12 = C..B / chromatic, major, ... */
 static void test_global_scale(void)
 {
     setup();
     seq_ui_button(&U, SUI_SHIFT, 1, now);
-    seq_ui_knob(&U, 2, -1, now);                               /* clamped at C */
+    seq_ui_knob(&U, 2, -1, now);                               /* clamped at follow */
     CHECK(S.groot == 0);
-    seq_ui_knob(&U, 2, 1, now);
-    seq_ui_knob(&U, 2, 3, now);                                /* one per report */
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[0] == 0 && rgb[1] == 0 && rgb[11] == 0);         /* follow: no pad lit */
+    seq_ui_knob(&U, 2, 1, now);                                /* C = pad 1 */
+    seq_ui_leds(&U, now, rgb);
+    CHECK(S.groot == 1 && rgb[0] == palette[0] && rgb[1] == rgbs(palette[0], 1, 12));
+    seq_ui_knob(&U, 2, 3, now);                                /* one per report: C# = pad 2 */
     CHECK(S.groot == 2 && groot_seen == 2 && pat.track[0].note == 36);   /* not the base note */
-    seq_ui_leds(&U, now, rgb);                                 /* pad 1 dark, C = pad 2: D = pad 4 */
-    CHECK(rgb[0] == 0 && rgb[3] == palette[0] && rgb[1] == rgbs(palette[0], 1, 12) && rgb[13] == 0);
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[1] == palette[0] && rgb[0] == rgbs(palette[0], 1, 12) && rgb[11] != 0 && rgb[12] == 0);
+    CHECK(seq_track_root(&S, &pat.track[0]) == 1);
     seq_ui_knob(&U, 3, 1, now);
     CHECK(S.gscale == SCALE_CHROMATIC + 1 && gscale_seen == 1);
     seq_ui_knob(&U, 3, 1, now);
     CHECK(S.gscale == SCALE_MAJOR + 1);
-    seq_ui_leds(&U, now, rgb);                                 /* pad 1 = follow preset, 3 = major */
-    CHECK(rgb[2] == palette[0] && rgb[0] == rgbs(palette[0], 1, 12) && rgb[12] != 0 && rgb[13] == 0);
+    seq_ui_leds(&U, now, rgb);                                 /* major = pad 2 */
+    CHECK(rgb[1] == palette[0] && rgb[0] == rgbs(palette[0], 1, 12) && rgb[11] != 0 && rgb[12] == 0);
     for (int i = 0; i < 20; i++) {
         seq_ui_knob(&U, 3, 1, now);
     }
     CHECK(S.gscale == SCALE_COUNT);
     seq_ui_button(&U, SUI_SHIFT, 0, now);
+    /* root "follow the preset": each track's own base note */
+    S.groot = 0;
+    pat.track[0].note = 62;
+    CHECK(seq_track_root(&S, &pat.track[0]) == 2);
+    pat.track[0].root = 6;                                     /* the track's own F wins */
+    CHECK(seq_track_root(&S, &pat.track[0]) == 5);
+}
+
+static void run_ms(int n)
+{
+    for (int i = 0; i < n; i++) {
+        now++;
+        seq_run(&S, now);
+    }
+}
+
+/* play view: Shift-menu octave / transpose; Shift page; recorded note length = step gate */
+static void test_play_shift_and_length(void)
+{
+    setup();
+    press(SUI_PAD_BANK);                                       /* play view */
+    pat.track[0].note = 60;
+    S.gscale = SCALE_MAJOR + 1;
+    U.play_oct = 1;
+    seq_ui_pad(&U, 0, 1, 90, now);
+    CHECK(last[1] == 72);                                      /* octave up */
+    seq_ui_pad(&U, 0, 0, 0, now);
+    U.play_oct = 0;
+    U.play_tr = 1;
+    seq_ui_pad(&U, 0, 1, 90, now);
+    CHECK(last[1] == 62);                                      /* transpose: one scale step */
+    seq_ui_pad(&U, 0, 0, 0, now);
+    U.play_tr = -1;
+    seq_ui_pad(&U, 0, 1, 90, now);
+    CHECK(last[1] == 59);
+    seq_ui_pad(&U, 0, 0, 0, now);
+    pat.track[0].scale = SCALE_CHROMATIC + 1;                  /* chromatic: semitones */
+    U.play_oct = -1;
+    U.play_tr = 2;
+    CHECK(seq_ui_play_offset(&U, 3) == 3 - 12 + 2);
+    seq_ui_pad(&U, 3, 1, 90, now);
+    CHECK(last[1] == 53);
+    seq_ui_pad(&U, 3, 0, 0, now);
+    U.play_oct = U.play_tr = 0;
+    /* Shift page: Shift held, nothing else claiming the pads */
+    CHECK(!seq_ui_shift_page(&U));
+    seq_ui_button(&U, SUI_SHIFT, 1, now);
+    CHECK(seq_ui_shift_page(&U));
+    U.padbank = 1;
+    CHECK(!seq_ui_shift_page(&U));
+    U.padbank = 0;
+    seq_ui_button(&U, SUI_SHIFT, 0, now);
+    /* note length: held 1 step -> gate 8/8 (table index 7, stored +1) */
+    press(SUI_REC);
+    press(SUI_PLAY);
+    run_ms(255);                                               /* ~step 2 */
+    seq_ui_pad(&U, 3, 1, 90, now);
+    run_ms(125);
+    seq_ui_pad(&U, 3, 0, 0, now);
+    struct seq_step *st = &pat.track[0].step[2];
+    CHECK(st->vel == 90 && (st->prob_gate & 0x0f) == 8);
+    /* a chord played together: the longest note sets the gate (2 steps = 16/8, index 10) */
+    run_ms(250 - 125);                                         /* ~step 4 */
+    seq_ui_pad(&U, 3, 1, 90, now);
+    seq_ui_pad(&U, 5, 1, 90, now);
+    run_ms(31);
+    seq_ui_pad(&U, 3, 0, 0, now);
+    run_ms(250 - 31);
+    seq_ui_pad(&U, 5, 0, 0, now);
+    st = &pat.track[0].step[4];
+    CHECK(seq_step_count(st) == 2 && (st->prob_gate & 0x0f) == 11);
+    /* a note added to a step recorded earlier keeps that step's gate */
+    run_ms(2000 - 250 - 250);                                  /* next loop, ~step 2 */
+    seq_ui_pad(&U, 9, 1, 90, now);
+    run_ms(400);
+    seq_ui_pad(&U, 9, 0, 0, now);
+    st = &pat.track[0].step[2];
+    CHECK(seq_step_count(st) == 2 && (st->prob_gate & 0x0f) == 8);
 }
 
 static void test_transport(void)
@@ -311,8 +395,8 @@ static void test_knob_pages_and_leds(void)
     seq_ui_knob(&U, 3, 1, now);
     CHECK(pat.track[0].root == 3 && pat.track[0].scale == SCALE_MAJOR + 1);
     CHECK(seq_track_root(&S, &pat.track[0]) == 2 && seq_track_scale(&S, &pat.track[0]) == SCALE_MAJOR);
-    seq_ui_leds(&U, now, rgb);                                 /* pick: pad 1 = follow global */
-    CHECK(rgb[2] == palette[0] && rgb[0] == rgbs(palette[0], 1, 12) && rgb[12] != 0 && rgb[13] == 0);
+    seq_ui_leds(&U, now, rgb);                                 /* pick: major = pad 2 */
+    CHECK(rgb[1] == palette[0] && rgb[0] == rgbs(palette[0], 1, 12) && rgb[11] != 0 && rgb[12] == 0);
     now += SUI_OVERLAY_MS + 1;
     press(SUI_KNOB_BANK);
     /* step view LEDs */
@@ -440,6 +524,7 @@ int main(void)
     test_timing_page();
     test_views_play_and_tracks();
     test_global_scale();
+    test_play_shift_and_length();
     test_transport();
     test_knob_pages_and_leds();
     test_stop_mute_running();

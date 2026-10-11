@@ -18,6 +18,9 @@
  *   Play / Stop                (Stop on release; twice = to the start); Rec = live record
  *   KNOB BANK                  knob page: track / pattern (K3 / K4 = track root / scale)
  *   Shift + K3 / K4            global root / scale (shared with normal mode)
+ *   Shift + pad                the normal-mode Shift menu (preset, curve, transpose, octave;
+ *                              drawn and handled by the caller, see seq_ui_shift_page());
+ *                              octave / transpose move the play view (play_oct, play_tr)
  */
 #ifndef SMCPAD_SEQ_UI_H
 #define SMCPAD_SEQ_UI_H
@@ -55,6 +58,10 @@ struct seq_ui {
     u16 keep;                               /* held pads that must not toggle on release */
     u16 lit_pads;                           /* play-view pads held (white) */
     u8  live_note[17], live_chan[17];       /* notes sounding: pads 0-15, 16 = knob preview */
+    s8  play_oct, play_tr;                  /* play view: octaves / scale steps (Shift menu) */
+    /* note-length recording: the step a held play-view pad wrote (0xFF = none) */
+    u8  rec_step[16], rec_trk[16];
+    u32 rec_pos[16];
     /* knob value overlay */
     u32 ov_until;
     u8  ov_kind;                            /* SUI_OV_* */
@@ -71,7 +78,8 @@ struct seq_ui {
     u32 act_ms;                             /* last pad / knob / button event */
 };
 
-/* PICK: one pad per choice from pad 1 (ov_min = value of pad 1; values below 0 stay dark) */
+/* PICK: one pad per choice from pad 1 (ov_min = value of pad 1); a value below ov_min ("follow")
+ * leaves every pad dark */
 enum { SUI_OV_NONE = 0, SUI_OV_BAR, SUI_OV_SIGNED, SUI_OV_KEYS, SUI_OV_COUNT, SUI_OV_FLASH,
        SUI_OV_PICK };
 
@@ -87,5 +95,8 @@ u32  seq_ui_track_rgb(u8 track);                             /* palette */
 u8   seq_ui_step_pad(u8 i);         /* step i (0-15 on a page) <-> pad; its own inverse */
 u8   seq_ui_beat_led(const struct seq *s, u32 now_ms);       /* 1 = beat flash on */
 u8   seq_ui_undo_skip(u16 off);     /* undo_init() skip rule over struct seq_pattern: mutes */
+/* 1 = Shift is held with nothing else claiming the pads: the caller shows / runs the Shift menu */
+u8   seq_ui_shift_page(const struct seq_ui *u);
+s8   seq_ui_play_offset(const struct seq_ui *u, u8 pad);    /* play-view pad -> scale steps */
 
 #endif

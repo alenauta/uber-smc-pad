@@ -49,7 +49,7 @@ BUTTONS = [
     ("PLAY", ["PLAY"]),
     ("STOP", ["STOP", "BANK+pad", "MUTE", "\u21e7 CLEAR"]),
     ("REC", ["REC", "\u21e7 SAVE \u2020"]),
-    ("SHIFT", ["+K3 ROOT", "+K4 SCALE", "+pad PATT.\u2020"]),
+    ("SHIFT", ["+pad MENU", "+K3 ROOT", "+K4 SCALE"]),
     ("NOTE REPEAT", ["hold TIMING", "\u21e7 SEQ", "+step", "RATCHET"]),
 ]
 
@@ -159,7 +159,7 @@ SCALE_NAMES = ["chrom.", "major", "minor", "dorian", "phryg.", "lydian", "mixol.
 
 
 def pick_text():
-    return ", ".join(["1 follow"] + [f"{i + 2} {NOTE_NAMES[i]} / {SCALE_NAMES[i]}" for i in range(12)])
+    return ("Pads 1&ndash;12: C&hellip;B, or " + ", ".join(SCALE_NAMES) + "; none lit = follow.")
 
 
 def card():
@@ -173,7 +173,8 @@ def card():
  <div class="col">
   <h2>Sequencer mode</h2>
   <ul>
-   <li><b>Shift + Note Repeat</b> enter / leave. The Note Repeat LED flashes on the beat.</li>
+   <li><b>Shift + Note Repeat</b> enter / leave. The Note Repeat LED flashes on the beat.
+    <b>Shift + pad</b>: the normal Shift menu (preset, curve, transpose, octave).</li>
    <li><b>PAD BANK</b> tap: Step &harr; Play view (LED on = Play).</li>
    <li><b>Hold PAD BANK</b>: track layer (activity flashes, muted dim): pad = select track,
     <b>+ Stop + pad</b> = mute (playback goes on), <b>+ Shift + Stop + pad</b> = clear the track.</li>
@@ -189,9 +190,10 @@ def card():
    </ul></div>
   <h3>Play view</h3>
   <ul>
-   <li>Pads play the track from its base note in its scale (chromatic = drum kit). Root pads brighter.</li>
-   <li><b>Rec</b> + Play: live recording, snapped to the nearest step (K4 = strength).
-    Hits on a step that already plays add chord notes (up to 4).</li>
+   <li>Pads play the track from its base note in its scale (chromatic = drum kit). Root pads brighter.
+    Shift-menu octave / transpose move the pads (transpose = one scale step).</li>
+   <li><b>Rec</b> + Play: live recording, snapped to the nearest step (K4 = strength); how long you
+    hold sets the step's length. Hits on a step that already plays add chord notes (up to 4).</li>
   </ul>
   <h3>Transport &amp; sync</h3>
   <ul>
@@ -201,9 +203,9 @@ def card():
   </ul>
   <h3>Root &amp; scale</h3>
   <ul>
-   <li><b>KNOB BANK K3 / K4</b>: this track's root / scale (pad 1 = follow global).
-    <b>Shift + K3 / K4</b>: global, also in normal mode (scale pad 1 = follow the preset, = chromatic here).</li>
-   <li>Pads: {pick_text()}.</li>
+   <li><b>KNOB BANK K3 / K4</b>: track root / scale (follow = global). <b>Shift + K3 / K4</b>: global,
+    also normal mode (follow = preset, root = pad 1's note).</li>
+   <li>{pick_text()}</li>
   </ul>
  </div>
  <div class="col">
@@ -226,7 +228,7 @@ def card():
    <li>Trig conditions (K7): always, 1:2, 2:2, 1:3, 2:3, 3:3, 1:4&hellip;4:4, first, fill, not fill.</li>
    <li>Ratchet rate (K6): auto (split the step), 1/8, 1/16, 1/16T, 1/32, 1/32T, 1/64.</li>
   </ul>
-  <p class="foot">&dagger; pattern memory: Shift + pad = pattern, Shift + Rec = save (later build).</p>
+  <p class="foot">&dagger; pattern memory: Shift + Rec = save (later build).</p>
  </div>
 </div>"""
 
@@ -298,7 +300,7 @@ def build():
 the grey holes. The left strip goes over the knobs (pull the knob caps off if they don't pass through), the right
 strip next to the buttons. The pads stay uncovered: their printed timing labels already match the timing page,
 except pad 14 (FILL, use the sticker).</p>
-<p>The sizes come from the drawing in the manual. Measure your unit before you cut. Firmware 913 and later.</p></div>"""
+<p>The sizes come from the drawing in the manual. Measure your unit before you cut. Firmware 914 and later.</p></div>"""
     sticker = ('<div class="sticker">FILL</div><div class="stickerlab">&larr; sticker for pad 14: covers the '
                'printed &ldquo;LATCH&rdquo; label</div>')
     page = f'<div class="page">{left}{right}{head}{ruler()}{sticker}{card()}</div>'

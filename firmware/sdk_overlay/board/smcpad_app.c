@@ -92,6 +92,7 @@ static struct {
     u32 load_t0, load_busy;         /* window start, busy ms in the window */
     u8  load_pct, load_pct_max;     /* last 1 s window, highest since boot */
     u16 pass_max_ms;                /* longest single pass since boot */
+    u16 seq_shift_pads;             /* sequencer mode: pads pressed as Shift-menu functions */
 } app;
 
 extern void clr_wdt(void);
@@ -179,7 +180,7 @@ static void seq_midi(void *ctx, const u8 *m, u32 n)
  * change (tempo / swing stay in globals 0-2). groot / gscale = the global root / scale, shared
  * by normal mode and the sequencer (were reserved zeros: old items read as C / follow preset). */
 #define SMCPAD_SEQCFG_VM_ID     43                  /* free user VM id */
-#define SEQCFG_VER              1
+#define SEQCFG_VER              2                   /* 2: groot 0 = follow preset, 1..12 = C..B */
 #define SEQCFG_FLUSH_MS         2000
 static struct { u8 ver, lead_ms, groot, gscale; } seq_cfg;
 static u8 seq_cfg_dirty;
@@ -248,12 +249,13 @@ static void seq_app_init(void)
     u8 sw = store.globals[GLOB_SWING];
     seq.swing = sw < 50 || sw > 75 ? 50 : sw;
     if (syscfg_read(SMCPAD_SEQCFG_VM_ID, (u8 *)&seq_cfg, sizeof(seq_cfg)) != sizeof(seq_cfg) ||
-        seq_cfg.ver != SEQCFG_VER || seq_cfg.lead_ms > SEQ_LEAD_MAX_MS) {
+        (seq_cfg.ver != SEQCFG_VER && seq_cfg.ver != 1) || seq_cfg.lead_ms > SEQ_LEAD_MAX_MS) {
         memset(&seq_cfg, 0, sizeof(seq_cfg));
     }
-    if (seq_cfg.groot > 11 || seq_cfg.gscale > SCALE_COUNT) {
-        seq_cfg.groot = seq_cfg.gscale = 0;
+    if (seq_cfg.ver == 1 || seq_cfg.groot > 12 || seq_cfg.gscale > SCALE_COUNT) {
+        seq_cfg.groot = seq_cfg.gscale = 0;         /* v1 root meant 0..11: back to follow */
     }
+    seq_cfg.ver = SEQCFG_VER;
     seq.lead_ms = seq_cfg.lead_ms;
     seq.groot = preset.root = seq_cfg.groot;
     seq.gscale = preset.scale = seq_cfg.gscale;
@@ -268,6 +270,11 @@ static u8 seq_leds(u32 ms, u16 *btn)
     u32 rgb[SMCPAD_NUM_PADS];
     u8 changed = 0;
     *btn = seq_ui_leds(&sui, ms, rgb);
+    if (seq_ui_shift_page(&sui) && !sui.ov_until && preset.shift) {
+        for (u8 i = 0; i < SMCPAD_NUM_PADS; i++) {  /* the normal-mode Shift menu */
+            rgb[i] = smcpad_preset_pad_rgb(&preset, i);
+        }
+    }
     for (u8 i = 0; i < SMCPAD_NUM_PADS; i++) {
         if (rgb[i] != seq_rgb_last[i]) {
             seq_rgb_last[i] = rgb[i];
@@ -511,6 +518,13 @@ static void service_bt(u32 now)
     }
 }
 
+/* play view octave / transpose = the normal-mode Shift menu's (default octave 2) */
+static void seq_play_shift(void)
+{
+    sui.play_oct = (s8)((s8)store.globals[GLOB_OCTAVE] - 2);
+    sui.play_tr = (s8)store.globals[GLOB_TRANSPOSE];
+}
+
 /* sequencer: clock, playback, LED frames; ms = the TIMER2 millisecond counter */
 static void service_seq(void)
 {
@@ -518,6 +532,7 @@ static void service_seq(void)
     seq_run(&seq, ms);
     seq_clock_timeout(&seq, ms);
     seq_cfg_flush(sys_timer_get_ms());
+    seq_play_shift();
     smcpad_hw_fast_wake(seq.running || seq.ext_seen || sui.active);
     if (sui.active != app.seq_shown) {             /* mode changed: repaint everything */
         app.seq_shown = sui.active;
@@ -561,7 +576,16 @@ static void service_pads(u32 now)
                 app.held &= (u16)~BIT(e.pad);
             }
             if (e.type == SMCPAD_EV_PAD_ON || e.type == SMCPAD_EV_PAD_OFF) {
+                u16 b = (u16)BIT(e.pad);
+                if ((on && seq_ui_shift_page(&sui) && preset.shift) || (!on && (app.seq_shift_pads & b))) {
+                    /* Shift + pad: the normal-mode Shift menu (preset, curve, transpose, octave) */
+                    app.seq_shift_pads = on ? (u16)(app.seq_shift_pads | b) : (u16)(app.seq_shift_pads & ~b);
+                    smcpad_preset_pad(&preset, e.pad, on, on ? (e.velocity ? e.velocity : 1) : 0);
+                    seq_play_shift();
+                    continue;
+                }
                 u8 v = on ? smcpad_preset_curve(e.velocity ? e.velocity : 1, store.globals[GLOB_PAD_CURVE]) : 0;
+                seq_play_shift();
                 seq_ui_pad(&sui, e.pad, on, v, smcpad_hw_ms());
             }
             continue;

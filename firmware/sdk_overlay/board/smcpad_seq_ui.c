@@ -72,6 +72,7 @@ static void all_live_off(struct seq_ui *u)
         live_off(u, i);
     }
     u->lit_pads = 0;
+    memset(u->rec_step, 0xFF, sizeof(u->rec_step));
 }
 
 static void tempo_changed(struct seq_ui *u)       /* any persisted setting changed */
@@ -137,6 +138,19 @@ void seq_ui_init(struct seq_ui *u, struct seq *s, const struct seq_ui_io *io)
     u->io = io;
     u->at_start = 1;
     memset(u->live_note, 0xFF, sizeof(u->live_note));
+    memset(u->rec_step, 0xFF, sizeof(u->rec_step));
+}
+
+u8 seq_ui_shift_page(const struct seq_ui *u)
+{
+    return (u8)(u->active && u->shift && !u->padbank && !u->nr);
+}
+
+s8 seq_ui_play_offset(const struct seq_ui *u, u8 pad)
+{
+    const struct seq_track *t = &u->seq->pat->track[u->track & 15];
+    s32 o = (s32)pad + (s32)u->play_oct * smcpad_scale_size(seq_track_scale(u->seq, t)) + u->play_tr;
+    return (s8)clampi(o, -64, 63);
 }
 
 void seq_ui_toggle(struct seq_ui *u)
@@ -277,16 +291,16 @@ static void knob_pattern(struct seq_ui *u, u8 k, s32 d, u32 now)
         overlay(u, SUI_OV_BAR, u->track, s->swing, 50, 75, now);
         tempo_changed(u);
         break;
-    case 2: {                                   /* track root: pad 1 = follow global, 2..13 = C..B */
+    case 2: {                                   /* track root: no pad = follow global, 1..12 = C..B */
         struct seq_track *t = &p->track[u->track];
         t->root = (u8)clampi(t->root + one(d), 0, 12);
-        overlay(u, SUI_OV_PICK, u->track, t->root, 0, 12, now);
+        overlay(u, SUI_OV_PICK, u->track, t->root, 1, 12, now);
         break;
     }
-    case 3: {                                   /* track scale: pad 1 = follow global, 2 = chromatic.. */
+    case 3: {                                   /* track scale: no pad = follow global, 1 = chromatic.. */
         struct seq_track *t = &p->track[u->track];
         t->scale = (u8)clampi(t->scale + one(d), 0, SCALE_COUNT);
-        overlay(u, SUI_OV_PICK, u->track, t->scale, 0, SCALE_COUNT, now);
+        overlay(u, SUI_OV_PICK, u->track, t->scale, 1, SCALE_COUNT, now);
         break;
     }
     case 6: {                                   /* MIDI channel: 1 pad = ch 1 ... 16 pads = ch 16 */
@@ -308,17 +322,17 @@ static void knob_pattern(struct seq_ui *u, u8 k, s32 d, u32 now)
 }
 
 /* Shift + K3 / K4: the global root and scale, shared with normal mode. Same pads as the track
- * pick: root pad 1 dark (nothing to follow), 2..13 = C..B; scale pad 1 = follow the preset,
- * 2 = chromatic, 3.. = the other scales */
+ * pick: no pad lit = follow the preset (root = each track's base note, scale = chromatic here),
+ * pads 1..12 = C..B / chromatic, major, ... blues */
 static u8 knob_global(struct seq_ui *u, u8 k, s32 d, u32 now)
 {
     struct seq *s = u->seq;
     if (k == 2) {
-        s->groot = (u8)clampi(s->groot + one(d), 0, 11);
-        overlay(u, SUI_OV_PICK, u->track, s->groot, -1, 11, now);
+        s->groot = (u8)clampi(s->groot + one(d), 0, 12);
+        overlay(u, SUI_OV_PICK, u->track, s->groot, 1, 12, now);
     } else if (k == 3) {
         s->gscale = (u8)clampi(s->gscale + one(d), 0, SCALE_COUNT);
-        overlay(u, SUI_OV_PICK, u->track, s->gscale, 0, SCALE_COUNT, now);
+        overlay(u, SUI_OV_PICK, u->track, s->gscale, 1, SCALE_COUNT, now);
     } else {
         return 0;
     }
@@ -382,6 +396,40 @@ static void timing_pad(struct seq_ui *u, u8 pad, u32 now)
     }
 }
 
+/* note-length recording: the time a play-view pad was held becomes the gate of the step its
+ * press created (nearest table value, 1/8 step .. 4 steps); chord notes added while the chord
+ * is being played keep the longest */
+static void rec_gate(struct seq_ui *u, u8 pad)
+{
+    struct seq *s = u->seq;
+    u8 si = u->rec_step[pad];
+    u->rec_step[pad] = 0xFF;
+    if (!s->running || si >= SEQ_STEPS) {
+        return;
+    }
+    struct seq_track *t = &s->pat->track[u->rec_trk[pad] & 15];
+    struct seq_step *st = &t->step[si];
+    u32 held = s->pos - u->rec_pos[pad];
+    u32 su = seq_step_units(t->rate);           /* never 0 */
+    if (!st->vel || held > 0x01000000u) {
+        return;                                 /* cleared meanwhile / position jumped back */
+    }
+    u32 e8 = (held * 8 + su / 2) / su;          /* eighths of a step */
+    u8 best = 0;
+    for (u8 i = 1; i < SEQ_GATES; i++) {
+        u32 db = e8 > seq_gate_eighths[best] ? e8 - seq_gate_eighths[best] : seq_gate_eighths[best] - e8;
+        u32 di = e8 > seq_gate_eighths[i] ? e8 - seq_gate_eighths[i] : seq_gate_eighths[i] - e8;
+        if (di < db) {
+            best = i;
+        }
+    }
+    u8 cur = st->prob_gate & 0x0f;              /* 0 = new step; else set by a chord note */
+    if (cur && (u8)(cur - 1) > best) {
+        best = (u8)(cur - 1);
+    }
+    st->prob_gate = (u8)((st->prob_gate & 0xF0) | (best + 1));
+}
+
 void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
 {
     if (!u->active || pad > 15) {
@@ -409,6 +457,9 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
             if (!u->held) {
                 live_off(u, 16);
             }
+        }
+        if (u->rec_step[pad] != 0xFF) {
+            rec_gate(u, pad);
         }
         if (u->lit_pads & bit) {
             u->lit_pads &= (u16)~bit;
@@ -448,11 +499,22 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
         }
         return;
     }
-    /* play view: pad = scale step above the track's base note (chromatic = drum kit) */
-    live_on(u, pad, t->chan, seq_track_note(s, t, (s8)pad), vel);
+    /* play view: pad = scale step above the track's base note (chromatic = drum kit), moved by
+     * the Shift-menu octave / transpose */
+    s8 off = seq_ui_play_offset(u, pad);
+    live_on(u, pad, t->chan, seq_track_note(s, t, off), vel);
     u->lit_pads |= bit;
     if (u->rec && s->running) {
-        seq_record(s, u->track, vel, (s8)pad);
+        u8 k = seq_record(s, u->track, vel, off);
+        u8 mine = s->rec_created;
+        for (u8 j = 0; j < 16 && !mine && k != 0xFF; j++) {     /* joins a chord being played */
+            mine = (u8)(u->rec_step[j] == k && u->rec_trk[j] == u->track);
+        }
+        if (mine && k != 0xFF) {
+            u->rec_step[pad] = k;
+            u->rec_trk[pad] = u->track;
+            u->rec_pos[pad] = s->pos;
+        }
     }
 }
 
@@ -584,7 +646,7 @@ static void draw_overlay(const struct seq_ui *u, u32 rgb[16])
     if (u->ov_kind == SUI_OV_PICK) {            /* one pad per choice, from pad 1 */
         for (u8 i = 0; i < 16; i++) {
             s32 idx = (s32)i + lo;
-            rgb[i] = (idx < 0 || idx > hi) ? 0 : (idx == v ? c : rgbs(c, 1, 12));
+            rgb[i] = (v < lo || idx > hi) ? 0 : (idx == v ? c : rgbs(c, 1, 12));   /* v < lo: follow */
         }
         return;
     }
@@ -712,7 +774,7 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
     /* play view: root pads brighter, held pads white, full colour while the note sounds */
     u8 root = seq_track_root(s, t), ch = (u8)(t->chan & 0x0f);
     for (u8 i = 0; i < 16; i++) {
-        u8 n = seq_track_note(s, t, (s8)i);
+        u8 n = seq_track_note(s, t, seq_ui_play_offset(u, i));
         u8 on = 0;
         for (u8 a = 0; a < s->nactive && !on; a++) {
             on = (u8)(s->active[a].chan == ch && s->active[a].note == n);
