@@ -271,10 +271,12 @@ static void test_global_scale(void)
     }
     CHECK(S.gscale == SCALE_COUNT);
     seq_ui_button(&U, SUI_SHIFT, 0, now);
-    /* root "follow the preset": each track's own base note */
+    /* root "follow the preset": the preset's pad-1 note, the same for every track */
     S.groot = 0;
-    pat.track[0].note = 62;
-    CHECK(seq_track_root(&S, &pat.track[0]) == 2);
+    S.proot = 2;
+    pat.track[0].note = 61;
+    pat.track[1].note = 66;
+    CHECK(seq_track_root(&S, &pat.track[0]) == 2 && seq_track_root(&S, &pat.track[1]) == 2);
     pat.track[0].root = 6;                                     /* the track's own F wins */
     CHECK(seq_track_root(&S, &pat.track[0]) == 5);
 }

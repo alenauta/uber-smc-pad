@@ -248,8 +248,8 @@ static void preset_scale_changed(void *ctx)     /* Shift + K3 / K4 in normal mod
 static void seq_app_init(void)
 {
     u8 notes[SEQ_TRACKS], chans[SEQ_TRACKS];
-    for (u8 i = 0; i < SEQ_TRACKS; i++) {      /* tracks default to the active preset's pads */
-        u8 ch = 9, n = smcpad_preset_pad_note(&preset, i, &ch);
+    for (u8 i = 0; i < SEQ_TRACKS; i++) {      /* tracks default to the preset's pads (octave 2, no transpose) */
+        u8 ch = 9, n = smcpad_preset_default_note(&preset, i, &ch);
         notes[i] = n == 0xFF ? (u8)(36 + i) : n;
         chans[i] = n == 0xFF ? 9 : ch;
     }
@@ -536,11 +536,13 @@ static void service_bt(u32 now)
     }
 }
 
-/* play view octave / transpose = the normal-mode Shift menu's (default octave 2) */
+/* play view octave / transpose = the normal-mode Shift menu's (default octave 2); the preset's
+ * root for "follow preset" */
 static void seq_play_shift(void)
 {
     sui.play_oct = (s8)((s8)store.globals[GLOB_OCTAVE] - 2);
     sui.play_tr = (s8)store.globals[GLOB_TRANSPOSE];
+    seq.proot = smcpad_preset_default_root(&preset);
 }
 
 /* sequencer: clock, playback, LED frames; ms = the TIMER2 millisecond counter */

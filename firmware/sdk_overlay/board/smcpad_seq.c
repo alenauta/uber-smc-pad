@@ -111,7 +111,7 @@ u8 seq_track_root(const struct seq *s, const struct seq_track *t)
     if (s->groot) {                             /* global */
         return (u8)((s->groot - 1) % 12);
     }
-    return (u8)(t->note % 12);                  /* follow the preset: the track's base note */
+    return (u8)(s->proot % 12);                 /* follow the preset: its pad-1 note */
 }
 
 u8 seq_track_note(const struct seq *s, const struct seq_track *t, s8 offset)

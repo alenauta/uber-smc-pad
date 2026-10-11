@@ -126,8 +126,9 @@ struct seq {
     u8  self_started; /* Play was pressed on the pad: ignore host Start (could be our own echo) */
     u8  fill;
     u8  swing;      /* 50..75 % */
-    u8  groot;      /* global root: 0 = follow the preset (each track's base note), 1..12 = C..B */
+    u8  groot;      /* global root: 0 = follow the preset (proot), 1..12 = C..B */
     u8  gscale;     /* global scale: 0 = follow the preset (chromatic here), 1.. = smcpad_scale index + 1 */
+    u8  proot;      /* the preset's root (its pad-1 note, 0..11), set by the caller */
     u32 centibpm;   /* internal tempo */
     u32 pos;        /* current position */
     u32 rem;        /* remainder of the ms -> units conversion */
