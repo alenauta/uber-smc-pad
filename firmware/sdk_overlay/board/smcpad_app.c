@@ -88,7 +88,13 @@ static struct {
     u32 diag_reset_ms;
     u32 vbat_ms;
     u16 vbat, vbat_min;             /* battery, 10 mV units */
+    /* main-loop load (1 ms clock: short passes count 0 or 1, right on average) */
+    u32 load_t0, load_busy;         /* window start, busy ms in the window */
+    u8  load_pct, load_pct_max;     /* last 1 s window, highest since boot */
+    u16 pass_max_ms;                /* longest single pass since boot */
 } app;
+
+extern void clr_wdt(void);
 
 extern u16 get_vbat_level(void);                /* SDK, 10 mV units */
 
@@ -787,6 +793,10 @@ static void diag_reply(const u8 *req, u32 len)
         /* 911+: battery now / lowest since boot, 10 mV */
         put14(&p, app.vbat);
         put14(&p, app.vbat_min);
+        /* 913+: main loop busy % (last second, max since boot), longest pass ms */
+        *p++ = (u8)(app.load_pct & 0x7f);
+        *p++ = (u8)(app.load_pct_max & 0x7f);
+        put14(&p, app.pass_max_ms);
 #endif
     } else if (cmd == 0x04) {                       /* boot history v2 (911+) */
         const struct smcpad_boot_hist *h = smcpad_crash_hist();
@@ -930,6 +940,8 @@ static void smcpad_task(void *p)
     for (;;) {
         smcpad_crumb_stage(CRUMB_IDLE, smcpad_hw_ms());
         os_sem_pend(&app_sem, 1);                   /* events, or at least every tick */
+        u32 pass_t0 = smcpad_hw_ms();
+        clr_wdt();                                  /* the loop runs: don't depend on idle */
         smcpad_hw_notified();
         u32 now = sys_timer_get_ms();
         if (app.diag_reset && now - app.diag_reset_ms >= 100) {
@@ -986,6 +998,22 @@ static void smcpad_task(void *p)
         }
         smcpad_crumb_stage(CRUMB_ADC, smcpad_hw_ms());
         smcpad_hw_sync_sdk_adc();
+
+        u32 pass_t1 = smcpad_hw_ms(), pass = pass_t1 - pass_t0;
+        app.load_busy += pass;
+        if (pass > app.pass_max_ms) {
+            app.pass_max_ms = (u16)(pass > 0xFFFF ? 0xFFFF : pass);
+        }
+        u32 win = pass_t1 - app.load_t0;
+        if (win >= 1000) {                          /* win > 0: safe divisor */
+            u32 pct = app.load_busy * 100u / win;
+            app.load_pct = (u8)(pct > 100 ? 100 : pct);
+            if (app.load_pct > app.load_pct_max) {
+                app.load_pct_max = app.load_pct;
+            }
+            app.load_busy = 0;
+            app.load_t0 = pass_t1;
+        }
     }
 }
 

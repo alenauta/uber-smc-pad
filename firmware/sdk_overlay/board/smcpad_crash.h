@@ -3,11 +3,12 @@
  * The pad has no log output, so when it restarts by itself we need the reason afterwards.
  * Every boot appends an entry to a ring in VM (id SMCPAD_BOOTS_VM_ID):
  *  - JL_RST->SRC and the P33 reset source (measured: power-on 0x01, soft reset / exception
- *    0x40; 0x04 seen once, unexplained);
+ *    0x40; 0x04 seen in sequencer mode, probably the watchdog);
  *  - a "breadcrumb" left by the previous run in RAM that survives a warm reset: its uptime,
  *    what the main task was doing (stage), the last knob / button / pad event and the battery
- *    voltage. It lives in the alignment padding at the end of the .boot_info section, just
- *    below the IRQ stack (cpu0_sstack_begin - 16), which nothing else uses.
+ *    voltage. It lives in its own NOLOAD section .smcpad_keep just below the heap (apply.py
+ *    patches cpu/br25/sdk_ld.c), which the startup code never zeroes. (Until 913 it sat at
+ *    cpu0_sstack_begin - 16, which turned out to be wiped at boot.)
  * smcdiag.py "boots" shows the ring; "reboot" / "crashtest" produce known resets.
  * (909 also replaced the CPU exception handlers to record faults; that build boot-looped, so
  * the SDK handlers stay.)

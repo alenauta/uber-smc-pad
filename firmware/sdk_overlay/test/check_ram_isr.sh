@@ -18,14 +18,15 @@ while read -r addr size name; do
     fi
 done < <(awk '/smcpad_(hw|app|logic)\.c/ && $4 == ".data_code" {print $1, $5, $6}' "$OUT/symbol_tbl.txt")
 echo "RAM tables:"; awk '/smcpad_(hw|app|logic)\.c/ && $4 == ".data" {printf "    %-24s 0x%s\n", $6, $1}' "$OUT/symbol_tbl.txt"
-# Heap budget: BSS growth (preset RAM image, Sinco/BLE buffers) shrinks the heap; the BLE stack
-# plus tasks need ~48 KB (MIN_HEAP to override).
+# Heap budget: BSS growth (preset RAM image, Sinco/BLE buffers) shrinks the heap. Floor 40 KB
+# (MIN_HEAP to override): 912 had ~50 KB here and ~87 KB measured free at runtime on the pad, so
+# the earlier 48 KB floor was very conservative; 913's chords take ~6 KB of patterns.
 MAP=$SDK/cpu/br25/tools/sdk.map
 hb=$(awk '/_HEAP_BEGIN = \./ {print $1; exit}' "$MAP"); he=$(awk '/_HEAP_END = / {print $1; exit}' "$MAP")
 if [ -z "$hb" ] || [ -z "$he" ]; then
     echo "HEAP: _HEAP_BEGIN/_HEAP_END not found in $MAP"; rc=1
 else
-    heap=$(( he - hb )); min=${MIN_HEAP:-49152}
+    heap=$(( he - hb )); min=${MIN_HEAP:-40960}
     if [ $heap -lt $min ]; then echo "HEAP TOO SMALL: $heap B < $min B"; rc=1
     else echo "heap ok: $heap B (>= $min B)"; fi
 fi

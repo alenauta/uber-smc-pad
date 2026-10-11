@@ -18,15 +18,16 @@
 
 extern u8 power_reset_src;                  /* cpu/br25/setup.c, set at boot */
 extern void chip_reset(void);
-extern u32 cpu0_sstack_begin[];             /* sdk.ld: IRQ stack start = end of .boot_info */
 
 static struct smcpad_boot_hist hist;
-static volatile u32 *crumb;                 /* 4 words: magic, ms, stage|ev|vbat, ev_ms */
+/* 4 words: magic, ms, stage|ev|vbat, ev_ms. NOLOAD section placed by sdk_ld.c (apply.py):
+ * not zeroed at boot, so the previous run's words are still there after a warm reset */
+static volatile u32 crumb_keep[4] __attribute__((section(".smcpad_keep"), aligned(16)));
+static volatile u32 *crumb;
 
 void smcpad_crash_init(void)
 {
-    u32 base = (u32)cpu0_sstack_begin - 16;
-    crumb = (base & 15) ? NULL : (volatile u32 *)base;
+    crumb = crumb_keep;
 
     if (syscfg_read(SMCPAD_BOOTS_VM_ID, (u8 *)&hist, sizeof(hist)) != sizeof(hist) || hist.ver != HIST_VER) {
         memset(&hist, 0, sizeof(hist));

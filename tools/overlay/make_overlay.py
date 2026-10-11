@@ -30,8 +30,8 @@ C_TRACK, C_STEP, C_PAT = "#111111", "#e0600b", "#1f6fd1"
 KNOBS = {
     1: ("Volume", "Velocity", "Tempo"),
     2: ("Gate", "Gate", "Swing"),
-    3: ("Base note", "Note offset", "Root"),
-    4: ("Rec quantize", "Micro-timing", "Scale"),
+    3: ("Base note", "Note (chord)", "Track root"),
+    4: ("Rec quantize", "Micro-timing", "Track scale"),
     5: ("Probability", "Probability", ""),
     6: ("Ratchet rate", "Ratchet rate", ""),
     7: ("Steps (length)", "Trig condition", "MIDI channel"),
@@ -42,14 +42,14 @@ KNOB_POS = {7: (0, 0), 8: (1, 0), 5: (0, 1), 6: (1, 1), 3: (0, 2), 4: (1, 2), 1:
 # buttons top -> bottom: label lines next to each button
 BUTTONS = [
     ("BT", []),
-    ("PAD BANK", ["VIEW (LED):", "off  step", "on   kit", "blink keys", "+pad TRACK"]),
+    ("PAD BANK", ["TAP: VIEW", "off  step", "on   play", "HOLD TRACKS"]),
     ("KNOB BANK", ["PATTERN", "KNOBS"]),
     ("<", ["PAGE \u25c2", "\u21e7 UNDO"]),
     (">", ["PAGE \u25b8", "\u21e7 REDO"]),
     ("PLAY", ["PLAY"]),
-    ("STOP", ["STOP", "+pad MUTE", "\u21e7+pad", "CLEAR"]),
+    ("STOP", ["STOP", "BANK+pad", "MUTE", "\u21e7 CLEAR"]),
     ("REC", ["REC", "\u21e7 SAVE \u2020"]),
-    ("SHIFT", ["+ pad", "PATTERN \u2020"]),
+    ("SHIFT", ["+K3 ROOT", "+K4 SCALE", "+pad PATT.\u2020"]),
     ("NOTE REPEAT", ["hold TIMING", "\u21e7 SEQ", "+step", "RATCHET"]),
 ]
 
@@ -152,6 +152,14 @@ def step_cells():
 
 TIMING = ["1/4", "1/4T", "1/8", "1/8T", "1/16", "1/16T", "1/32", "1/32T",
           "sw 50", "sw 56", "sw 62", "sw 68", "sw 75", "<b>FILL</b>", "SYNC", "TAP"]
+# root / scale picks (track: pad 1 = follow global; global: root pad 1 unused, scale pad 1 = follow preset)
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+SCALE_NAMES = ["chrom.", "major", "minor", "dorian", "phryg.", "lydian", "mixol.", "locrian",
+               "harm.min", "pent.maj", "pent.min", "blues"]
+
+
+def pick_text():
+    return ", ".join(["1 follow"] + [f"{i + 2} {NOTE_NAMES[i]} / {SCALE_NAMES[i]}" for i in range(12)])
 
 
 def card():
@@ -166,8 +174,9 @@ def card():
   <h2>Sequencer mode</h2>
   <ul>
    <li><b>Shift + Note Repeat</b> enter / leave. The Note Repeat LED flashes on the beat.</li>
-   <li><b>PAD BANK</b> tap: Step &rarr; Kit &rarr; Keys view (LED off / on / blinking).</li>
-   <li><b>Hold PAD BANK + pad</b>: select track 1&ndash;16.</li>
+   <li><b>PAD BANK</b> tap: Step &harr; Play view (LED on = Play).</li>
+   <li><b>Hold PAD BANK</b>: track layer (activity flashes, muted dim): pad = select track,
+    <b>+ Stop + pad</b> = mute (playback goes on), <b>+ Shift + Stop + pad</b> = clear the track.</li>
    <li><b>KNOB BANK</b>: Track &harr; Pattern knobs (LED on = Pattern).</li>
    <li><b>&lt; &gt;</b> step pages of 16 (LED lit = more pages). <b>Shift + &lt; / &gt;</b> undo / redo.</li>
   </ul>
@@ -175,21 +184,26 @@ def card():
   <div class="row">{grid(step_cells(), "steps")}
    <ul class="side">
     <li>Tap a pad: step on / off.</li>
-    <li>Hold step + knob: step settings (orange).</li>
+    <li>Hold step + knob: step settings (orange). K3 moves the whole chord.</li>
     <li>Hold step + <b>Note Repeat</b>: ratchet &times;1&rarr;2&rarr;3&rarr;4.</li>
    </ul></div>
-  <h3>Kit &amp; Keys views</h3>
+  <h3>Play view</h3>
   <ul>
-   <li>Kit: pads play and select tracks. <b>Stop + pad</b> mutes; playback continues (Stop acts on release).</li>
-   <li>Keys: pads play the track's notes in the pattern scale.</li>
-   <li><b>Rec</b> + Play: live recording, snapped to the nearest step (K4 = strength).</li>
-   <li><b>Shift + Stop + pad</b>: clear that track.</li>
+   <li>Pads play the track from its base note in its scale (chromatic = drum kit). Root pads brighter.</li>
+   <li><b>Rec</b> + Play: live recording, snapped to the nearest step (K4 = strength).
+    Hits on a step that already plays add chord notes (up to 4).</li>
   </ul>
   <h3>Transport &amp; sync</h3>
   <ul>
    <li><b>Play</b>: start / continue. <b>Stop</b>: stop; press again = back to the top.</li>
    <li>Sync on (timing pad 15): the DAW's Start / Stop / clock drive the pad. Otherwise the pad sends clock.</li>
    <li><b>Play early</b> (KNOB BANK K8) sends notes ahead to cancel DAW / Bluetooth latency.</li>
+  </ul>
+  <h3>Root &amp; scale</h3>
+  <ul>
+   <li><b>KNOB BANK K3 / K4</b>: this track's root / scale (pad 1 = follow global).
+    <b>Shift + K3 / K4</b>: global, also in normal mode (scale pad 1 = follow the preset, = chromatic here).</li>
+   <li>Pads: {pick_text()}.</li>
   </ul>
  </div>
  <div class="col">
@@ -206,9 +220,9 @@ def card():
   <h3>Reading the pads while turning a knob</h3>
   <ul>
    <li><b>Amounts</b> (volume, velocity, probability, quantize, steps, tempo, swing, play early 0&ndash;63 ms): bar from pad 1, dim &rarr; full. Micro-timing: centre-out.</li>
-   <li><b>Choices</b> light one pad: rate (pads 1&ndash;8 = printed 1/4&hellip;1/32T), ratchet rate, trig condition.</li>
+   <li><b>Choices</b> light one pad: rate (pads 1&ndash;8 = printed 1/4&hellip;1/32T), ratchet rate, trig condition, root, scale.</li>
    <li><b>Counts</b>: MIDI channel (1 pad = ch 1 &hellip; 16 = ch 16), gate.</li>
-   <li>Notes: pads 1&ndash;12 = keyboard, top row = octave. Ratchet count: pads 1&ndash;4.</li>
+   <li>Base note / step note: pads 1&ndash;12 = keyboard, top row = octave. Ratchet count: pads 1&ndash;4.</li>
    <li>Trig conditions (K7): always, 1:2, 2:2, 1:3, 2:3, 3:3, 1:4&hellip;4:4, first, fill, not fill.</li>
    <li>Ratchet rate (K6): auto (split the step), 1/8, 1/16, 1/16T, 1/32, 1/32T, 1/64.</li>
   </ul>
@@ -284,7 +298,7 @@ def build():
 the grey holes. The left strip goes over the knobs (pull the knob caps off if they don't pass through), the right
 strip next to the buttons. The pads stay uncovered: their printed timing labels already match the timing page,
 except pad 14 (FILL, use the sticker).</p>
-<p>The sizes come from the drawing in the manual. Measure your unit before you cut. Firmware 911 and later.</p></div>"""
+<p>The sizes come from the drawing in the manual. Measure your unit before you cut. Firmware 913 and later.</p></div>"""
     sticker = ('<div class="sticker">FILL</div><div class="stickerlab">&larr; sticker for pad 14: covers the '
                'printed &ldquo;LATCH&rdquo; label</div>')
     page = f'<div class="page">{left}{right}{head}{ruler()}{sticker}{card()}</div>'

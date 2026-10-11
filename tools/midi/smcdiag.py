@@ -148,6 +148,8 @@ def cmd_status(pad):
               f"  undo levels {u14(r, 45)}")
     if len(r) >= 51:                                       # 911+: battery
         print(f"battery {u14(r, 47) / 100:.2f} V  (lowest since boot {u14(r, 49) / 100:.2f} V)")
+    if len(r) >= 55:                                       # 913+: main loop load
+        print(f"main loop busy {r[51]} % (highest since boot {r[52]} %)  longest pass {u14(r, 53)} ms")
 
 
 def cmd_frame(pad, n=1):

@@ -124,6 +124,19 @@ SMCPAD_BOARD_C_EDITS = [
      "    gpio_longpress_pin0_reset_config(IO_PORTB_01, 0, 0);\n"),
 ]
 ADC_API = "cpu/br25/adc_api.c"
+# crash breadcrumb (smcpad_crash.c): a NOLOAD section just below the heap, never zeroed at boot,
+# so the previous run's last words survive a warm reset (the heap starts 16 bytes later)
+SDK_LD = "cpu/br25/sdk_ld.c"
+SDK_LD_EDITS = [
+    ("\tdata_code_limit_end = .;\n\n\t_HEAP_BEGIN = .;\n",
+     "\tdata_code_limit_end = .;\n\n"
+     "\t.smcpad_keep (NOLOAD) : ALIGN(16)\n"
+     "\t{\n"
+     "\t\t*(.smcpad_keep)\n"
+     "\t\t. = ALIGN(16);\n"
+     "\t} > ram0\n\n"
+     "\t_HEAP_BEGIN = .;\n"),
+]
 # smcpad_hw.c owns the SARADC; it hands VBAT / LDOREF / DTEMP results back through this
 ADC_API_EDITS = [
     ("u32 adc_value_to_voltage(u32 adc_vbg, u32 adc_ch_val)\n",
@@ -396,8 +409,10 @@ def main():
             print("  wrote", os.path.join(BOARD, f))
     if a.no_smcpad_hw:
         shutil.copyfile(os.path.join(PRISTINE, ADC_API), os.path.join(WORK, ADC_API))
+        shutil.copyfile(os.path.join(PRISTINE, SDK_LD), os.path.join(WORK, SDK_LD))
     else:
         patch_file(ADC_API, ADC_API_EDITS)
+        patch_file(SDK_LD, SDK_LD_EDITS)
 
     # 8. trans_data start hook: usb_start() for MIDI, smcpad_start()
     edits = [] if a.no_usb_midi else [APP_TD_USB_EDIT]
