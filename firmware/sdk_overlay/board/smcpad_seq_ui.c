@@ -194,7 +194,7 @@ static void knob_step(struct seq_ui *u, u8 k, s32 d, u32 now)
             if (first) overlay(u, SUI_OV_BAR, u->track, v, -1, SEQ_GATES - 1, now);
             break;
         }
-        case 2: {                               /* probability: starts from the track's */
+        case 4: {                               /* K5 probability: starts from the track's */
             u8 n = st->prob_gate >> 4;
             v = clampi((n ? n : prob_nibble(t->prob)) + one(d), 1, 15);
             st->prob_gate = (u8)((st->prob_gate & 0x0F) | (v << 4));
@@ -205,7 +205,7 @@ static void knob_step(struct seq_ui *u, u8 k, s32 d, u32 now)
             v = st->micro = (s8)clampi(st->micro + accel(d, 96), -SEQ_MICRO_MAX, SEQ_MICRO_MAX);
             if (first) overlay(u, SUI_OV_SIGNED, u->track, v, -SEQ_MICRO_MAX, SEQ_MICRO_MAX, now);
             break;
-        case 4:
+        case 2:                                 /* K3 note offset (Root is K3 on KNOB BANK) */
             v = st->note = (s8)clampi(st->note + one(d), -48, 48);
             if (first) {
                 u8 n = seq_step_note(p, t, st);
@@ -243,9 +243,9 @@ static void knob_track(struct seq_ui *u, u8 k, s32 d, u32 now)
     switch (k) {
     case 0: t->vol = (u8)clampi(t->vol + accel(d, 127), 0, 127); overlay(u, SUI_OV_BAR, c, t->vol, 0, 127, now); break;
     case 1: t->gate = (u8)clampi(t->gate + one(d), 0, SEQ_GATES - 1); overlay(u, SUI_OV_BAR, c, t->gate, -1, SEQ_GATES - 1, now); break;
-    case 2: t->prob = (u8)clampi(t->prob + accel(d, 100), 0, 100); overlay(u, SUI_OV_BAR, c, t->prob, 0, 100, now); break;
+    case 4: t->prob = (u8)clampi(t->prob + accel(d, 100), 0, 100); overlay(u, SUI_OV_BAR, c, t->prob, 0, 100, now); break;
     case 3: t->quantize = (u8)clampi(t->quantize + accel(d, 100), 0, 100); overlay(u, SUI_OV_BAR, c, t->quantize, 0, 100, now); break;
-    case 4:
+    case 2:                                     /* K3 base note */
         t->note = (u8)clampi(t->note + one(d), 0, 127);
         live_on(u, 16, t->chan, t->note, SUI_DEFAULT_VEL);
         overlay(u, SUI_OV_KEYS, c, t->note, 0, 127, now);

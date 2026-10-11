@@ -75,7 +75,7 @@ static void test_mode_and_steps(void)
     seq_ui_pad(&U, P(5), 1, 90, now);
     seq_ui_knob(&U, 0, -10, now);                              /* K1 velocity */
     seq_ui_knob(&U, 3, 2, now);                                /* K4 micro (small: no accel) */
-    seq_ui_knob(&U, 2, -3, now);                               /* K3 probability: from the track's 100 % */
+    seq_ui_knob(&U, 4, -3, now);                               /* K5 probability: from the track's 100 % */
     seq_ui_knob(&U, 6, 2, now);                                /* K7 condition: one per report -> 1:2 */
     seq_ui_knob(&U, 7, 1, now);                                /* K8 tie */
     seq_ui_knob(&U, 5, 3, now);                                /* K6 ratchet rate: auto -> 1/8 */
@@ -224,7 +224,7 @@ static void test_knob_pages_and_leds(void)
     CHECK(pat.track[0].rate == SEQ_RATE_8T);
     seq_ui_leds(&U, now, rgb);                                 /* pick: pad 4 (printed 1/8T) bright */
     CHECK(rgb[3] == palette[0] && rgb[4] == rgbs(palette[0], 1, 12) && rgb[8] == 0);
-    seq_ui_knob(&U, 4, 2, now);                                /* K5 base note + preview */
+    seq_ui_knob(&U, 2, 2, now);                                /* K3 base note + preview */
     CHECK(pat.track[0].note == 37 && last[0] == 0x99 && last[1] == 37);
     /* overlay for K1 volume (bar) */
     seq_ui_knob(&U, 0, -64, now);                              /* 127 -> 0 (accel) */

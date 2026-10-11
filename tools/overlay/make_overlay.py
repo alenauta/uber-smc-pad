@@ -30,9 +30,9 @@ C_TRACK, C_STEP, C_PAT = "#111111", "#e0600b", "#1f6fd1"
 KNOBS = {
     1: ("Volume", "Velocity", "Tempo"),
     2: ("Gate", "Gate", "Swing"),
-    3: ("Probability", "Probability", "Root"),
+    3: ("Base note", "Note offset", "Root"),
     4: ("Rec quantize", "Micro-timing", "Scale"),
-    5: ("Base note", "Note offset", ""),
+    5: ("Probability", "Probability", ""),
     6: ("Ratchet rate", "Ratchet rate", ""),
     7: ("Steps (length)", "Trig condition", "MIDI channel"),
     8: ("Rate", "Tie", "Play early"),
