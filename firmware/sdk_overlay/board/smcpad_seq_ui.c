@@ -419,10 +419,13 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
             u->stop_used = 1;
             return;
         }
-        u->track = pad;                         /* preview + select: never records */
+        u->track = pad;
         t = &p->track[pad];
         live_on(u, pad, t->chan, t->note, vel);
         u->lit_pads |= bit;
+        if (u->rec && s->running) {
+            seq_record(s, pad, vel, 0);
+        }
         return;
     }
     /* keyboard: pad = scale step above the track's base note */

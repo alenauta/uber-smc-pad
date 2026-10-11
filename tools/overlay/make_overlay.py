@@ -182,7 +182,7 @@ def card():
   <ul>
    <li>Kit: pads play and select tracks. <b>Stop + pad</b> mutes; playback continues (Stop acts on release).</li>
    <li>Keys: pads play the track's notes in the pattern scale.</li>
-   <li><b>Rec</b> + Play: live recording from the Keys view, snapped to the nearest step (K4 = strength). Kit taps are a preview only.</li>
+   <li><b>Rec</b> + Play: live recording, snapped to the nearest step (K4 = strength).</li>
    <li><b>Shift + Stop + pad</b>: clear that track.</li>
   </ul>
   <h3>Transport &amp; sync</h3>

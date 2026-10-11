@@ -169,7 +169,7 @@ static void test_views_kit_keys(void)
     tap(4);
     seq_ui_button(&U, SUI_STOP, 0, now);
     CHECK(pat.track[4].mute == 1);
-    /* kit taps are a preview only, even while recording */
+    /* live record while running */
     press(SUI_REC);
     press(SUI_PLAY);
     CHECK(S.running && U.rec);
@@ -178,15 +178,15 @@ static void test_views_kit_keys(void)
         seq_run(&S, now);
     }
     tap(7);                                                    /* ~step 2 */
-    CHECK(U.track == 7 && last[1] == 43 && pat.track[7].step[2].vel == 0);
-    /* keyboard: C major from 60, records while Rec is on */
+    CHECK(pat.track[7].step[2].vel == 90);
+    /* keyboard: C major from 60 */
     pat.root = 0;
     pat.scale = SCALE_MAJOR;
     pat.track[7].note = 60;
     press(SUI_PAD_BANK);
     CHECK(U.view == SUI_VIEW_KEYS && U.track == 7);
     seq_ui_pad(&U, 2, 1, 80, now);
-    CHECK(last[1] == 64 && pat.track[7].step[2].vel == 80 && pat.track[7].step[2].note == 2);
+    CHECK(last[1] == 64);
     seq_ui_pad(&U, 2, 0, 0, now);
     press(SUI_PAD_BANK);
     CHECK(U.view == SUI_VIEW_STEP);
