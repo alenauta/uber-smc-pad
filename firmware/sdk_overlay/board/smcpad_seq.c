@@ -539,9 +539,64 @@ static u32 lead_units(const struct seq *s)
     return (u32)s->lead_ms * SEQ_CLOCK_UNITS * 256u / s->ext_interval_q8;
 }
 
+/* a track schedules a step half a step before its time: a cue has to fire before the coarsest
+ * track would schedule the bar */
+static u32 max_half(const struct seq *s)
+{
+    u32 m = 1;
+    for (u8 i = 0; i < SEQ_TRACKS; i++) {
+        u32 h = seq_step_units(s->pat->track[i].res) / 2 + 1;
+        m = h > m ? h : m;
+    }
+    return m;
+}
+
+u8 seq_cue(struct seq *s, void (*fn)(void *ctx, struct seq *s), void *ctx)
+{
+    if (!s->running) {
+        return 0;
+    }
+    u32 ahead = s->pos + lead_units(s);
+    u32 b = (s->pos / SEQ_BAR_UNITS + 1) * SEQ_BAR_UNITS;
+    if ((s32)(b - (ahead + max_half(s))) <= 0) {
+        b += SEQ_BAR_UNITS;                     /* too close: tracks may have scheduled it */
+    }
+    s->cue_at = b;
+    s->cue_fn = fn;
+    s->cue_ctx = ctx;
+    s->cued = 1;
+    return 1;
+}
+
+void seq_cue_cancel(struct seq *s)
+{
+    s->cued = 0;
+}
+
+static void cue_fire(struct seq *s)
+{
+    s->cued = 0;
+    for (u8 i = 0; i < SEQ_TRACKS; i++) {       /* the old pattern up to the bar (<= half a step) */
+        for (u8 guard = 0; guard < SEQ_STEPS && (s32)(s->ts[i].next_grid - s->cue_at) < 0; guard++) {
+            schedule(s, i);
+        }
+    }
+    if (s->cue_fn) {
+        s->cue_fn(s->cue_ctx, s);               /* the new pattern */
+    }
+    for (u8 i = 0; i < SEQ_TRACKS; i++) {
+        s->ts[i].next_grid = s->cue_at;         /* everything restarts on the bar */
+        s->ts[i].step = 0;
+        s->ts[i].loop = 0;
+    }
+}
+
 static void process(struct seq *s)
 {
     u32 ahead = s->pos + lead_units(s);
+    if (s->cued && (s32)(ahead + max_half(s) - s->cue_at) >= 0) {
+        cue_fire(s);
+    }
     for (u8 i = 0; i < SEQ_TRACKS; i++) {
         u32 half = seq_step_units(s->pat->track[i].res) / 2;
         for (u8 guard = 0; guard < 8 && (s32)(ahead + half - s->ts[i].next_grid) >= 0; guard++) {
@@ -594,6 +649,7 @@ void seq_stop(struct seq *s)
     s->running = 0;
     s->following = 0;
     s->self_started = 0;
+    s->cued = 0;
     for (u8 i = 0; i < s->nactive; i++) {
         u8 m[3] = {(u8)(0x80 | s->active[i].chan), s->active[i].note, 0x40};
         send(s, m, 3);

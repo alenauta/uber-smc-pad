@@ -25,6 +25,10 @@
  *   Shift + pad                the normal-mode Shift menu (preset, curve, transpose, octave;
  *                              drawn and handled by the caller, see seq_ui_shift_page());
  *                              octave / transpose move the play view (play_oct, play_tr)
+ *   hold Shift + Rec           pattern slots, save: pad = save into that slot; released with no
+ *                              pad = save into the current slot (918+)
+ *   hold Shift + Play          pattern slots, load: pad = load that slot (running: on the next
+ *                              bar line). Slot page: off = empty, dim = used, full = current
  */
 #ifndef SMCPAD_SEQ_UI_H
 #define SMCPAD_SEQ_UI_H
@@ -44,11 +48,16 @@ enum { SUI_KNOBS_TRACK = 0, SUI_KNOBS_PATTERN };
 #define SUI_UNDO_REC_IDLE_MS 1000           /* while recording: this long without a hit */
 #define SUI_DEFAULT_VEL     100
 
+enum { SUI_SLOT_NONE = 0, SUI_SLOT_SAVE, SUI_SLOT_LOAD };
+
 struct seq_ui_io {
     void *ctx;
     void (*midi)(void *ctx, const u8 *m, u32 n);           /* live notes from the play view */
     /* persist tempo, swing, play early, global root / scale */
     void (*save)(void *ctx, const struct seq *s);
+    /* pattern slots: op = SUI_SLOT_SAVE / SUI_SLOT_LOAD; the caller updates slot_used /
+     * slot_cur and reports with seq_ui_notify() / seq_ui_loaded() */
+    void (*slot)(void *ctx, u8 op, u8 slot);
 };
 
 struct seq_ui {
@@ -82,6 +91,12 @@ struct seq_ui {
     struct undo *undo;
     u8  dirty;                              /* something may have changed since the commit */
     u32 act_ms;                             /* last pad / knob / button event */
+    /* pattern slots (caller-owned state: slot_used, slot_cur) */
+    u8  slot_page;                          /* SUI_SLOT_*: page shown while Rec / Play held */
+    u8  slot_picked;                        /* a pad was used on the page */
+    u8  slot_cur;                           /* current slot 0..15 */
+    u16 slot_used;                          /* bit n: slot n holds a pattern */
+    u16 slot_pads;                          /* pads pressed on the page (their release is eaten) */
 };
 
 /* PICK: one pad per choice from pad 1 (ov_min = value of pad 1); a value below ov_min ("follow")
@@ -105,5 +120,9 @@ u8   seq_ui_undo_skip(u16 off);     /* undo_init() skip rule over struct seq_pat
 /* 1 = Shift is held with nothing else claiming the pads: the caller shows / runs the Shift menu */
 u8   seq_ui_shift_page(const struct seq_ui *u);
 s8   seq_ui_play_offset(const struct seq_ui *u, u8 pad);    /* play-view pad -> scale steps */
+/* result of a slot operation: ok = white flash, else red flash */
+void seq_ui_notify(struct seq_ui *u, u8 ok, u32 now_ms);
+/* a different pattern is now in place: held steps, pages, recording state and undo restart */
+void seq_ui_loaded(struct seq_ui *u);
 
 #endif

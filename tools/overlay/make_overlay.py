@@ -46,9 +46,9 @@ BUTTONS = [
     ("KNOB BANK", ["PATTERN", "KNOBS"]),
     ("<", ["PAGE \u25c2", "\u21e7 UNDO"]),
     (">", ["PAGE \u25b8", "\u21e7 REDO"]),
-    ("PLAY", ["PLAY"]),
+    ("PLAY", ["PLAY", "\u21e7 LOAD"]),
     ("STOP", ["STOP", "BANK+pad", "MUTE", "\u21e7 CLEAR"]),
-    ("REC", ["REC", "\u21e7 SAVE \u2020"]),
+    ("REC", ["REC", "\u21e7 SAVE"]),
     ("SHIFT", ["+pad MENU", "+K3 ROOT", "+K4 SCALE"]),
     ("NOTE REPEAT", ["hold TIMING", "\u21e7 SEQ", "+step", "RATCHET"]),
 ]
@@ -201,6 +201,14 @@ def card():
    <li>Sync on (timing pad 15): the DAW's Start / Stop / clock drive the pad. Otherwise the pad sends clock.</li>
    <li><b>Play early</b> (KNOB BANK K8) sends notes ahead to cancel DAW / Bluetooth latency.</li>
   </ul>
+  <h3>Pattern slots (16, one per pad)</h3>
+  <ul>
+   <li><b>Hold Shift + Rec</b>: pad = save there; release without a pad = save the current slot.
+    <b>Hold Shift + Play</b>: pad = load (while playing: on the next bar). Off = empty, dim = used, full = current.</li>
+   <li>Stop saves the current slot if it changed. Loading another slot keeps your changes first; an empty
+    slot starts a new pattern; loading the current slot again goes back to its saved version.
+    White flash = done, red = failed.</li>
+  </ul>
   <h3>Root &amp; scale</h3>
   <ul>
    <li><b>KNOB BANK K3 / K4</b>: track root / scale (follow = global). <b>Shift + K3 / K4</b>: global,
@@ -233,7 +241,6 @@ def card():
    <li>K8 / timing pads 1&ndash;8: notes keep their timing. A coarser grid keeps the notes in between
     (pad dim white). <b>Shift + K8</b>: the same steps faster / slower.</li>
   </ul>
-  <p class="foot">&dagger; pattern memory: Shift + Rec = save (later build).</p>
  </div>
 </div>"""
 
@@ -305,7 +312,7 @@ def build():
 the grey holes. The left strip goes over the knobs (pull the knob caps off if they don't pass through), the right
 strip next to the buttons. The pads stay uncovered: their printed timing labels already match the timing page,
 except pad 14 (FILL, use the sticker).</p>
-<p>The sizes come from the drawing in the manual. Measure your unit before you cut. Firmware 915 and later.</p></div>"""
+<p>The sizes come from the drawing in the manual. Measure your unit before you cut. Firmware 918 and later.</p></div>"""
     sticker = ('<div class="sticker">FILL</div><div class="stickerlab">&larr; sticker for pad 14: covers the '
                'printed &ldquo;LATCH&rdquo; label</div>')
     page = f'<div class="page">{left}{right}{head}{ruler()}{sticker}{card()}</div>'

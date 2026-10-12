@@ -14,7 +14,9 @@
 
 #include "system/includes.h"
 #include "syscfg_id.h"
+#include "boot.h"
 #include "sinco_store.h"
+#include "smcpad_patstore.h"
 #include "smcpad_store_port.h"
 
 #define LOG_TAG_CONST       BOARD
@@ -125,6 +127,66 @@ const struct sinco_flash_port *smcpad_store_port(void)
     writable = (u8)((a == SMCPAD_PRESETS_FLASH) | ((t == SMCPAD_CALIB_FLASH) << 1));
     log_info("USRFLASH @%x, USRTRIM @%x -> writable %x", a, t, writable);
     return &port;
+}
+
+/* ---- sequencer pattern slots (918+): the gap 0x30000-0x4FFFF ------------------------------
+ * repack_oldchain.sh pins the code below 0x30000 and the VM at 0x50000 (907+), so the gap is in
+ * no JLFS area and updates never touch it. Changes are allowed only if the running image's VM
+ * (boot_info, from the flash directory) really starts at or above the end of the gap; with any
+ * other layout (e.g. an image that kept the stock one, VM from 0x26000) the slots are refused
+ * and nothing is written. test/check_ram_isr.sh checks the code end at build time. */
+static u8 pat_writable;
+
+static int pp_read(void *ctx, u32 addr, u8 *dst, u32 len)
+{
+    (void)ctx;
+    if (!in_area(addr, len, PATSTORE_BASE, PATSTORE_END - PATSTORE_BASE)) {
+        return -1;
+    }
+    sfc_read(dst, addr, len);
+    return 0;
+}
+
+static int pp_erase(void *ctx, u32 addr)
+{
+    (void)ctx;
+    if (!pat_writable || addr % PATSTORE_SECTOR ||
+        !in_area(addr, PATSTORE_SECTOR, PATSTORE_BASE, PATSTORE_END - PATSTORE_BASE)) {
+        log_error("refused pattern erase @%x", addr);
+        return -1;
+    }
+    return sfc_erase(SECTOR_ERASER, addr) ? 0 : -1;
+}
+
+static int pp_write(void *ctx, u32 addr, const u8 *src, u32 len)
+{
+    (void)ctx;
+    if (!pat_writable || !in_area(addr, len, PATSTORE_BASE, PATSTORE_END - PATSTORE_BASE)) {
+        log_error("refused pattern write @%x+%x", addr, len);
+        return -1;
+    }
+    return sfc_write(src, addr, len) == len ? 0 : -1;
+}
+
+static const struct patstore_port pat_port = {NULL, pp_read, pp_erase, pp_write};
+
+const struct patstore_port *smcpad_pattern_port(void)
+{
+    u32 vs = boot_info.vm.vm_saddr, vz = boot_info.vm.vm_size;
+    pat_writable = (u8)(vs >= PATSTORE_END && vs % 0x1000 == 0 && vz && vs < SMCPAD_PRESETS_FLASH &&
+                        vz <= SMCPAD_PRESETS_FLASH - vs);
+    log_info("VM @%x+%x -> pattern slots %s", vs, vz, pat_writable ? "writable" : "refused");
+    return &pat_port;
+}
+
+u8 smcpad_pattern_writable(void)
+{
+    return pat_writable;
+}
+
+u32 smcpad_vm_start(void)
+{
+    return boot_info.vm.vm_saddr;
 }
 
 #endif

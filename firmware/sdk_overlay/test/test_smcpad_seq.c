@@ -559,6 +559,50 @@ static void test_rate_grid(void)
     CHECK(seq_record(&S, 7, 90, 0) == 4 && t7->step[4].vel == 90);
 }
 
+/* pattern change on the bar line (seq_cue): the old pattern plays up to the bar, the new one
+ * starts on it with every track from step 1 */
+static int cue_calls;
+static u32 cue_pos;
+static void cue_cb(void *ctx, struct seq *s)
+{
+    (void)ctx;
+    cue_calls++;
+    cue_pos = s->pos;
+    for (u8 t = 0; t < SEQ_TRACKS; t++) {
+        memset(pat.track[t].step, 0, sizeof(pat.track[t].step));
+    }
+    pat.track[2].step[0].vel = 100;                            /* note 38 on the bar */
+    pat.track[1].step[1].vel = 100;                            /* note 37 one step after it */
+}
+
+static void test_cue(void)
+{
+    setup();
+    cue_calls = 0;
+    CHECK(!seq_cue(&S, cue_cb, NULL));                         /* stopped: nothing cued */
+    pat.track[0].step[0].vel = pat.track[0].step[15].vel = 100;    /* 36: last step at 1875 ms */
+    pat.track[1].len = 3;                                      /* 37: every 375 ms (polymeter) */
+    pat.track[1].step[0].vel = 100;
+    seq_start(&S, now);                                        /* t0 = 1000, bar = 2000 ms */
+    run_to(1700);
+    CHECK(seq_cue(&S, cue_cb, NULL) && S.cue_at == SEQ_BAR_UNITS);
+    run_to(2700);
+    CHECK(cue_calls == 0);
+    run_to(5200);
+    CHECK(cue_calls == 1 && cue_pos < SEQ_BAR_UNITS && cue_pos + 130 >= SEQ_BAR_UNITS);
+    CHECK(count_on(36, 2870, 2880) == 1 && count_on(37, 2870, 2880) == 1);   /* old, before the bar */
+    CHECK(count_on(38, 2998, 3003) == 1);                      /* new, on the bar */
+    CHECK(count_on(36, 2950, 5200) == 0 && count_on(37, 2950, 3100) == 0);
+    CHECK(count_on(37, 3123, 3128) == 1 && count_on(37, 3498, 3503) == 1);  /* track 1 from step 1 */
+    /* Stop cancels; too close to the bar: the next one */
+    CHECK(seq_cue(&S, cue_cb, NULL));
+    seq_stop(&S);
+    CHECK(!S.cued);
+    seq_start(&S, now);                                        /* t0 = 5200 */
+    run_to(5200 + 1990);                                       /* 10 ms (19 units) before bar 1 */
+    CHECK(seq_cue(&S, cue_cb, NULL) && S.cue_at == 2 * SEQ_BAR_UNITS);
+}
+
 int main(void)
 {
     test_scale();
@@ -575,6 +619,7 @@ int main(void)
     test_chords_scales();
     test_queue_load();
     test_rate_grid();
+    test_cue();
     printf(failures ? "test_smcpad_seq: %d FAILED\n" : "test_smcpad_seq: ALL PASSED\n", failures);
     return failures != 0;
 }

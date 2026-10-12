@@ -40,6 +40,7 @@
 #include "smcpad_seq.h"
 #include "smcpad_seq_ui.h"
 #include "smcpad_scale.h"
+#include "smcpad_patstore.h"
 #define APP_PRESETS         1                   /* preset interpreter (needs the store) */
 #else
 #define APP_PRESETS         0
@@ -186,7 +187,7 @@ static struct { u8 ver, lead_ms, groot, gscale; } seq_cfg;
 static u8 seq_cfg_dirty;
 static u32 seq_cfg_ms;
 /* track colours (KNOB BANK K6): own item so the seq_cfg layout stays; 42 is free in spp_and_le
- * (user_cfg_id.h uses 1-14, 17-36, 47-49; we use 43-46) */
+ * (user_cfg_id.h uses 1-14, 17-36, 47-49; we use 41, 43-46) */
 #define SMCPAD_COLOURS_VM_ID    42
 static struct { u8 ver, colour[SEQ_TRACKS]; } seq_colours;
 
@@ -234,8 +235,173 @@ static void seq_cfg_flush(u32 now)
     }
 }
 
+/* ---- pattern slots (918+): smcpad_patstore.c in the flash gap 0x30000-0x4FFFF --------------
+ * Shift + Rec + pad = save there (no pad: the current slot), Shift + Play + pad = load (running:
+ * on the next bar line; an empty slot = a new default pattern there). Switching to another slot
+ * saves unsaved changes of the current one first; loading the current slot again reverts it.
+ * Stop (pad or host) saves the current slot when the pattern changed since its last save/load.
+ * Saves run one short step per main-loop pass (the longest stall is one 4 KB sector erase). */
+#define SMCPAD_SLOT_VM_ID       41                  /* current slot; free user id (see above) */
+#define SLOT_NONE               0xFF
+static struct patstore pat_store;
+static struct { u8 ver, slot; } slot_cfg;
+static u32 slot_saved_crc;                          /* pattern CRC at the last save / load */
+static u32 slot_save_crc;                           /* pattern CRC when the running save began */
+static u8 slot_save_target = SLOT_NONE, slot_save_next = SLOT_NONE;
+static u8 slot_load_next = SLOT_NONE;               /* load waiting for a save to finish */
+static u8 slot_cued = SLOT_NONE;                    /* load waiting for the bar line */
+static u8 slot_was_running;
+
+static u32 pat_crc(void)
+{
+    return patstore_crc32(0, (const u8 *)&seq_pat, sizeof(seq_pat));
+}
+
+static void seq_default_pattern(void)
+{
+    u8 notes[SEQ_TRACKS], chans[SEQ_TRACKS];
+    u8 ch = 9, n = smcpad_preset_default_note(&preset, 0, &ch);
+    for (u8 i = 0; i < SEQ_TRACKS; i++) {      /* 918+: every track starts on the preset's pad 1
+                                                 * (octave 2, no transpose), so the play view has the
+                                                 * root on pad 1 on every track; K3 sets another */
+        notes[i] = n == 0xFF ? 36 : n;
+        chans[i] = n == 0xFF ? 9 : ch;
+    }
+    seq_pattern_default(&seq_pat, notes, chans);
+}
+
+static void slot_set_cur(u8 slot)
+{
+    sui.slot_cur = (u8)(slot & 15);
+    if (slot_cfg.ver != 1 || slot_cfg.slot != sui.slot_cur) {
+        slot_cfg.ver = 1;
+        slot_cfg.slot = sui.slot_cur;
+        syscfg_write(SMCPAD_SLOT_VM_ID, (u8 *)&slot_cfg, sizeof(slot_cfg));
+    }
+}
+
+static void slot_save_request(u8 slot)
+{
+    if (pat_store.busy) {
+        slot_save_next = slot;                      /* after the running one */
+        return;
+    }
+    if (patstore_save_begin(&pat_store, slot, &seq_pat)) {
+        slot_load_next = SLOT_NONE;
+        seq_ui_notify(&sui, 0, smcpad_hw_ms());     /* too big / no flash access */
+        return;
+    }
+    slot_save_target = slot;
+    slot_save_crc = pat_crc();
+}
+
+static void slot_load_now(u8 slot)                 /* stopped, or at the bar line */
+{
+    if (pat_store.used & BIT(slot)) {
+        if (patstore_load(&pat_store, slot, &seq_pat)) {
+            seq_ui_notify(&sui, 0, smcpad_hw_ms());
+            return;                                 /* checked first: the pattern is unchanged */
+        }
+    } else {
+        seq_default_pattern();                      /* empty slot: start a new pattern there */
+    }
+    seq_ui_loaded(&sui);
+    slot_set_cur(slot);
+    slot_saved_crc = pat_crc();
+    seq_ui_notify(&sui, 1, smcpad_hw_ms());
+}
+
+static void slot_cue_fn(void *ctx, struct seq *s)
+{
+    (void)ctx;
+    (void)s;
+    if (slot_cued != SLOT_NONE) {
+        u8 slot = slot_cued;
+        slot_cued = SLOT_NONE;
+        slot_load_now(slot);
+    }
+}
+
+static void slot_load_go(u8 slot)
+{
+    if (seq_cue(&seq, slot_cue_fn, NULL)) {
+        slot_cued = slot;                           /* running: on the next bar line */
+    } else {
+        slot_load_now(slot);
+    }
+}
+
+static void slot_load_request(u8 slot)
+{
+    if (pat_store.busy) {
+        slot_load_next = slot;                      /* re-checked when the save is done */
+        return;
+    }
+    if (slot == sui.slot_cur && !(pat_store.used & BIT(slot))) {
+        seq_ui_notify(&sui, 0, smcpad_hw_ms());     /* never saved: nothing to revert to */
+        return;
+    }
+    if (slot != sui.slot_cur && pat_crc() != slot_saved_crc) {
+        slot_load_next = slot;                      /* keep the current work first */
+        slot_save_request(sui.slot_cur);
+        return;
+    }
+    slot_load_go(slot);
+}
+
+static void seq_slot(void *ctx, u8 op, u8 slot)
+{
+    (void)ctx;
+    if (op == SUI_SLOT_SAVE) {
+        slot_save_request(slot);
+    } else if (op == SUI_SLOT_LOAD) {
+        slot_load_request(slot);
+    }
+}
+
+static void slot_service(void)
+{
+    if (slot_cued != SLOT_NONE && !seq.running) {   /* stopped before the bar: load now */
+        u8 slot = slot_cued;
+        slot_cued = SLOT_NONE;
+        slot_load_now(slot);
+    }
+    if (slot_was_running && !seq.running && !pat_store.busy && pat_crc() != slot_saved_crc) {
+        slot_save_request(sui.slot_cur);            /* auto-save on Stop */
+    }
+    slot_was_running = seq.running;
+    if (!pat_store.busy) {
+        return;
+    }
+    int r = patstore_save_step(&pat_store);
+    if (r > 0) {
+        return;
+    }
+    sui.slot_used = pat_store.used;
+    u8 load = slot_load_next;
+    slot_load_next = SLOT_NONE;
+    if (r == 0) {
+        slot_set_cur(slot_save_target);
+        slot_saved_crc = slot_save_crc;
+        seq_ui_notify(&sui, 1, smcpad_hw_ms());
+    } else {
+        log_error("pattern save to slot %d failed: %d", slot_save_target, r);
+        load = SLOT_NONE;                           /* don't switch away from unsaved work */
+        seq_ui_notify(&sui, 0, smcpad_hw_ms());
+    }
+    slot_save_target = SLOT_NONE;
+    if (slot_save_next != SLOT_NONE) {
+        u8 slot = slot_save_next;
+        slot_save_next = SLOT_NONE;
+        slot_save_request(slot);
+    }
+    if (load != SLOT_NONE) {
+        slot_load_request(load);                    /* again: waits for a queued save, re-checks */
+    }
+}
+
 static const struct seq_out seq_out = {NULL, seq_midi};
-static const struct seq_ui_io sui_io = {NULL, seq_midi, seq_settings_store};
+static const struct seq_ui_io sui_io = {NULL, seq_midi, seq_settings_store, seq_slot};
 
 static void preset_scale_changed(void *ctx)     /* Shift + K3 / K4 in normal mode */
 {
@@ -247,13 +413,7 @@ static void preset_scale_changed(void *ctx)     /* Shift + K3 / K4 in normal mod
 
 static void seq_app_init(void)
 {
-    u8 notes[SEQ_TRACKS], chans[SEQ_TRACKS];
-    for (u8 i = 0; i < SEQ_TRACKS; i++) {      /* tracks default to the preset's pads (octave 2, no transpose) */
-        u8 ch = 9, n = smcpad_preset_default_note(&preset, i, &ch);
-        notes[i] = n == 0xFF ? (u8)(36 + i) : n;
-        chans[i] = n == 0xFF ? 9 : ch;
-    }
-    seq_pattern_default(&seq_pat, notes, chans);
+    seq_default_pattern();
     seq_init(&seq, &seq_out, &seq_pat, sys_timer_get_ms() | 1);
     u32 bpm = store.globals[GLOB_TEMPO_LO] | ((u32)store.globals[GLOB_TEMPO_HI] << 8);
     seq_set_tempo(&seq, (bpm < 30 || bpm > 300 ? 120 : bpm) * 100);
@@ -280,6 +440,18 @@ static void seq_app_init(void)
     memcpy(seq_colours.colour, sui.colour, sizeof(seq_colours.colour));
     undo_init(&seq_undo, (u8 *)&seq_pat, (u16)sizeof(seq_pat), seq_shadow, (u16)sizeof(seq_shadow),
               seq_ui_undo_skip);
+    /* pattern slots: the last used one comes back (none saved yet: slot 1, default pattern) */
+    patstore_init(&pat_store, smcpad_pattern_port());
+    if (syscfg_read(SMCPAD_SLOT_VM_ID, (u8 *)&slot_cfg, sizeof(slot_cfg)) != sizeof(slot_cfg) ||
+        slot_cfg.ver != 1 || slot_cfg.slot >= PATSTORE_SLOTS) {
+        memset(&slot_cfg, 0, sizeof(slot_cfg));
+    }
+    sui.slot_cur = slot_cfg.slot;
+    sui.slot_used = pat_store.used;
+    if ((pat_store.used & BIT(slot_cfg.slot)) && patstore_load(&pat_store, slot_cfg.slot, &seq_pat)) {
+        seq_default_pattern();                      /* read error after the check: start clean */
+    }
+    slot_saved_crc = pat_crc();
     sui.undo = &seq_undo;
 }
 
@@ -552,9 +724,10 @@ static void service_seq(void)
     u32 ms = smcpad_hw_ms();
     seq_run(&seq, ms);
     seq_clock_timeout(&seq, ms);
+    slot_service();                                 /* pattern saves: one short step per pass */
     seq_cfg_flush(sys_timer_get_ms());
     seq_play_shift();
-    smcpad_hw_fast_wake(seq.running || seq.ext_seen || sui.active);
+    smcpad_hw_fast_wake(seq.running || seq.ext_seen || sui.active || pat_store.busy);
     if (sui.active != app.seq_shown) {             /* mode changed: repaint everything */
         app.seq_shown = sui.active;
         memset(seq_rgb_last, 0xFF, sizeof(seq_rgb_last));
@@ -842,6 +1015,14 @@ static void diag_reply(const u8 *req, u32 len)
         *p++ = (u8)(app.load_pct & 0x7f);
         *p++ = (u8)(app.load_pct_max & 0x7f);
         put14(&p, app.pass_max_ms);
+        /* 918+: pattern slots used (16 bits), current slot, flags (1 = flash area writable,
+         * 2 = saving), last error (negated), the running image's VM start / 4 KB */
+        put14(&p, pat_store.used);
+        put14(&p, (u32)pat_store.used >> 14);
+        *p++ = (u8)(sui.slot_cur & 0x7f);
+        *p++ = (u8)((smcpad_pattern_writable() ? 1 : 0) | (pat_store.busy ? 2 : 0));
+        *p++ = (u8)((-(s32)pat_store.err) & 0x7f);
+        put14(&p, smcpad_vm_start() >> 12);
 #endif
     } else if (cmd == 0x04) {                       /* boot history v2 (911+) */
         const struct smcpad_boot_hist *h = smcpad_crash_hist();

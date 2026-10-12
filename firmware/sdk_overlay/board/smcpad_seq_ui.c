@@ -13,6 +13,9 @@
 #define C_FILL      0x00FFFF
 #define C_SYNC      0x0040FF
 #define C_TAP       0xFF0020
+#define C_SLOT_SAVE 0xFF2000                /* slot pages: save (Shift + Rec), load (Shift + Play) */
+#define C_SLOT_LOAD 0x00FF40
+#define C_FAIL      0xFF0000                /* a slot operation failed */
 
 /* track colours (KNOB BANK K6): mostly pure / two-channel hues, so they still differ when dimmed;
  * no plain white (held pads and the playhead are white) */
@@ -42,14 +45,16 @@ static u8 view_len(const struct seq_track *t)    /* grid steps in the loop (last
 
 /* dim levels (num / den of the full colour): kept high enough that the LEDs still show the hue
  * after the global brightness (~1/4); below that colours drift (orange -> red ...) */
-#define DIM_EMPTY       1, 8                    /* empty step in the step view */
+#define DIM_EMPTY       1, 16                   /* empty step in the step view: the faintest that
+                                                 * still keeps the hue (918: was 1/8) */
 #define DIM_CHOICE      1, 6                    /* other choices in a pick overlay */
 #define DIM_BAR         1, 10                   /* the empty part of a bar / count */
 #define DIM_PLAY        1, 6                    /* play view: other notes */
 #define DIM_ROOT        1, 2                    /* play view: root notes */
 #define DIM_TRACK       1, 5                    /* track layer: other tracks */
 #define DIM_MUTED       1, 12                   /* track layer: muted tracks */
-#define LIT_MIN         40                      /* step lit at velocity 1, in 1/128 (127 = 128) */
+#define LIT_MIN         64                      /* step lit at velocity 1, in 1/128 (127 = 128); 918:
+                                                 * was 40, soft notes got lost among empty steps */
 
 /* c * num / den per channel, rounded; a channel that is on stays on (hue kept when dim) */
 static u32 rgbs(u32 c, u32 num, u32 den)
@@ -179,6 +184,33 @@ static void flash(struct seq_ui *u, u32 now)    /* short white blink: done (undo
     u->ov_until = now + SUI_FLASH_MS ? now + SUI_FLASH_MS : 1;
 }
 
+void seq_ui_notify(struct seq_ui *u, u8 ok, u32 now_ms)
+{
+    flash(u, now_ms);
+    if (!ok) {
+        u->ov_val = 1;                          /* red, a bit longer */
+        u->ov_until = now_ms + 3 * SUI_FLASH_MS ? now_ms + 3 * SUI_FLASH_MS : 1;
+    }
+}
+
+void seq_ui_loaded(struct seq_ui *u)
+{
+    u->held = u->keep = 0;
+    u->page = 0;
+    memset(u->rec_step, 0xFF, sizeof(u->rec_step));
+    u->dirty = 0;
+    if (u->undo) {
+        undo_reset(u->undo);                    /* history belonged to the other pattern */
+    }
+}
+
+static void slot_call(struct seq_ui *u, u8 op, u8 slot)
+{
+    if (u->io && u->io->slot) {
+        u->io->slot(u->io->ctx, op, (u8)(slot & 15));
+    }
+}
+
 void seq_ui_init(struct seq_ui *u, struct seq *s, const struct seq_ui_io *io)
 {
     memset(u, 0, sizeof(*u));
@@ -192,7 +224,7 @@ void seq_ui_init(struct seq_ui *u, struct seq *s, const struct seq_ui_io *io)
 
 u8 seq_ui_shift_page(const struct seq_ui *u)
 {
-    return (u8)(u->active && u->shift && !u->padbank && !u->nr);
+    return (u8)(u->active && u->shift && !u->padbank && !u->nr && !u->slot_page);
 }
 
 s8 seq_ui_play_offset(const struct seq_ui *u, u8 pad)
@@ -513,6 +545,17 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
     if (!u->active || pad > 15) {
         return;
     }
+    u16 pbit = (u16)(1u << pad);
+    if (!on && (u->slot_pads & pbit)) {         /* released after picking a slot */
+        u->slot_pads &= (u16)~pbit;
+        return;
+    }
+    if (on && u->slot_page) {                   /* slot page: pad = slot */
+        u->slot_pads |= pbit;
+        u->slot_picked = 1;
+        slot_call(u, u->slot_page, pad);
+        return;
+    }
     u->dirty = 1;
     u->act_ms = now_ms;
     undo_track(u, u->track);
@@ -682,13 +725,18 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
         }
         break;
     case SUI_PLAY:
-        if (pressed && !s->running) {
+        if (pressed && u->shift) {
+            u->slot_page = SUI_SLOT_LOAD;       /* held: load page */
+            u->slot_picked = 0;
+        } else if (pressed && !s->running) {
             if (u->at_start) {
                 seq_start(s, now_ms);
             } else {
                 seq_continue(s, now_ms);
             }
             u->at_start = 0;
+        } else if (!pressed && u->slot_page == SUI_SLOT_LOAD) {
+            u->slot_page = SUI_SLOT_NONE;
         }
         break;
     case SUI_STOP:                              /* acts on release: Stop + pad = mute, no stop */
@@ -704,8 +752,16 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
         }
         break;
     case SUI_REC:
-        if (pressed && !u->shift) {
-            u->rec ^= 1;                        /* Shift + Rec = save (Flash B) */
+        if (pressed && u->shift) {
+            u->slot_page = SUI_SLOT_SAVE;       /* held: save page */
+            u->slot_picked = 0;
+        } else if (pressed) {
+            u->rec ^= 1;
+        } else if (u->slot_page == SUI_SLOT_SAVE) {
+            if (!u->slot_picked) {
+                slot_call(u, SUI_SLOT_SAVE, u->slot_cur);   /* no pad: the current slot */
+            }
+            u->slot_page = SUI_SLOT_NONE;
         }
         break;
     default:
@@ -718,9 +774,9 @@ static void draw_overlay(const struct seq_ui *u, u32 rgb[16])
 {
     u32 c = seq_ui_track_rgb(u, u->ov_colour);
     s32 lo = u->ov_min, hi = u->ov_max, v = u->ov_val;
-    if (u->ov_kind == SUI_OV_FLASH) {           /* undo / redo done, or refused */
+    if (u->ov_kind == SUI_OV_FLASH) {           /* undo / redo / saved: white; failed: red */
         for (u8 i = 0; i < 16; i++) {
-            rgb[i] = rgbs(WHITE, 1, 6);
+            rgb[i] = v ? rgbs(C_FAIL, 1, 3) : rgbs(WHITE, 1, 6);
         }
         return;
     }
@@ -808,6 +864,13 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
     if (seq_ui_beat_led(s, now_ms)) btn |= 1u << SUI_NOTE_REPEAT;   /* sequencer mode + tempo */
     if (u->stop) btn |= 1u << SUI_STOP;
 
+    if (u->slot_page) {                         /* pattern slots: off empty, dim used, full current */
+        u32 c = u->slot_page == SUI_SLOT_SAVE ? C_SLOT_SAVE : C_SLOT_LOAD;
+        for (u8 i = 0; i < 16; i++) {
+            rgb[i] = i == u->slot_cur ? c : (((u->slot_used >> i) & 1) ? rgbs(c, DIM_CHOICE) : 0);
+        }
+        return btn;
+    }
     if (u->ov_until && (s32)(u->ov_until - now_ms) > 0) {
         draw_overlay(u, rgb);
         return btn;

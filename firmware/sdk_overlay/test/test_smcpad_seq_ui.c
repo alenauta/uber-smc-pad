@@ -34,8 +34,16 @@ static void cap_tempo(void *ctx, const struct seq *s)
     groot_seen = s->groot;
     gscale_seen = s->gscale;
 }
+static u8 slot_op, slot_n, slot_calls;
+static void cap_slot(void *ctx, u8 op, u8 slot)
+{
+    (void)ctx;
+    slot_op = op;
+    slot_n = slot;
+    slot_calls++;
+}
 static const struct seq_out sout = {NULL, cap};
-static const struct seq_ui_io uio = {NULL, cap, cap_tempo};
+static const struct seq_ui_io uio = {NULL, cap, cap_tempo, cap_slot};
 #define P(step) seq_ui_step_pad(step)                         /* pad of a step-view step */
 
 static struct seq_pattern pat;
@@ -591,6 +599,54 @@ static void test_undo_rec_passes(void)
     seq_ui_button(&U, SUI_SHIFT, 0, now);
 }
 
+/* pattern slots (918+): hold Shift + Rec = save page, hold Shift + Play = load page */
+static void test_slots(void)
+{
+    setup();
+    slot_calls = 0;
+    U.slot_used = (1u << 0) | (1u << 3);
+    U.slot_cur = 3;
+    seq_ui_button(&U, SUI_SHIFT, 1, now);
+    seq_ui_button(&U, SUI_REC, 1, now);
+    CHECK(U.slot_page == SUI_SLOT_SAVE && !U.rec && !seq_ui_shift_page(&U));
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[3] == C_SLOT_SAVE && rgb[0] == rgbs(C_SLOT_SAVE, DIM_CHOICE) && rgb[1] == 0);
+    tap(5);                                                    /* save into slot 6 */
+    CHECK(slot_calls == 1 && slot_op == SUI_SLOT_SAVE && slot_n == 5 && rec_count(&pat.track[0]) == 0);
+    seq_ui_button(&U, SUI_REC, 0, now);
+    CHECK(slot_calls == 1 && !U.slot_page);                    /* a pad was used: no extra save */
+    seq_ui_button(&U, SUI_REC, 1, now);                        /* quick save: no pad */
+    seq_ui_button(&U, SUI_REC, 0, now);
+    CHECK(slot_calls == 2 && slot_op == SUI_SLOT_SAVE && slot_n == 3);
+    /* load page: Play doesn't start */
+    seq_ui_button(&U, SUI_PLAY, 1, now);
+    CHECK(U.slot_page == SUI_SLOT_LOAD && !S.running);
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[3] == C_SLOT_LOAD && rgb[0] == rgbs(C_SLOT_LOAD, DIM_CHOICE));
+    seq_ui_pad(&U, 0, 1, 90, now);
+    CHECK(slot_calls == 3 && slot_op == SUI_SLOT_LOAD && slot_n == 0);
+    seq_ui_button(&U, SUI_PLAY, 0, now);
+    seq_ui_button(&U, SUI_SHIFT, 0, now);
+    seq_ui_pad(&U, 0, 0, 0, now);                              /* released after the page: eaten */
+    CHECK(!U.slot_page && rec_count(&pat.track[0]) == 0 && !S.running && slot_calls == 3);
+    press(SUI_REC);                                            /* without Shift: record, as before */
+    CHECK(U.rec && slot_calls == 3);
+    press(SUI_REC);
+    /* results: red = failed, white = done */
+    seq_ui_notify(&U, 0, now);
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[7] == rgbs(C_FAIL, 1, 3));
+    now += 3 * SUI_FLASH_MS + 1;
+    seq_ui_notify(&U, 1, now);
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[7] == rgbs(WHITE, 1, 6));
+    /* another pattern in place: held steps and recording state restart */
+    seq_ui_pad(&U, P(2), 1, 90, now);
+    seq_ui_loaded(&U);
+    seq_ui_pad(&U, P(2), 0, 0, now);
+    CHECK(!U.held && !U.keep && U.page == 0 && U.rec_step[0] == 0xFF);
+}
+
 /* rate = editing grid: a coarser grid keeps the notes between its steps; Shift + K8 = speed;
  * KNOB BANK K6 = track colour */
 static void test_grid_rate_colour(void)
@@ -663,6 +719,7 @@ int main(void)
     test_beat_led();
     test_undo();
     test_undo_rec_passes();
+    test_slots();
     test_grid_rate_colour();
     printf(failures ? "test_smcpad_seq_ui: %d FAILED\n" : "test_smcpad_seq_ui: ALL PASSED\n", failures);
     return failures != 0;

@@ -30,4 +30,14 @@ else
     if [ $heap -lt $min ]; then echo "HEAP TOO SMALL: $heap B < $min B"; rc=1
     else echo "heap ok: $heap B (>= $min B)"; fi
 fi
+# Code size: app.bin sits at flash 0x1120 and cfg_tool.bin follows; everything must end below
+# the pattern slots at 0x30000 (smcpad_patstore.h). 0x2D000 leaves room for both headers.
+APPBIN=$OUT/stage/app.bin
+if [ -f "$APPBIN" ]; then
+    sz=$(stat -c %s "$APPBIN"); max=$((0x2D000))
+    if [ "$sz" -gt "$max" ]; then echo "CODE TOO BIG: app.bin $sz B > $max B (pattern area 0x30000)"; rc=1
+    else echo "code ok: app.bin $sz B (<= $max B, pattern area at 0x30000)"; fi
+else
+    echo "CODE SIZE: $APPBIN not found"; rc=1
+fi
 exit $rc

@@ -153,6 +153,11 @@ struct seq {
     u32 late;       /* events emitted more than ~2 ms late (diagnostics) */
     u32 dropped;    /* queue overflows */
     u8  rec_created;/* the last seq_record() call started a new step (vs. added a chord note) */
+    /* pattern change cued for the bar line at cue_at (seq_cue) */
+    u8  cued;
+    u32 cue_at;
+    void (*cue_fn)(void *ctx, struct seq *s);
+    void *cue_ctx;
 };
 
 /* tables (exposed for UI and tests) */
@@ -197,5 +202,13 @@ s32  seq_step_micro_units(const struct seq_track *t, const struct seq_step *st);
  * index (0xFF when stopped). */
 u8   seq_record(struct seq *s, u8 track, u8 vel, s8 note);
 u8   seq_playhead(const struct seq *s, u8 track);   /* step whose grid time last passed */
+
+/* pattern change on the next bar line (bars of 4 beats from the start): fn runs just before
+ * anything at the bar is scheduled (load the new pattern there), then every track restarts
+ * from its step 1 on the bar. Returns 0 when stopped (nothing cued: load right away). A new
+ * cue replaces the old one; Stop cancels it. */
+#define SEQ_BAR_UNITS       (4 * SEQ_PPQN)
+u8   seq_cue(struct seq *s, void (*fn)(void *ctx, struct seq *s), void *ctx);
+void seq_cue_cancel(struct seq *s);
 
 #endif

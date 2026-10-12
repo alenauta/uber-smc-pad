@@ -150,6 +150,16 @@ def cmd_status(pad):
         print(f"battery {u14(r, 47) / 100:.2f} V  (lowest since boot {u14(r, 49) / 100:.2f} V)")
     if len(r) >= 55:                                       # 913+: main loop load
         print(f"main loop busy {r[51]} % (highest since boot {r[52]} %)  longest pass {u14(r, 53)} ms")
+    if len(r) >= 64:                                       # 918+: pattern slots
+        used = u14(r, 55) | u14(r, 57) << 14
+        slots = " ".join(str(i + 1) for i in range(16) if used >> i & 1) or "none"
+        errs = {0: "", 1: "flash I/O", 2: "empty", 3: "CRC", 4: "format", 5: "too big", 6: "slot",
+                7: "busy", 8: "verify (flash protected?)"}
+        e = r[61]
+        print(f"pattern slots: current {r[59] + 1}, saved: {slots}"
+              f"{', saving' if r[60] & 2 else ''}"
+              f"  flash area {'writable' if r[60] & 1 else 'REFUSED'} (VM at 0x{u14(r, 62) << 12:05X})"
+              f"{f', last error: {errs.get(e, e)}' if e else ''}")
 
 
 def cmd_frame(pad, n=1):
