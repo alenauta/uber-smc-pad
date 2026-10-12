@@ -40,10 +40,26 @@ static u8 view_len(const struct seq_track *t)    /* grid steps in the loop (last
     return (u8)((len + k - 1) / k);
 }
 
+/* dim levels (num / den of the full colour): kept high enough that the LEDs still show the hue
+ * after the global brightness (~1/4); below that colours drift (orange -> red ...) */
+#define DIM_EMPTY       1, 8                    /* empty step in the step view */
+#define DIM_CHOICE      1, 6                    /* other choices in a pick overlay */
+#define DIM_BAR         1, 10                   /* the empty part of a bar / count */
+#define DIM_PLAY        1, 6                    /* play view: other notes */
+#define DIM_ROOT        1, 2                    /* play view: root notes */
+#define DIM_TRACK       1, 5                    /* track layer: other tracks */
+#define DIM_MUTED       1, 12                   /* track layer: muted tracks */
+#define LIT_MIN         40                      /* step lit at velocity 1, in 1/128 (127 = 128) */
+
+/* c * num / den per channel, rounded; a channel that is on stays on (hue kept when dim) */
 static u32 rgbs(u32 c, u32 num, u32 den)
 {
-    u32 r = ((c >> 16) & 0xff) * num / den, g = ((c >> 8) & 0xff) * num / den, b = (c & 0xff) * num / den;
-    return (r << 16) | (g << 8) | b;
+    u32 out = 0;
+    for (u8 sh = 0; sh <= 16; sh += 8) {
+        u32 v = (c >> sh) & 0xff, o = (v * num + den / 2) / den;
+        out |= (u32)((v && !o && num) ? 1 : (o > 255 ? 255 : o)) << sh;
+    }
+    return out;
 }
 
 static s32 clampi(s32 v, s32 lo, s32 hi)
@@ -124,12 +140,23 @@ u8 seq_ui_undo_skip(u16 off)
     return (u8)((off - base) % sizeof(struct seq_track) == __builtin_offsetof(struct seq_track, mute));
 }
 
+/* edits settle into one undo step after SUI_UNDO_IDLE_MS without touching anything (while
+ * recording: SUI_UNDO_REC_IDLE_MS without a hit, so a new pass over the loop is its own step) */
 static void undo_settle(struct seq_ui *u, u32 now)
 {
-    if (u->undo && u->dirty && !u->held && !(u->rec && u->seq->running) &&
-        now - u->act_ms >= SUI_UNDO_IDLE_MS) {
+    u32 idle = (u->rec && u->seq->running) ? SUI_UNDO_REC_IDLE_MS : SUI_UNDO_IDLE_MS;
+    if (u->undo && u->dirty && !u->held && !u->lit_pads && now - u->act_ms >= idle) {
         undo_commit(u->undo);
         u->dirty = 0;
+    }
+}
+
+/* the journal watches one track: the one about to be edited (switching commits the last one) */
+static void undo_track(struct seq_ui *u, u8 t)
+{
+    if (u->undo) {
+        undo_window(u->undo, (u16)(__builtin_offsetof(struct seq_pattern, track) + (u32)(t & 15) * sizeof(struct seq_track)),
+                    (u16)sizeof(struct seq_track));
     }
 }
 
@@ -395,6 +422,7 @@ void seq_ui_knob(struct seq_ui *u, u8 knob, s32 steps, u32 now_ms)
     }
     u->dirty = 1;
     u->act_ms = now_ms;
+    undo_track(u, u->track);
     if (u->shift && knob_global(u, knob, steps, now_ms)) {
         return;
     }
@@ -487,6 +515,7 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
     }
     u->dirty = 1;
     u->act_ms = now_ms;
+    undo_track(u, u->track);
     struct seq *s = u->seq;
     struct seq_pattern *p = s->pat;
     struct seq_track *t = &p->track[u->track];
@@ -524,6 +553,7 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
     }
     if (u->padbank) {                           /* track layer: select / mute / clear */
         if (u->stop && u->shift) {
+            undo_track(u, pad);                 /* the cleared track: its own undo step */
             memset(p->track[pad].step, 0, sizeof(p->track[pad].step));
             u->stop_used = 1;
         } else if (u->stop) {
@@ -590,6 +620,7 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
     }
     u->dirty = 1;
     u->act_ms = now_ms;
+    undo_track(u, u->track);
     switch (hw) {
     case SUI_SHIFT:
         u->shift = pressed;
@@ -702,7 +733,7 @@ static void draw_overlay(const struct seq_ui *u, u32 rgb[16])
     if (u->ov_kind == SUI_OV_PICK) {            /* one pad per choice, from pad 1 */
         for (u8 i = 0; i < 16; i++) {
             s32 idx = (s32)i + lo;
-            rgb[i] = (v < lo || idx > hi) ? 0 : (idx == v ? c : rgbs(c, 1, 12));   /* v < lo: follow */
+            rgb[i] = (v < lo || idx > hi) ? 0 : (idx == v ? c : rgbs(c, DIM_CHOICE));   /* v < lo: follow */
         }
         return;
     }
@@ -712,8 +743,8 @@ static void draw_overlay(const struct seq_ui *u, u32 rgb[16])
         for (u8 i = 0; i < 8; i++) {
             s32 part = clampi(fill - i * 8, 0, 8);
             u8 pad = v < 0 ? (u8)(7 - i) : (u8)(8 + i);
-            rgb[pad] = part ? rgbs(c, (u32)part, 8) : rgbs(c, 1, 24);
-            rgb[v < 0 ? 8 + i : 7 - i] = rgbs(c, 1, 24);
+            rgb[pad] = part ? rgbs(c, (u32)part, 8) : rgbs(c, DIM_BAR);
+            rgb[v < 0 ? 8 + i : 7 - i] = rgbs(c, DIM_BAR);
         }
         if (!v) {
             rgb[7] = rgb[8] = rgbs(WHITE, 1, 4);
@@ -733,7 +764,7 @@ static void draw_overlay(const struct seq_ui *u, u32 rgb[16])
     }
     if (u->ov_kind == SUI_OV_COUNT) {
         for (u8 i = 0; i < 16; i++) {
-            rgb[i] = i < 4 ? (i < v ? c : rgbs(c, 1, 24)) : 0;
+            rgb[i] = i < 4 ? (i < v ? c : rgbs(c, DIM_BAR)) : 0;
         }
         return;
     }
@@ -741,7 +772,7 @@ static void draw_overlay(const struct seq_ui *u, u32 rgb[16])
     s32 fill = (v - lo) * 128 / span;           /* eighths over 16 pads */
     for (u8 i = 0; i < 16; i++) {
         s32 part = clampi(fill - i * 8, 0, 8);
-        rgb[i] = part ? rgbs(c, (u32)part, 8) : rgbs(c, 1, 24);
+        rgb[i] = part ? rgbs(c, (u32)part, 8) : rgbs(c, DIM_BAR);
     }
 }
 
@@ -805,7 +836,7 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
             if (u->hit_ms[i] && now_ms - u->hit_ms[i] < 80) {
                 rgb[i] = pc;
             } else {
-                rgb[i] = rgbs(pc, 1, p->track[i].mute ? 32 : (i == u->track ? 4 : 6));
+                rgb[i] = p->track[i].mute ? rgbs(pc, DIM_MUTED) : (i == u->track ? rgbs(pc, 1, 4) : rgbs(pc, DIM_TRACK));
             }
         }
         return btn;
@@ -832,11 +863,11 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
             } else if (ph != 0xFF && ph / grid == vi) {
                 rgb[pad] = st->vel ? WHITE : rgbs(WHITE, 1, 6);
             } else if (st->vel) {
-                rgb[pad] = rgbs(c, 24 + (u32)st->vel * 104 / 127, 128);
+                rgb[pad] = rgbs(c, LIT_MIN + (u32)st->vel * (128 - LIT_MIN) / 127, 128);
             } else if (between) {
                 rgb[pad] = rgbs(WHITE, 1, 12);
             } else {
-                rgb[pad] = rgbs(c, 1, 16);
+                rgb[pad] = rgbs(c, DIM_EMPTY);
             }
         }
         return btn;
@@ -854,7 +885,7 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
         } else if (on) {
             rgb[i] = c;
         } else {
-            rgb[i] = (u8)(n % 12) == root ? rgbs(c, 1, 3) : rgbs(c, 1, 12);
+            rgb[i] = (u8)(n % 12) == root ? rgbs(c, DIM_ROOT) : rgbs(c, DIM_PLAY);
         }
     }
     return btn;

@@ -104,9 +104,12 @@ static uint16_t smcpad_att_read_callback(hci_con_handle_t connection_handle, uin
 static int smcpad_att_write_callback(hci_con_handle_t connection_handle, uint16_t att_handle, uint16_t transaction_mode, uint16_t offset, uint8_t *buffer, uint16_t buffer_size);
 static int smcpad_event_packet_handler(int event, u8 *packet, u16 size, u8 *ext_param);
 
-/* "Just Works": no MITM (NoInputNoOutput), bonding so the host can reconnect encrypted */
+/* "Just Works": no MITM (NoInputNoOutput), bonding so the host can reconnect encrypted. 917+:
+ * the pad asks for security right after connecting (like the stock firmware), so iOS bonds (one
+ * pairing pop-up), keeps the pad in its list and reconnects to it. 0 = the host decides (<= 916).
+ * Not waiting for it: MIDI flows during pairing, and a host that declines still works. */
 static const sm_cfg_t smcpad_sm_init_config = {
-    .slave_security_auto_req = 0,
+    .slave_security_auto_req = 1,
     .slave_set_wait_security = 0,
     .io_capabilities = IO_CAPABILITY_NO_INPUT_NO_OUTPUT,
     .authentication_req_flags = SM_AUTHREQ_BONDING | SM_AUTHREQ_MITM_PROTECTION,

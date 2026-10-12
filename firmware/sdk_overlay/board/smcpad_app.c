@@ -163,8 +163,8 @@ static const struct smcpad_preset_io preset_io = {NULL, preset_midi, preset_midi
 /* ---- sequencer ------------------------------------------------------------------------ */
 #define APP_SEQ_LED_MS      20                  /* sequencer LED frame rate (playhead, blinks) */
 static struct seq_pattern seq_pat;              /* active pattern (9.4 KB) */
-static struct seq_pattern seq_shadow;           /* undo: the pattern at the last commit */
-static struct undo seq_undo;                    /* undo: changed bytes (1.5 KB) */
+static u8 seq_shadow[sizeof(struct seq_track)]; /* undo: the edited track at the last commit */
+static struct undo seq_undo;                    /* undo: changed bytes (3 KB) */
 static struct seq seq;
 static struct seq_ui sui;
 static u32 seq_led_ms, seq_rgb_last[SMCPAD_NUM_PADS];
@@ -278,7 +278,8 @@ static void seq_app_init(void)
         }
     }
     memcpy(seq_colours.colour, sui.colour, sizeof(seq_colours.colour));
-    undo_init(&seq_undo, (u8 *)&seq_pat, (u8 *)&seq_shadow, (u16)sizeof(seq_pat), seq_ui_undo_skip);
+    undo_init(&seq_undo, (u8 *)&seq_pat, (u16)sizeof(seq_pat), seq_shadow, (u16)sizeof(seq_shadow),
+              seq_ui_undo_skip);
     sui.undo = &seq_undo;
 }
 

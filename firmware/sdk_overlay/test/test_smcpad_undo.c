@@ -10,13 +10,14 @@
 static int failures;
 #define CHECK(c) do { if (!(c)) { failures++; printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); } } while (0)
 
-static u8 buf[64], shadow[64];
+static u8 buf[64], shadow[64], small[16];
 static struct undo U;
 static u8 skip7(u16 off) { return off == 7; }
 
 int main(void)
 {
-    undo_init(&U, buf, shadow, sizeof(buf), skip7);
+    undo_init(&U, buf, sizeof(buf), shadow, sizeof(shadow), skip7);
+    undo_window(&U, 0, sizeof(buf));                /* watch it all */
     CHECK(!undo_commit(&U) && !undo_undo(&U) && !undo_redo(&U) && undo_levels(&U) == 0);
     buf[1] = 10; buf[2] = 20;                   /* group 1: 2 bytes */
     CHECK(undo_commit(&U) && U.n == 2 && undo_levels(&U) == 1);
@@ -49,6 +50,22 @@ int main(void)
     /* an edit bigger than the journal clears the history */
     memset(buf + 40, 7, 20);
     CHECK(!undo_commit(&U) && U.n == 0 && !undo_undo(&U) && buf[40] == 7);
+
+    /* windows: only the watched part is shadowed; groups undo wherever they are */
+    memset(buf, 0, sizeof(buf));
+    undo_init(&U, buf, sizeof(buf), small, sizeof(small), skip7);
+    undo_window(&U, 16, 16);                    /* "track" 1 */
+    buf[17] = 1;
+    buf[40] = 9;                                /* outside the window: not journaled */
+    undo_window(&U, 32, 40);                    /* commits track 1; window capped at 16 bytes */
+    CHECK(U.n == 1 && U.woff == 32 && U.wlen == 16 && undo_levels(&U) == 1);
+    buf[33] = 2; buf[34] = 3;
+    CHECK(undo_commit(&U) && undo_levels(&U) == 2);
+    CHECK(undo_undo(&U) && buf[33] == 0 && buf[34] == 0 && small[1] == 0);  /* shadow follows */
+    CHECK(undo_undo(&U) && buf[17] == 0 && buf[40] == 9);
+    CHECK(undo_redo(&U) && buf[17] == 1);
+    CHECK(!undo_commit(&U));                    /* the undo itself is not a new edit */
+    CHECK(undo_redo(&U) && buf[34] == 3 && small[2] == 3);
     printf(failures ? "test_smcpad_undo: %d FAILED\n" : "test_smcpad_undo: ALL PASSED\n", failures);
     return failures != 0;
 }

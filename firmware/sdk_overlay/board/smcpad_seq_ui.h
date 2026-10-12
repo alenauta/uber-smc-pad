@@ -41,6 +41,7 @@ enum { SUI_KNOBS_TRACK = 0, SUI_KNOBS_PATTERN };
 #define SUI_OVERLAY_MS      1000            /* knob value shown on the pads after the last turn */
 #define SUI_FLASH_MS        120             /* pads blink after an undo / redo */
 #define SUI_UNDO_IDLE_MS    600             /* edits this far apart are separate undo steps */
+#define SUI_UNDO_REC_IDLE_MS 1000           /* while recording: this long without a hit */
 #define SUI_DEFAULT_VEL     100
 
 struct seq_ui_io {

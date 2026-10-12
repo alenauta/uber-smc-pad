@@ -241,6 +241,14 @@ u8 smcpad_ring_pop(struct smcpad_ev_ring *r, struct smcpad_pad_ev *e)
 }
 
 /* ---- LEDs -------------------------------------------------------------------------- */
+/* brightness scale, rounded; a channel that is on stays on (else dim mixed colours lose their
+ * weaker channel and change hue, e.g. dim orange turns red) */
+static u32 ws_scale(u32 v, u32 scale)
+{
+    u32 o = (v * scale + 128) >> 8;
+    return (v && !o && scale > 1) ? 1 : o;
+}
+
 void smcpad_ws_encode(u8 *buf, const u32 *rgb, u8 brightness)
 {
     u32 scale = (u32)brightness + 1;
@@ -253,9 +261,9 @@ void smcpad_ws_encode(u8 *buf, const u32 *rgb, u8 brightness)
     }
     for (u8 led = 0; led < SMCPAD_NUM_RGB; led++) {
         u32 c = rgb[led];
-        u32 r = (((c >> 16) & 0xff) * scale) >> 8;
-        u32 g = (((c >> 8) & 0xff) * scale) >> 8;
-        u32 b = ((c & 0xff) * scale) >> 8;
+        u32 r = ws_scale((c >> 16) & 0xff, scale);
+        u32 g = ws_scale((c >> 8) & 0xff, scale);
+        u32 b = ws_scale(c & 0xff, scale);
         u32 grb = (g << 16) | (r << 8) | b;
         u8 *p = buf + SMCPAD_WS_LEAD + (u32)smcpad_rgb_chain_pos[led] * 24;
         for (u8 bit = 0; bit < 24; bit++) {

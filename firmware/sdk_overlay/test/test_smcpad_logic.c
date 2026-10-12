@@ -269,6 +269,18 @@ static void test_leds(void)
         r = (u8)((r << 1) | (p0[i] == SMCPAD_WS_ONE));
     }
     CHECK(r == 0x40);
+    /* dim mixed colour at the default brightness 64: rounded, the weaker channel stays on */
+    rgb[8] = 0x0F0300;                                   /* orange / 16 */
+    smcpad_ws_encode(buf, rgb, 64);
+    u8 rr = 0, gg = 0;
+    for (int i = 0; i < 8; i++) {
+        gg = (u8)((gg << 1) | (p0[i] == SMCPAD_WS_ONE));
+        rr = (u8)((rr << 1) | (p0[8 + i] == SMCPAD_WS_ONE));
+    }
+    CHECK(rr == 4 && gg == 1);                           /* was 3 and 0 (plain red) */
+    rgb[8] = 0;
+    smcpad_ws_encode(buf, rgb, 0);                       /* off stays off */
+    CHECK(p0[15] == SMCPAD_WS_ZERO);
 
     u8 seg[SMCPAD_BLED_PHASES];
     smcpad_bled_phases(1u << 3, seg);               /* hw 3 = Left -> LED 0 = 0x10 */
