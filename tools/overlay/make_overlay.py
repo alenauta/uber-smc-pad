@@ -201,14 +201,6 @@ def card():
    <li>Sync on (timing pad 15): the DAW's Start / Stop / clock drive the pad. Otherwise the pad sends clock.</li>
    <li><b>Play early</b> (KNOB BANK K8) sends notes ahead to cancel DAW / Bluetooth latency.</li>
   </ul>
-  <h3>Pattern slots (16, one per pad)</h3>
-  <ul>
-   <li><b>Hold Shift + Rec</b>: pad = save there; release without a pad = save the current slot.
-    <b>Hold Shift + Play</b>: pad = load (while playing: on the next bar). Off = empty, dim = used, full = current.</li>
-   <li>Stop saves the current slot if it changed. Loading another slot keeps your changes first; an empty
-    slot starts a new pattern; loading the current slot again goes back to its saved version.
-    White flash = done, red = failed.</li>
-  </ul>
   <h3>Root &amp; scale</h3>
   <ul>
    <li><b>KNOB BANK K3 / K4</b>: track root / scale (follow = global). <b>Shift + K3 / K4</b>: global,
@@ -241,6 +233,12 @@ def card():
    <li>K8 / timing pads 1&ndash;8: notes keep their timing. A coarser grid keeps the notes in between
     (pad dim white). <b>Shift + K8</b>: the same steps faster / slower.</li>
   </ul>
+  <h3>Pattern slots (16, pad = slot)</h3>
+  <ul>
+   <li><b>Hold Shift + Rec</b> + pad: save (no pad = current slot). <b>Hold Shift + Play</b> + pad: load
+    (playing: on the next bar). Off empty, dim used, full current. White flash ok, red failed.</li>
+   <li>Stop saves changes. Another slot: changes kept first; empty slot = new pattern; current slot = revert.</li>
+  </ul>
  </div>
 </div>"""
 
@@ -269,13 +267,13 @@ text { font-family: "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", s
 .sticker { position: absolute; left: 12mm; top: 162mm; width: 17mm; height: 3.8mm; border: 0.25mm dashed #888;
   font: 700 2.3mm "Avenir Next Condensed", sans-serif; text-align: center; line-height: 3.4mm; }
 .stickerlab { position: absolute; left: 32mm; top: 161.6mm; font-size: 2.3mm; color: #555; width: 70mm; line-height: 1.25; }
-.card { position: absolute; left: 116mm; top: 44mm; width: 172mm; border: 0.3mm solid #111;
-  border-radius: 3mm; padding: 3mm 3.5mm; display: flex; gap: 4mm; font-size: 2.65mm; line-height: 1.3; }
+.card { position: absolute; left: 116mm; top: 42mm; width: 172mm; border: 0.3mm solid #111;
+  border-radius: 3mm; padding: 3mm 3.5mm; display: flex; gap: 4mm; font-size: 2.4mm; line-height: 1.25; }
 .col { flex: 1; min-width: 0; }
-.card h2 { font-size: 3.4mm; margin: 0 0 1mm; }
-.card h3 { font-size: 2.8mm; margin: 2.2mm 0 0.8mm; border-bottom: 0.2mm solid #ccc; }
+.card h2 { font-size: 3.2mm; margin: 0 0 0.8mm; }
+.card h3 { font-size: 2.6mm; margin: 1.8mm 0 0.6mm; border-bottom: 0.2mm solid #ccc; }
 .card ul { margin: 0; padding-left: 3.2mm; }
-.card li { margin: 0.35mm 0; }
+.card li { margin: 0.25mm 0; }
 .row { display: flex; gap: 2.5mm; align-items: flex-start; }
 .side { flex: 1; }
 table.grid { border-collapse: separate; border-spacing: 0.7mm; }
