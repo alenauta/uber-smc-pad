@@ -153,13 +153,13 @@ def cmd_status(pad):
     if len(r) >= 64:                                       # 918+: pattern slots
         used = u14(r, 55) | u14(r, 57) << 14
         slots = " ".join(str(i + 1) for i in range(16) if used >> i & 1) or "none"
-        errs = {0: "", 1: "flash I/O", 2: "empty", 3: "CRC", 4: "format", 5: "too big", 6: "slot",
-                7: "busy", 8: "verify (flash protected?)"}
-        e = r[61]
-        print(f"pattern slots: current {r[59] + 1}, saved: {slots}"
-              f"{', saving' if r[60] & 2 else ''}"
-              f"  flash area {'writable' if r[60] & 1 else 'REFUSED'} (VM at 0x{u14(r, 62) << 12:05X})"
-              f"{f', last error: {errs.get(e, e)}' if e else ''}")
+        errs = {0: "", 1: "write/read failed", 2: "empty", 3: "CRC", 4: "format", 5: "too big", 6: "slot",
+                7: "busy", 8: "verify (read-back differs)", 9: "out of memory"}
+        e, fl = r[61], r[60]
+        where = ("settings items 128-143" if fl & 4 else
+                 f"flash area {'writable' if fl & 1 else 'REFUSED'} (VM at 0x{u14(r, 62) << 12:05X})")
+        print(f"pattern slots: current {r[59] + 1}, saved: {slots}{', saving' if fl & 2 else ''}"
+              f"  [{where}]{f', last error: {errs.get(e, e)}' if e else ''}")
 
 
 def cmd_frame(pad, n=1):

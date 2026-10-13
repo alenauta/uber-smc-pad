@@ -129,59 +129,31 @@ const struct sinco_flash_port *smcpad_store_port(void)
     return &port;
 }
 
-/* ---- sequencer pattern slots (918+): the gap 0x30000-0x4FFFF ------------------------------
- * repack_oldchain.sh pins the code below 0x30000 and the VM at 0x50000 (907+), so the gap is in
- * no JLFS area and updates never touch it. Changes are allowed only if the running image's VM
- * (boot_info, from the flash directory) really starts at or above the end of the gap; with any
- * other layout (e.g. an image that kept the stock one, VM from 0x26000) the slots are refused
- * and nothing is written. test/check_ram_isr.sh checks the code end at build time. */
-static u8 pat_writable;
+/* ---- sequencer pattern slots (919+): settings items PATSTORE_ID0 .. +15 -------------------
+ * 918 wrote raw flash at 0x30000-0x4FFFF, but the SDK's flash driver write-protects the chip
+ * from 0 up to the VM start at boot (flash_wp_otp.c), so those writes were ignored. Settings
+ * items live in the VM, which is never protected (settings and pairings are saved there). */
+#if PATSTORE_ID0 + PATSTORE_SLOTS > VM_ITEM_MAX_NUM || PATSTORE_ID0 < 128
+#error "pattern slots must use the app extension ids 128 .. VM_ITEM_MAX_NUM - 1"
+#endif
 
-static int pp_read(void *ctx, u32 addr, u8 *dst, u32 len)
+static int pv_read(void *ctx, u16 id, u8 *dst, u32 cap)
 {
     (void)ctx;
-    if (!in_area(addr, len, PATSTORE_BASE, PATSTORE_END - PATSTORE_BASE)) {
-        return -1;
-    }
-    sfc_read(dst, addr, len);
-    return 0;
+    return syscfg_read(id, dst, (u16)cap);
 }
 
-static int pp_erase(void *ctx, u32 addr)
+static int pv_write(void *ctx, u16 id, const u8 *src, u32 len)
 {
     (void)ctx;
-    if (!pat_writable || addr % PATSTORE_SECTOR ||
-        !in_area(addr, PATSTORE_SECTOR, PATSTORE_BASE, PATSTORE_END - PATSTORE_BASE)) {
-        log_error("refused pattern erase @%x", addr);
-        return -1;
-    }
-    return sfc_erase(SECTOR_ERASER, addr) ? 0 : -1;
+    return syscfg_write(id, (void *)src, (u16)len);
 }
 
-static int pp_write(void *ctx, u32 addr, const u8 *src, u32 len)
-{
-    (void)ctx;
-    if (!pat_writable || !in_area(addr, len, PATSTORE_BASE, PATSTORE_END - PATSTORE_BASE)) {
-        log_error("refused pattern write @%x+%x", addr, len);
-        return -1;
-    }
-    return sfc_write(src, addr, len) == len ? 0 : -1;
-}
-
-static const struct patstore_port pat_port = {NULL, pp_read, pp_erase, pp_write};
+static const struct patstore_port pat_port = {NULL, pv_read, pv_write};
 
 const struct patstore_port *smcpad_pattern_port(void)
 {
-    u32 vs = boot_info.vm.vm_saddr, vz = boot_info.vm.vm_size;
-    pat_writable = (u8)(vs >= PATSTORE_END && vs % 0x1000 == 0 && vz && vs < SMCPAD_PRESETS_FLASH &&
-                        vz <= SMCPAD_PRESETS_FLASH - vs);
-    log_info("VM @%x+%x -> pattern slots %s", vs, vz, pat_writable ? "writable" : "refused");
     return &pat_port;
-}
-
-u8 smcpad_pattern_writable(void)
-{
-    return pat_writable;
 }
 
 u32 smcpad_vm_start(void)

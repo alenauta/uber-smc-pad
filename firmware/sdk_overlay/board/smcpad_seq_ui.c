@@ -16,6 +16,7 @@
 #define C_SLOT_SAVE 0xFF2000                /* slot pages: save (Shift + Rec), load (Shift + Play) */
 #define C_SLOT_LOAD 0x00FF40
 #define C_FAIL      0xFF0000                /* a slot operation failed */
+#define C_OK        0x00FF00                /* ... done */
 
 /* track colours (KNOB BANK K6): mostly pure / two-channel hues, so they still differ when dimmed;
  * no plain white (held pads and the playhead are white) */
@@ -191,6 +192,10 @@ void seq_ui_notify(struct seq_ui *u, u8 ok, u32 now_ms)
         u->ov_val = 1;                          /* red, a bit longer */
         u->ov_until = now_ms + 3 * SUI_FLASH_MS ? now_ms + 3 * SUI_FLASH_MS : 1;
     }
+    if (u->slot_mark != 0xFF && u->slot_mark_state == SUI_MARK_BUSY) {
+        u->slot_mark_state = ok ? SUI_MARK_OK : SUI_MARK_FAIL;   /* shown on the slot page */
+        u->slot_mark_ms = now_ms;
+    }
 }
 
 void seq_ui_loaded(struct seq_ui *u)
@@ -206,6 +211,8 @@ void seq_ui_loaded(struct seq_ui *u)
 
 static void slot_call(struct seq_ui *u, u8 op, u8 slot)
 {
+    u->slot_mark = (u8)(slot & 15);             /* white until the result comes */
+    u->slot_mark_state = SUI_MARK_BUSY;
     if (u->io && u->io->slot) {
         u->io->slot(u->io->ctx, op, (u8)(slot & 15));
     }
@@ -217,6 +224,7 @@ void seq_ui_init(struct seq_ui *u, struct seq *s, const struct seq_ui_io *io)
     u->seq = s;
     u->io = io;
     u->at_start = 1;
+    u->slot_mark = 0xFF;
     memset(u->live_note, 0xFF, sizeof(u->live_note));
     memset(u->rec_step, 0xFF, sizeof(u->rec_step));
     seq_ui_default_colours(u->colour);
@@ -864,10 +872,18 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
     if (seq_ui_beat_led(s, now_ms)) btn |= 1u << SUI_NOTE_REPEAT;   /* sequencer mode + tempo */
     if (u->stop) btn |= 1u << SUI_STOP;
 
+    if (u->slot_mark != 0xFF && u->slot_mark_state != SUI_MARK_BUSY &&
+        now_ms - u->slot_mark_ms >= SUI_MARK_MS) {
+        u->slot_mark = 0xFF;                    /* result shown long enough */
+    }
     if (u->slot_page) {                         /* pattern slots: off empty, dim used, full current */
         u32 c = u->slot_page == SUI_SLOT_SAVE ? C_SLOT_SAVE : C_SLOT_LOAD;
         for (u8 i = 0; i < 16; i++) {
             rgb[i] = i == u->slot_cur ? c : (((u->slot_used >> i) & 1) ? rgbs(c, DIM_CHOICE) : 0);
+        }
+        if (u->slot_mark < 16) {                /* the tapped slot: busy white, then ok / failed */
+            rgb[u->slot_mark] = u->slot_mark_state == SUI_MARK_BUSY ? WHITE :
+                                (u->slot_mark_state == SUI_MARK_OK ? C_OK : C_FAIL);
         }
         return btn;
     }

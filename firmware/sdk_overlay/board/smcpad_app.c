@@ -235,20 +235,17 @@ static void seq_cfg_flush(u32 now)
     }
 }
 
-/* ---- pattern slots (918+): smcpad_patstore.c in the flash gap 0x30000-0x4FFFF --------------
+/* ---- pattern slots (919+): smcpad_patstore.c, settings (VM) items 128..143 ----------------
  * Shift + Rec + pad = save there (no pad: the current slot), Shift + Play + pad = load (running:
  * on the next bar line; an empty slot = a new default pattern there). Switching to another slot
  * saves unsaved changes of the current one first; loading the current slot again reverts it.
  * Stop (pad or host) saves the current slot when the pattern changed since its last save/load.
- * Saves run one short step per main-loop pass (the longest stall is one 4 KB sector erase). */
+ * A save is one settings write (<= 4 KB); the 4 KB work buffer only exists during the call. */
 #define SMCPAD_SLOT_VM_ID       41                  /* current slot; free user id (see above) */
 #define SLOT_NONE               0xFF
 static struct patstore pat_store;
 static struct { u8 ver, slot; } slot_cfg;
 static u32 slot_saved_crc;                          /* pattern CRC at the last save / load */
-static u32 slot_save_crc;                           /* pattern CRC when the running save began */
-static u8 slot_save_target = SLOT_NONE, slot_save_next = SLOT_NONE;
-static u8 slot_load_next = SLOT_NONE;               /* load waiting for a save to finish */
 static u8 slot_cued = SLOT_NONE;                    /* load waiting for the bar line */
 static u8 slot_was_running;
 
@@ -280,25 +277,30 @@ static void slot_set_cur(u8 slot)
     }
 }
 
-static void slot_save_request(u8 slot)
+static int slot_save(u8 slot)                      /* 0 = saved (and now the current slot) */
 {
-    if (pat_store.busy) {
-        slot_save_next = slot;                      /* after the running one */
-        return;
+    u8 *buf = malloc(PATSTORE_MAX);
+    int r = buf ? patstore_save(&pat_store, slot, &seq_pat, buf) : (pat_store.err = PATSTORE_E_MEM);
+    free(buf);
+    sui.slot_used = pat_store.used;
+    if (r) {
+        log_error("pattern save to slot %d failed: %d", slot, r);
+        seq_ui_notify(&sui, 0, smcpad_hw_ms());     /* too big / write failed */
+        return r;
     }
-    if (patstore_save_begin(&pat_store, slot, &seq_pat)) {
-        slot_load_next = SLOT_NONE;
-        seq_ui_notify(&sui, 0, smcpad_hw_ms());     /* too big / no flash access */
-        return;
-    }
-    slot_save_target = slot;
-    slot_save_crc = pat_crc();
+    slot_set_cur(slot);
+    slot_saved_crc = pat_crc();
+    seq_ui_notify(&sui, 1, smcpad_hw_ms());
+    return 0;
 }
 
 static void slot_load_now(u8 slot)                 /* stopped, or at the bar line */
 {
     if (pat_store.used & BIT(slot)) {
-        if (patstore_load(&pat_store, slot, &seq_pat)) {
+        u8 *buf = malloc(PATSTORE_MAX);
+        int r = buf ? patstore_load(&pat_store, slot, &seq_pat, buf) : (pat_store.err = PATSTORE_E_MEM);
+        free(buf);
+        if (r) {
             seq_ui_notify(&sui, 0, smcpad_hw_ms());
             return;                                 /* checked first: the pattern is unchanged */
         }
@@ -322,8 +324,15 @@ static void slot_cue_fn(void *ctx, struct seq *s)
     }
 }
 
-static void slot_load_go(u8 slot)
+static void slot_load_request(u8 slot)
 {
+    if (slot == sui.slot_cur && !(pat_store.used & BIT(slot))) {
+        seq_ui_notify(&sui, 0, smcpad_hw_ms());     /* never saved: nothing to revert to */
+        return;
+    }
+    if (slot != sui.slot_cur && pat_crc() != slot_saved_crc && slot_save(sui.slot_cur)) {
+        return;                                     /* couldn't keep the current work: stay */
+    }
     if (seq_cue(&seq, slot_cue_fn, NULL)) {
         slot_cued = slot;                           /* running: on the next bar line */
     } else {
@@ -331,29 +340,11 @@ static void slot_load_go(u8 slot)
     }
 }
 
-static void slot_load_request(u8 slot)
-{
-    if (pat_store.busy) {
-        slot_load_next = slot;                      /* re-checked when the save is done */
-        return;
-    }
-    if (slot == sui.slot_cur && !(pat_store.used & BIT(slot))) {
-        seq_ui_notify(&sui, 0, smcpad_hw_ms());     /* never saved: nothing to revert to */
-        return;
-    }
-    if (slot != sui.slot_cur && pat_crc() != slot_saved_crc) {
-        slot_load_next = slot;                      /* keep the current work first */
-        slot_save_request(sui.slot_cur);
-        return;
-    }
-    slot_load_go(slot);
-}
-
 static void seq_slot(void *ctx, u8 op, u8 slot)
 {
     (void)ctx;
     if (op == SUI_SLOT_SAVE) {
-        slot_save_request(slot);
+        slot_save(slot);
     } else if (op == SUI_SLOT_LOAD) {
         slot_load_request(slot);
     }
@@ -366,38 +357,10 @@ static void slot_service(void)
         slot_cued = SLOT_NONE;
         slot_load_now(slot);
     }
-    if (slot_was_running && !seq.running && !pat_store.busy && pat_crc() != slot_saved_crc) {
-        slot_save_request(sui.slot_cur);            /* auto-save on Stop */
+    if (slot_was_running && !seq.running && pat_crc() != slot_saved_crc) {
+        slot_save(sui.slot_cur);                    /* auto-save on Stop */
     }
     slot_was_running = seq.running;
-    if (!pat_store.busy) {
-        return;
-    }
-    int r = patstore_save_step(&pat_store);
-    if (r > 0) {
-        return;
-    }
-    sui.slot_used = pat_store.used;
-    u8 load = slot_load_next;
-    slot_load_next = SLOT_NONE;
-    if (r == 0) {
-        slot_set_cur(slot_save_target);
-        slot_saved_crc = slot_save_crc;
-        seq_ui_notify(&sui, 1, smcpad_hw_ms());
-    } else {
-        log_error("pattern save to slot %d failed: %d", slot_save_target, r);
-        load = SLOT_NONE;                           /* don't switch away from unsaved work */
-        seq_ui_notify(&sui, 0, smcpad_hw_ms());
-    }
-    slot_save_target = SLOT_NONE;
-    if (slot_save_next != SLOT_NONE) {
-        u8 slot = slot_save_next;
-        slot_save_next = SLOT_NONE;
-        slot_save_request(slot);
-    }
-    if (load != SLOT_NONE) {
-        slot_load_request(load);                    /* again: waits for a queued save, re-checks */
-    }
 }
 
 static const struct seq_out seq_out = {NULL, seq_midi};
@@ -441,16 +404,24 @@ static void seq_app_init(void)
     undo_init(&seq_undo, (u8 *)&seq_pat, (u16)sizeof(seq_pat), seq_shadow, (u16)sizeof(seq_shadow),
               seq_ui_undo_skip);
     /* pattern slots: the last used one comes back (none saved yet: slot 1, default pattern) */
-    patstore_init(&pat_store, smcpad_pattern_port());
     if (syscfg_read(SMCPAD_SLOT_VM_ID, (u8 *)&slot_cfg, sizeof(slot_cfg)) != sizeof(slot_cfg) ||
         slot_cfg.ver != 1 || slot_cfg.slot >= PATSTORE_SLOTS) {
         memset(&slot_cfg, 0, sizeof(slot_cfg));
     }
+    u8 *buf = malloc(PATSTORE_MAX);
+    if (buf) {
+        patstore_init(&pat_store, smcpad_pattern_port(), buf);
+        if ((pat_store.used & BIT(slot_cfg.slot)) && patstore_load(&pat_store, slot_cfg.slot, &seq_pat, buf)) {
+            seq_default_pattern();                  /* checked first: only a read error lands here */
+        }
+        free(buf);
+    } else {
+        memset(&pat_store, 0, sizeof(pat_store));   /* no scan without a buffer: slots look empty */
+        pat_store.port = smcpad_pattern_port();
+        pat_store.err = PATSTORE_E_MEM;
+    }
     sui.slot_cur = slot_cfg.slot;
     sui.slot_used = pat_store.used;
-    if ((pat_store.used & BIT(slot_cfg.slot)) && patstore_load(&pat_store, slot_cfg.slot, &seq_pat)) {
-        seq_default_pattern();                      /* read error after the check: start clean */
-    }
     slot_saved_crc = pat_crc();
     sui.undo = &seq_undo;
 }
@@ -724,10 +695,10 @@ static void service_seq(void)
     u32 ms = smcpad_hw_ms();
     seq_run(&seq, ms);
     seq_clock_timeout(&seq, ms);
-    slot_service();                                 /* pattern saves: one short step per pass */
+    slot_service();                                 /* pattern slots: cued load on Stop, auto-save */
     seq_cfg_flush(sys_timer_get_ms());
     seq_play_shift();
-    smcpad_hw_fast_wake(seq.running || seq.ext_seen || sui.active || pat_store.busy);
+    smcpad_hw_fast_wake(seq.running || seq.ext_seen || sui.active);
     if (sui.active != app.seq_shown) {             /* mode changed: repaint everything */
         app.seq_shown = sui.active;
         memset(seq_rgb_last, 0xFF, sizeof(seq_rgb_last));
@@ -1015,12 +986,12 @@ static void diag_reply(const u8 *req, u32 len)
         *p++ = (u8)(app.load_pct & 0x7f);
         *p++ = (u8)(app.load_pct_max & 0x7f);
         put14(&p, app.pass_max_ms);
-        /* 918+: pattern slots used (16 bits), current slot, flags (1 = flash area writable,
-         * 2 = saving), last error (negated), the running image's VM start / 4 KB */
+        /* 918+: pattern slots used (16 bits), current slot, flags (919: 4 = slots are settings
+         * items; 918: 1 = flash area writable, 2 = saving), last error (negated), VM start / 4 KB */
         put14(&p, pat_store.used);
         put14(&p, (u32)pat_store.used >> 14);
         *p++ = (u8)(sui.slot_cur & 0x7f);
-        *p++ = (u8)((smcpad_pattern_writable() ? 1 : 0) | (pat_store.busy ? 2 : 0));
+        *p++ = 4;
         *p++ = (u8)((-(s32)pat_store.err) & 0x7f);
         put14(&p, smcpad_vm_start() >> 12);
 #endif

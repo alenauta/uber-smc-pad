@@ -77,6 +77,24 @@ static const u8 midi_service_uuid128[16] = {
 static u8  adv_data[ADV_RSP_PACKET_MAX];
 static u8  scan_rsp_data[ADV_RSP_PACKET_MAX];
 static u16 con_handle;
+static u8 link_encrypted, pair_asked;   /* this connection: encrypted / pairing already requested */
+
+extern bool sm_api_request_pairing(hci_con_handle_t con_handle);   /* btstack/le/sm.h */
+
+/* an app subscribed to BLE-MIDI: ask to pair once per connection, unless the link is already
+ * encrypted (a bonded host that reconnected) */
+static void midi_pair_request(u16 h)
+{
+#if CONFIG_BT_SM_SUPPORT_ENABLE
+    if (h && !link_encrypted && !pair_asked) {
+        pair_asked = 1;
+        log_info("MIDI subscribed: request pairing\n");
+        sm_api_request_pairing(h);
+    }
+#else
+    (void)h;
+#endif
+}
 static u16 att_mtu = 23;
 static volatile u32 conn_gen;
 static adv_cfg_t server_adv_config;
@@ -104,12 +122,14 @@ static uint16_t smcpad_att_read_callback(hci_con_handle_t connection_handle, uin
 static int smcpad_att_write_callback(hci_con_handle_t connection_handle, uint16_t att_handle, uint16_t transaction_mode, uint16_t offset, uint8_t *buffer, uint16_t buffer_size);
 static int smcpad_event_packet_handler(int event, u8 *packet, u16 size, u8 *ext_param);
 
-/* "Just Works": no MITM (NoInputNoOutput), bonding so the host can reconnect encrypted. 917+:
- * the pad asks for security right after connecting (like the stock firmware), so iOS bonds (one
- * pairing pop-up), keeps the pad in its list and reconnects to it. 0 = the host decides (<= 916).
+/* "Just Works": no MITM (NoInputNoOutput), bonding so the host can reconnect encrypted.
+ * 917-918 asked for security on every connection, which also hit SincoOTA (pairing pop-up
+ * during the update handshake: flashing needed several tries). 919+: the pad asks only when an
+ * app subscribes to BLE-MIDI notes (midi_pair_request), i.e. a synth / DAW: it bonds once, stays
+ * in the iOS list and reconnects; SincoOTA / Midi Suite never subscribe, so they never see it.
  * Not waiting for it: MIDI flows during pairing, and a host that declines still works. */
 static const sm_cfg_t smcpad_sm_init_config = {
-    .slave_security_auto_req = 1,
+    .slave_security_auto_req = 0,
     .slave_set_wait_security = 0,
     .io_capabilities = IO_CAPABILITY_NO_INPUT_NO_OUTPUT,
     .authentication_req_flags = SM_AUTHREQ_BONDING | SM_AUTHREQ_MITM_PROTECTION,
@@ -349,6 +369,7 @@ static int smcpad_event_packet_handler(int event, u8 *packet, u16 size, u8 *ext_
 
     case GATT_COMM_EVENT_CONNECTION_COMPLETE:
         con_handle = little_endian_read_16(packet, 0);
+        link_encrypted = pair_asked = 0;
         att_mtu = 23;
         conn_update_enable = 1;
         conn_gen++;
@@ -360,6 +381,7 @@ static int smcpad_event_packet_handler(int event, u8 *packet, u16 size, u8 *ext_
         log_info("disconnect_handle:%04x,reason= %02x\n", little_endian_read_16(packet, 0), packet[2]);
         if (con_handle == little_endian_read_16(packet, 0)) {
             con_handle = 0;
+            link_encrypted = pair_asked = 0;
             conn_gen++;
             notify_app();
         }
@@ -367,6 +389,9 @@ static int smcpad_event_packet_handler(int event, u8 *packet, u16 size, u8 *ext_
 
     case GATT_COMM_EVENT_ENCRYPTION_CHANGE:
         log_info("ENCRYPTION_CHANGE:handle=%04x,state=%d,process =%d", little_endian_read_16(packet, 0), packet[2], packet[3]);
+        if (little_endian_read_16(packet, 0) == con_handle) {
+            link_encrypted = packet[2] ? 1 : 0;
+        }
         if (packet[3] == LINK_ENCRYPTION_RECONNECT) {
             resume_all_ccc_enable(little_endian_read_16(packet, 0), 1);
         }
@@ -461,6 +486,9 @@ static int smcpad_att_write_callback(hci_con_handle_t connection_handle, uint16_
         send_connection_update(connection_handle);
         log_info("write ccc:%04x,%02x\n", att_handle, buffer[0]);
         ble_gatt_server_characteristic_ccc_set(connection_handle, att_handle, buffer[0]);
+        if (att_handle == MIDI_CCC_HANDLE && buffer_size && (buffer[0] & 1)) {
+            midi_pair_request(connection_handle);   /* a MIDI app, not SincoOTA */
+        }
         notify_app();
         break;
 

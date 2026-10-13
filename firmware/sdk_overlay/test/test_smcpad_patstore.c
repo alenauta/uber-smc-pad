@@ -1,4 +1,4 @@
-/* Host tests for smcpad_patstore.c (pattern slots) on a simulated NOR flash:
+/* Host tests for smcpad_patstore.c (pattern slots as settings items) on a simulated VM:
  *   gcc -Wall -Wextra -Werror -std=c11 -fsanitize=address,undefined -g -I board \
  *       test/test_smcpad_patstore.c -o /tmp/t_ps && /tmp/t_ps */
 #define SMCPAD_HOST_TEST 1
@@ -12,41 +12,36 @@
 static int failures;
 #define CHECK(c) do { if (!(c)) { failures++; printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); } } while (0)
 
-/* NOR: erase sets 0xFF, programming can only clear bits */
-static u8 flash[PATSTORE_END - PATSTORE_BASE];
-static int erases, writes, fail_erase, fail_write, protect;
+/* settings store: items by id, like syscfg (read needs cap >= length, write <= 4095) */
+static struct { int len; u8 d[PATSTORE_MAX]; } vm[256];
+static int writes, fail_write, drop_write, flip_on_read;
 
-static int f_read(void *ctx, u32 addr, u8 *dst, u32 len)
+static int v_read(void *ctx, u16 id, u8 *dst, u32 cap)
 {
     (void)ctx;
-    if (addr < PATSTORE_BASE || addr + len > PATSTORE_END) return -1;
-    memcpy(dst, flash + (addr - PATSTORE_BASE), len);
-    return 0;
+    if (id > 255 || vm[id].len <= 0) return -1;
+    if ((u32)vm[id].len > cap) return -2;
+    memcpy(dst, vm[id].d, (u32)vm[id].len);
+    if (flip_on_read) dst[PATSTORE_HDR + 3] ^= 1;
+    return vm[id].len;
 }
-static int f_erase(void *ctx, u32 addr)
+static int v_write(void *ctx, u16 id, const u8 *src, u32 len)
 {
     (void)ctx;
-    if (fail_erase || addr % PATSTORE_SECTOR || addr < PATSTORE_BASE || addr >= PATSTORE_END) return -1;
-    erases++;
-    if (!protect) memset(flash + (addr - PATSTORE_BASE), 0xFF, PATSTORE_SECTOR);
-    return 0;
-}
-static int f_write(void *ctx, u32 addr, const u8 *src, u32 len)
-{
-    (void)ctx;
-    if (fail_write || addr < PATSTORE_BASE || addr + len > PATSTORE_END) return -1;
+    if (fail_write || id > 255 || len > PATSTORE_MAX) return -1;
     writes++;
-    if (!protect) {
-        for (u32 i = 0; i < len; i++) flash[addr - PATSTORE_BASE + i] &= src[i];
-    }
-    return 0;                                   /* a protected chip "succeeds" silently */
+    if (drop_write) return (int)len;            /* "succeeds" but nothing changes */
+    memcpy(vm[id].d, src, len);
+    vm[id].len = (int)len;
+    return (int)len;
 }
-static const struct patstore_port port = {NULL, f_read, f_erase, f_write};
+static const struct patstore_port port = {NULL, v_read, v_write};
 
 static struct patstore ps;
-static struct seq_pattern a, b;
+static struct seq_pattern a, b, c;
+static u8 buf[PATSTORE_MAX];
 
-static void make_pattern(struct seq_pattern *p, u8 seed)
+static void make_pattern(struct seq_pattern *p, u8 seed, u8 density)
 {
     seq_pattern_default(p, NULL, NULL);
     for (u8 t = 0; t < SEQ_TRACKS; t++) {
@@ -55,7 +50,7 @@ static void make_pattern(struct seq_pattern *p, u8 seed)
         tr->chan = (u8)((t + seed) & 15);
         tr->root = (u8)((t * 5 + seed) % 13);
         for (u8 i = 0; i < SEQ_STEPS; i++) {
-            if ((i * 7 + t * 3 + seed) % 5 == 0) {
+            if ((i * 7 + t * 3 + seed) % density == 0) {
                 struct seq_step *st = &tr->step[i];
                 st->vel = (u8)(1 + (i + t + seed) % 127);
                 st->note = (s8)((i % 9) - 4);
@@ -69,144 +64,128 @@ static void make_pattern(struct seq_pattern *p, u8 seed)
     }
 }
 
-static int save(u8 slot, const struct seq_pattern *p)
+static void reset_vm(void)
 {
-    int r = patstore_save_begin(&ps, slot, p);
-    if (r) return r;
-    int steps = 0;
-    while ((r = patstore_save_step(&ps)) > 0) steps++;
-    if (r == 0) {
-        CHECK(steps == 2 + SEQ_TRACKS);         /* two erases, one step per track; header last */
-    }
-    return r;
+    memset(vm, 0, sizeof(vm));
+    writes = fail_write = drop_write = flip_on_read = 0;
 }
 
 static void test_crc(void)
 {
     CHECK(patstore_crc32(0, (const u8 *)"123456789", 9) == 0xCBF43926u);
-    u32 c = patstore_crc32(0, (const u8 *)"1234", 4);
-    CHECK(patstore_crc32(c, (const u8 *)"56789", 5) == 0xCBF43926u);    /* chunked = whole */
+    u32 x = patstore_crc32(0, (const u8 *)"1234", 4);
+    CHECK(patstore_crc32(x, (const u8 *)"56789", 5) == 0xCBF43926u);
 }
 
 static void test_roundtrip(void)
 {
-    memset(flash, 0xFF, sizeof(flash));
-    patstore_init(&ps, &port);
+    reset_vm();
+    patstore_init(&ps, &port, buf);
     CHECK(ps.used == 0 && ps.count == 0);
-    CHECK(patstore_load(&ps, 2, &b) == PATSTORE_E_EMPTY);
-    make_pattern(&a, 1);
-    CHECK(save(2, &a) == 0 && ps.used == (1u << 2) && ps.count == 1);
+    CHECK(patstore_load(&ps, 2, &b, buf) == PATSTORE_E_EMPTY);
+    make_pattern(&a, 1, 5);
+    CHECK(patstore_pattern_size(&a) <= PATSTORE_MAX);
+    CHECK(patstore_save(&ps, 2, &a, buf) == 0 && ps.used == (1u << 2) && ps.count == 1 && writes == 1);
+    CHECK(vm[PATSTORE_ID0 + 2].len == (int)patstore_pattern_size(&a));
     memset(&b, 0x55, sizeof(b));
-    CHECK(patstore_load(&ps, 2, &b) == 0 && memcmp(&a, &b, sizeof(a)) == 0);
-    /* the default pattern: smallest payload, every slot independent */
+    CHECK(patstore_load(&ps, 2, &b, buf) == 0 && memcmp(&a, &b, sizeof(a)) == 0);
+    /* the default pattern: smallest item, slots independent */
     seq_pattern_default(&b, NULL, NULL);
-    CHECK(patstore_pattern_size(&b) == SEQ_TRACKS * 21);
-    CHECK(save(15, &b) == 0 && ps.used == ((1u << 2) | (1u << 15)));
-    struct seq_pattern c;
-    CHECK(patstore_load(&ps, 15, &c) == 0 && memcmp(&b, &c, sizeof(b)) == 0);
-    CHECK(patstore_load(&ps, 2, &c) == 0 && memcmp(&a, &c, sizeof(a)) == 0);
-    /* boot scan finds both and the newest counter */
-    patstore_init(&ps, &port);
+    CHECK(patstore_pattern_size(&b) == PATSTORE_HDR + SEQ_TRACKS * 21);
+    CHECK(patstore_save(&ps, 15, &b, buf) == 0 && ps.used == ((1u << 2) | (1u << 15)));
+    CHECK(patstore_load(&ps, 15, &c, buf) == 0 && memcmp(&b, &c, sizeof(b)) == 0);
+    CHECK(patstore_load(&ps, 2, &c, buf) == 0 && memcmp(&a, &c, sizeof(a)) == 0);
+    /* boot scan */
+    patstore_init(&ps, &port, buf);
     CHECK(ps.used == ((1u << 2) | (1u << 15)) && ps.count == 2);
-    /* overwrite a slot */
-    make_pattern(&b, 7);
-    CHECK(save(2, &b) == 0 && patstore_load(&ps, 2, &c) == 0 && memcmp(&b, &c, sizeof(b)) == 0);
-    CHECK(patstore_load(&ps, 16, &c) == PATSTORE_E_SLOT);
+    /* overwrite */
+    make_pattern(&b, 7, 6);
+    CHECK(patstore_save(&ps, 2, &b, buf) == 0 && patstore_load(&ps, 2, &c, buf) == 0 && memcmp(&b, &c, sizeof(b)) == 0);
+    CHECK(patstore_load(&ps, 16, &c, buf) == PATSTORE_E_SLOT && patstore_save(&ps, 16, &b, buf) == PATSTORE_E_SLOT);
+    /* ids: slot n = item PATSTORE_ID0 + n, nothing else touched */
+    for (int id = 0; id < 256; id++) {
+        if (id != PATSTORE_ID0 + 2 && id != PATSTORE_ID0 + 15) CHECK(vm[id].len == 0);
+    }
 }
 
-static void test_corruption(void)
+static void test_capacity(void)
 {
-    memset(flash, 0xFF, sizeof(flash));
-    patstore_init(&ps, &port);
-    make_pattern(&a, 3);
-    CHECK(save(4, &a) == 0);
-    u32 base = 4 * PATSTORE_SLOT_SIZE;
-    flash[base + PATSTORE_HDR + 100] ^= 0x01;                  /* one bit in the payload */
-    memset(&b, 0x55, sizeof(b));
-    struct seq_pattern keep = b;
-    CHECK(patstore_load(&ps, 4, &b) == PATSTORE_E_CRC && memcmp(&b, &keep, sizeof(b)) == 0);
-    patstore_init(&ps, &port);
-    CHECK(!(ps.used & (1u << 4)));
-    flash[base + PATSTORE_HDR + 100] ^= 0x01;
-    flash[base + 5] = SEQ_PATTERN_VER + 1;                     /* a future layout: refused */
-    CHECK(patstore_check(&ps, 4) == PATSTORE_E_FORMAT);
-    /* a valid CRC over a broken structure (bitmap claims more steps than stored) */
-    memset(flash, 0xFF, sizeof(flash));
+    reset_vm();
+    patstore_init(&ps, &port, buf);
+    make_pattern(&a, 3, 5);
+    CHECK(patstore_save(&ps, 4, &a, buf) == 0);
+    /* 415 playing steps fit, 416 don't (refused before writing: the slot keeps its pattern) */
+    seq_pattern_default(&b, NULL, NULL);
+    for (u32 k = 0; k < 416; k++) b.track[k / SEQ_STEPS].step[k % SEQ_STEPS].vel = 100;
+    CHECK(patstore_pattern_size(&b) > PATSTORE_MAX);
+    writes = 0;
+    CHECK(patstore_save(&ps, 4, &b, buf) == PATSTORE_E_FULL && writes == 0 && ps.err == PATSTORE_E_FULL);
+    CHECK(patstore_load(&ps, 4, &c, buf) == 0 && memcmp(&a, &c, sizeof(a)) == 0);
+    b.track[415 / SEQ_STEPS].step[415 % SEQ_STEPS].vel = 0;
+    CHECK(patstore_pattern_size(&b) <= PATSTORE_MAX);
+    CHECK(patstore_save(&ps, 5, &b, buf) == 0 && patstore_load(&ps, 5, &c, buf) == 0 && memcmp(&b, &c, sizeof(b)) == 0);
+}
+
+static void test_failures(void)
+{
+    reset_vm();
+    patstore_init(&ps, &port, buf);
+    make_pattern(&a, 5, 5);
+    CHECK(patstore_save(&ps, 6, &a, buf) == 0);
+    /* write refused: error, the old item stays */
+    make_pattern(&b, 9, 4);
+    fail_write = 1;
+    CHECK(patstore_save(&ps, 6, &b, buf) == PATSTORE_E_IO && (ps.used & (1u << 6)));
+    fail_write = 0;
+    CHECK(patstore_load(&ps, 6, &c, buf) == 0 && memcmp(&a, &c, sizeof(a)) == 0);
+    /* write "ok" but nothing stored (an id the store ignores): caught by the read-back */
+    drop_write = 1;
+    CHECK(patstore_save(&ps, 9, &b, buf) == PATSTORE_E_VERIFY && !(ps.used & (1u << 9)) && ps.err == PATSTORE_E_VERIFY);
+    drop_write = 0;
+    /* a corrupted item: CRC error, the pattern in RAM untouched */
+    memset(&c, 0x55, sizeof(c));
+    struct seq_pattern keep = c;
+    flip_on_read = 1;
+    CHECK(patstore_load(&ps, 6, &c, buf) == PATSTORE_E_CRC && memcmp(&c, &keep, sizeof(c)) == 0);
+    patstore_init(&ps, &port, buf);
+    CHECK(!(ps.used & (1u << 6)));
+    flip_on_read = 0;
+    /* an item from another layout version / truncated: refused */
+    vm[PATSTORE_ID0 + 6].d[5] = SEQ_PATTERN_VER + 1;
+    CHECK(patstore_check(&ps, 6, buf) == PATSTORE_E_FORMAT);
+    vm[PATSTORE_ID0 + 6].d[5] = SEQ_PATTERN_VER;
+    vm[PATSTORE_ID0 + 6].len -= 1;
+    CHECK(patstore_check(&ps, 6, buf) == PATSTORE_E_FORMAT);
+    vm[PATSTORE_ID0 + 6].len += 1;
+    CHECK(patstore_check(&ps, 6, buf) == PATSTORE_OK);
+    /* the 918 raw-flash format (magic SPT1) is not taken for a 919 item */
+    vm[PATSTORE_ID0 + 6].d[3] = '1';
+    CHECK(patstore_check(&ps, 6, buf) == PATSTORE_E_EMPTY);
+    /* valid CRC over a broken structure: refused */
+    reset_vm();
     seq_pattern_default(&a, NULL, NULL);
-    CHECK(save(0, &a) == 0);
-    u8 *pl = flash + PATSTORE_HDR;
-    pl[PATSTORE_TRACK_HDR] = 0x01;                             /* track 0: step 0 "plays" */
-    u32 crc = patstore_crc32(0, pl, SEQ_TRACKS * 21);
-    flash[8] = (u8)crc; flash[9] = (u8)(crc >> 8); flash[10] = (u8)(crc >> 16); flash[11] = (u8)(crc >> 24);
-    CHECK(patstore_check(&ps, 0) == PATSTORE_E_FORMAT);
-    /* out-of-range track fields from a valid slot are made safe */
-    memset(flash, 0xFF, sizeof(flash));
+    CHECK(patstore_save(&ps, 0, &a, buf) == 0);
+    u8 *it = vm[PATSTORE_ID0].d;
+    it[PATSTORE_HDR + PATSTORE_TRACK_HDR] = 0x01;              /* track 0: step 0 "plays" */
+    put32le(it + 8, patstore_crc32(0, it + PATSTORE_HDR, SEQ_TRACKS * 21));
+    CHECK(patstore_check(&ps, 0, buf) == PATSTORE_E_FORMAT);
+    /* out-of-range track fields from a valid item are made safe */
+    reset_vm();
     seq_pattern_default(&a, NULL, NULL);
     a.track[3].len = 0; a.track[3].rate = 99; a.track[3].res = 77; a.track[3].gate = 200;
     a.track[3].prob = 250; a.track[3].root = 40; a.track[3].scale = 200; a.track[3].chan = 0x3F;
-    CHECK(save(1, &a) == 0 && patstore_load(&ps, 1, &b) == 0);
+    CHECK(patstore_save(&ps, 1, &a, buf) == 0 && patstore_load(&ps, 1, &b, buf) == 0);
     struct seq_track *t = &b.track[3];
     CHECK(t->len == 1 && t->rate == SEQ_RATE_16 && t->res == SEQ_RATE_16 && t->gate == 3);
     CHECK(t->prob == 100 && t->root == 0 && t->scale == 0 && t->chan == 15);
-}
-
-static void test_save_failures(void)
-{
-    memset(flash, 0xFF, sizeof(flash));
-    patstore_init(&ps, &port);
-    make_pattern(&a, 5);
-    CHECK(save(6, &a) == 0);
-    /* too big: refused before anything is erased, the slot keeps its pattern */
-    memset(&b, 0, sizeof(b));
-    seq_pattern_default(&b, NULL, NULL);
-    for (u8 t = 0; t < SEQ_TRACKS; t++) {
-        for (u8 i = 0; i < SEQ_STEPS; i++) b.track[t].step[i].vel = 100;
-    }
-    CHECK(patstore_pattern_size(&b) > PATSTORE_SLOT_SIZE - PATSTORE_HDR);
-    erases = 0;
-    CHECK(patstore_save_begin(&ps, 6, &b) == PATSTORE_E_FULL && erases == 0 && !ps.busy);
-    struct seq_pattern c;
-    CHECK(patstore_load(&ps, 6, &c) == 0 && memcmp(&a, &c, sizeof(a)) == 0);
-    /* the largest pattern that fits: 871 playing steps (one more does not) */
-    for (u8 t = 0; t < SEQ_TRACKS; t++) {
-        for (u8 i = 0; i < SEQ_STEPS; i++) b.track[t].step[i].vel = (u8)(t * SEQ_STEPS + i < 872 ? 100 : 0);
-    }
-    CHECK(patstore_pattern_size(&b) > PATSTORE_SLOT_SIZE - PATSTORE_HDR);
-    b.track[871 / SEQ_STEPS].step[871 % SEQ_STEPS].vel = 0;
-    CHECK(patstore_pattern_size(&b) <= PATSTORE_SLOT_SIZE - PATSTORE_HDR);
-    CHECK(save(7, &b) == 0 && patstore_load(&ps, 7, &c) == 0 && memcmp(&b, &c, sizeof(b)) == 0);
-    /* cut short (power off after a few steps): the slot is invalid, never wrong */
-    CHECK(patstore_save_begin(&ps, 6, &b) == 0);
-    for (int i = 0; i < 6; i++) CHECK(patstore_save_step(&ps) == 1);
-    CHECK(patstore_save_begin(&ps, 5, &b) == PATSTORE_E_BUSY);
-    patstore_init(&ps, &port);                                 /* reboot */
-    CHECK(!(ps.used & (1u << 6)) && (ps.used & (1u << 7)) && patstore_load(&ps, 6, &c) == PATSTORE_E_EMPTY);
-    /* erase fails / flash protected: error, the slot is not marked used */
-    fail_erase = 1;
-    CHECK(save(8, &a) == PATSTORE_E_IO && !(ps.used & (1u << 8)) && !ps.busy);
-    fail_erase = 0;
-    protect = 1;
-    CHECK(save(9, &a) == PATSTORE_E_VERIFY && !(ps.used & (1u << 9)) && ps.err == PATSTORE_E_VERIFY);
-    protect = 0;
-    /* edits between steps: each track is taken whole at its own step */
-    make_pattern(&a, 9);
-    CHECK(patstore_save_begin(&ps, 10, &a) == 0);
-    CHECK(patstore_save_step(&ps) == 1 && patstore_save_step(&ps) == 1);  /* erased */
-    CHECK(patstore_save_step(&ps) == 1);                                  /* track 0 written */
-    a.track[0].step[1].vel = 99;                                          /* too late for it */
-    a.track[5].step[1].vel = 99;                                          /* in time for this */
-    int r;
-    while ((r = patstore_save_step(&ps)) > 0) {}
-    CHECK(r == 0 && patstore_load(&ps, 10, &c) == 0);
-    CHECK(c.track[5].step[1].vel == 99 && c.track[0].step[1].vel != 99);
 }
 
 int main(void)
 {
     test_crc();
     test_roundtrip();
-    test_corruption();
-    test_save_failures();
+    test_capacity();
+    test_failures();
     printf(failures ? "test_smcpad_patstore: %d FAILED\n" : "test_smcpad_patstore: ALL PASSED\n", failures);
     return failures != 0;
 }

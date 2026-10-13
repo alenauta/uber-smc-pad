@@ -613,11 +613,23 @@ static void test_slots(void)
     CHECK(rgb[3] == C_SLOT_SAVE && rgb[0] == rgbs(C_SLOT_SAVE, DIM_CHOICE) && rgb[1] == 0);
     tap(5);                                                    /* save into slot 6 */
     CHECK(slot_calls == 1 && slot_op == SUI_SLOT_SAVE && slot_n == 5 && rec_count(&pat.track[0]) == 0);
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[5] == WHITE);                                    /* tapped: busy at once */
+    seq_ui_notify(&U, 0, now);
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[5] == C_FAIL);                                   /* then the result on the pad */
+    now += SUI_MARK_MS;
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[5] == 0 && U.slot_mark == 0xFF);
     seq_ui_button(&U, SUI_REC, 0, now);
     CHECK(slot_calls == 1 && !U.slot_page);                    /* a pad was used: no extra save */
     seq_ui_button(&U, SUI_REC, 1, now);                        /* quick save: no pad */
     seq_ui_button(&U, SUI_REC, 0, now);
     CHECK(slot_calls == 2 && slot_op == SUI_SLOT_SAVE && slot_n == 3);
+    seq_ui_notify(&U, 1, now);                                 /* the app reports every result */
+    seq_ui_leds(&U, now, rgb);
+    CHECK(U.slot_mark == 3 && U.slot_mark_state == SUI_MARK_OK);
+    now += SUI_MARK_MS;
     /* load page: Play doesn't start */
     seq_ui_button(&U, SUI_PLAY, 1, now);
     CHECK(U.slot_page == SUI_SLOT_LOAD && !S.running);

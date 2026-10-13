@@ -49,6 +49,8 @@ enum { SUI_KNOBS_TRACK = 0, SUI_KNOBS_PATTERN };
 #define SUI_DEFAULT_VEL     100
 
 enum { SUI_SLOT_NONE = 0, SUI_SLOT_SAVE, SUI_SLOT_LOAD };
+enum { SUI_MARK_BUSY = 0, SUI_MARK_OK, SUI_MARK_FAIL };
+#define SUI_MARK_MS         1500            /* slot page: result shown on the tapped pad */
 
 struct seq_ui_io {
     void *ctx;
@@ -97,6 +99,8 @@ struct seq_ui {
     u8  slot_cur;                           /* current slot 0..15 */
     u16 slot_used;                          /* bit n: slot n holds a pattern */
     u16 slot_pads;                          /* pads pressed on the page (their release is eaten) */
+    u8  slot_mark, slot_mark_state;         /* tapped slot (0xFF none): SUI_MARK_* */
+    u32 slot_mark_ms;                       /* when the result came */
 };
 
 /* PICK: one pad per choice from pad 1 (ov_min = value of pad 1); a value below ov_min ("follow")
