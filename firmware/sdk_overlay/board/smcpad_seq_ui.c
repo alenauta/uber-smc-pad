@@ -187,15 +187,12 @@ static void flash(struct seq_ui *u, u32 now)    /* short white blink: done (undo
 
 void seq_ui_notify(struct seq_ui *u, u8 ok, u32 now_ms)
 {
-    flash(u, now_ms);
-    if (!ok) {
-        u->ov_val = 1;                          /* red, a bit longer */
-        u->ov_until = now_ms + 3 * SUI_FLASH_MS ? now_ms + 3 * SUI_FLASH_MS : 1;
+    if (u->slot_mark == 0xFF) {
+        u->slot_mark = (u8)(u->slot_cur & 15);
+        u->slot_mark_page = u->slot_page;
     }
-    if (u->slot_mark != 0xFF && u->slot_mark_state == SUI_MARK_BUSY) {
-        u->slot_mark_state = ok ? SUI_MARK_OK : SUI_MARK_FAIL;   /* shown on the slot page */
-        u->slot_mark_ms = now_ms;
-    }
+    u->slot_mark_state = ok ? SUI_MARK_OK : SUI_MARK_FAIL;
+    u->slot_mark_ms = now_ms;
 }
 
 void seq_ui_loaded(struct seq_ui *u)
@@ -211,8 +208,9 @@ void seq_ui_loaded(struct seq_ui *u)
 
 static void slot_call(struct seq_ui *u, u8 op, u8 slot)
 {
-    u->slot_mark = (u8)(slot & 15);             /* white until the result comes */
+    u->slot_mark = (u8)(slot & 15);             /* white until the result comes, then 3 blinks */
     u->slot_mark_state = SUI_MARK_BUSY;
+    u->slot_mark_page = u->slot_page;
     if (u->io && u->io->slot) {
         u->io->slot(u->io->ctx, op, (u8)(slot & 15));
     }
@@ -224,6 +222,7 @@ void seq_ui_init(struct seq_ui *u, struct seq *s, const struct seq_ui_io *io)
     u->seq = s;
     u->io = io;
     u->at_start = 1;
+    u->padbank_src = 0xFF;
     u->slot_mark = 0xFF;
     memset(u->live_note, 0xFF, sizeof(u->live_note));
     memset(u->rec_step, 0xFF, sizeof(u->rec_step));
@@ -232,7 +231,8 @@ void seq_ui_init(struct seq_ui *u, struct seq *s, const struct seq_ui_io *io)
 
 u8 seq_ui_shift_page(const struct seq_ui *u)
 {
-    return (u8)(u->active && u->shift && !u->padbank && !u->nr && !u->slot_page);
+    return (u8)(u->active && u->shift && !u->padbank && !u->nr && !u->slot_page &&
+                !(u->slot_mark_page && u->slot_mark != 0xFF && u->slot_mark_state != SUI_MARK_BUSY));
 }
 
 s8 seq_ui_play_offset(const struct seq_ui *u, u8 pad)
@@ -252,6 +252,7 @@ void seq_ui_toggle(struct seq_ui *u)
     all_live_off(u);
     u->held = u->keep = 0;
     u->padbank = u->stop = 0;
+    u->padbank_src = 0xFF;
     u->ov_until = 0;
     u->seq->fill = 0;
     u->shift = 1;                               /* Shift and Note Repeat are held right now */
@@ -306,7 +307,8 @@ static void knob_step(struct seq_ui *u, u8 k, s32 d, u32 now)
             break;
         }
         case 3:
-            v = st->micro = (s8)clampi(st->micro + accel(d, 96), -SEQ_MICRO_MAX, SEQ_MICRO_MAX);
+            v = st->micro = (s8)clampi(seq_step_micro(t, st) + accel(d, 96), -SEQ_MICRO_MAX, SEQ_MICRO_MAX);
+            st->cond &= (u8)~SEQ_COND_REC;
             if (first) overlay(u, SUI_OV_SIGNED, u->track, v, -SEQ_MICRO_MAX, SEQ_MICRO_MAX, now);
             break;
         case 2: {                               /* K3 note offset: moves the whole chord */
@@ -332,7 +334,7 @@ static void knob_step(struct seq_ui *u, u8 k, s32 d, u32 now)
         }
         case 6:
             v = clampi((st->cond & SEQ_COND_MASK) + one(d), 0, SEQ_CONDS - 1);
-            st->cond = (u8)((st->cond & SEQ_COND_TIE) | v);
+            st->cond = (u8)((st->cond & ~SEQ_COND_MASK) | v);
             if (first) overlay(u, SUI_OV_PICK, u->track, v, 0, SEQ_CONDS - 1, now);
             break;
         default:
@@ -548,6 +550,32 @@ static void rec_gate(struct seq_ui *u, u8 pad)
     st->prob_gate = (u8)((st->prob_gate & 0xF0) | (best + 1));
 }
 
+static void track_copy(struct seq_ui *u, u8 src, u8 dst, u32 now_ms)
+{
+    struct seq *s = u->seq;
+    const struct seq_track *st = &s->pat->track[src & 15];
+    struct seq_track *dt = &s->pat->track[dst & 15];
+    undo_track(u, dst);                         /* one undo step on the destination track */
+    dt->len = st->len;
+    dt->rate = st->rate;
+    dt->res = st->res;
+    dt->gate = st->gate;
+    dt->prob = st->prob;
+    dt->quantize = st->quantize;
+    dt->ratchet_rate = st->ratchet_rate;
+    memcpy(dt->step, st->step, sizeof(dt->step));
+    s->ts[dst & 15] = s->ts[src & 15];
+    if (u->undo) {
+        undo_commit(u->undo);
+        u->dirty = 0;
+    }
+    u->track = (u8)(dst & 15);
+    u->slot_mark = (u8)(dst & 15);
+    u->slot_mark_state = SUI_MARK_OK;
+    u->slot_mark_page = SUI_SLOT_NONE;
+    u->slot_mark_ms = now_ms;
+}
+
 void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
 {
     if (!u->active || pad > 15) {
@@ -574,6 +602,9 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
     u8 sp = seq_ui_step_pad(pad);               /* step-view step of this pad */
     u16 sbit = (u16)(1u << sp);
     if (!on) {
+        if (u->padbank_src == pad) {
+            u->padbank_src = 0xFF;
+        }
         if (pad == 13) {
             s->fill = 0;
         }
@@ -602,7 +633,7 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
         u->nr_used = 1;
         return;
     }
-    if (u->padbank) {                           /* track layer: select / mute / clear */
+    if (u->padbank) {                           /* track layer: select / copy / mute / clear */
         if (u->stop && u->shift) {
             undo_track(u, pad);                 /* the cleared track: its own undo step */
             memset(p->track[pad].step, 0, sizeof(p->track[pad].step));
@@ -610,8 +641,11 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
         } else if (u->stop) {
             p->track[pad].mute ^= 1;
             u->stop_used = 1;
+        } else if (u->padbank_src < SEQ_TRACKS && u->padbank_src != pad) {
+            track_copy(u, u->padbank_src, pad, now_ms);
         } else {
             u->track = pad;
+            u->padbank_src = pad;
         }
         u->padbank_used = 1;
         return;
@@ -704,8 +738,10 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
         if (pressed) {
             u->padbank = 1;
             u->padbank_used = 0;
+            u->padbank_src = 0xFF;
         } else {
             u->padbank = 0;
+            u->padbank_src = 0xFF;
             if (!u->padbank_used) {
                 all_live_off(u);
                 u->held = u->keep = 0;
@@ -745,6 +781,9 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
             u->at_start = 0;
         } else if (!pressed && u->slot_page == SUI_SLOT_LOAD) {
             u->slot_page = SUI_SLOT_NONE;
+            if (u->slot_mark_state == SUI_MARK_BUSY) {
+                u->slot_mark_page = SUI_SLOT_NONE;  /* cued: blink on the active view at the bar */
+            }
         }
         break;
     case SUI_STOP:                              /* acts on release: Stop + pad = mute, no stop */
@@ -874,22 +913,26 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
 
     if (u->slot_mark != 0xFF && u->slot_mark_state != SUI_MARK_BUSY &&
         now_ms - u->slot_mark_ms >= SUI_MARK_MS) {
-        u->slot_mark = 0xFF;                    /* result shown long enough */
+        u->slot_mark = 0xFF;                    /* 3 blinks done */
+        u->slot_mark_page = SUI_SLOT_NONE;
     }
-    if (u->slot_page) {                         /* pattern slots: off empty, dim used, full current */
-        u32 c = u->slot_page == SUI_SLOT_SAVE ? C_SLOT_SAVE : C_SLOT_LOAD;
+    u8 spage = u->slot_page ? u->slot_page :
+               ((u->slot_mark != 0xFF && u->slot_mark_state != SUI_MARK_BUSY) ? u->slot_mark_page : 0);
+    if (spage) {                                /* pattern slots: off empty, dim used, full current */
+        u32 c = spage == SUI_SLOT_SAVE ? C_SLOT_SAVE : C_SLOT_LOAD;
         for (u8 i = 0; i < 16; i++) {
             rgb[i] = i == u->slot_cur ? c : (((u->slot_used >> i) & 1) ? rgbs(c, DIM_CHOICE) : 0);
         }
-        if (u->slot_mark < 16) {                /* the tapped slot: busy white, then ok / failed */
+        if (u->slot_mark < 16) {                /* the tapped slot: busy white, then 3x blink */
+            u32 mc = u->slot_mark_state == SUI_MARK_OK ? C_OK : C_FAIL;
             rgb[u->slot_mark] = u->slot_mark_state == SUI_MARK_BUSY ? WHITE :
-                                (u->slot_mark_state == SUI_MARK_OK ? C_OK : C_FAIL);
+                                (((now_ms - u->slot_mark_ms) / SUI_BLINK_STEP_MS) & 1 ? 0 : mc);
         }
         return btn;
     }
     if (u->ov_until && (s32)(u->ov_until - now_ms) > 0) {
         draw_overlay(u, rgb);
-        return btn;
+        goto done;
     }
     u->ov_until = 0;
     if (u->nr && !u->held) {                    /* timing page */
@@ -907,7 +950,7 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
         rgb[14] = s->sync ? C_SYNC : rgbs(C_SYNC, 1, 10);
         u32 beat = 6000000u / (s->centibpm ? s->centibpm : 12000);
         rgb[15] = now_ms % beat < beat / 4 ? C_TAP : rgbs(C_TAP, 1, 10);
-        return btn;
+        goto done;
     }
     if (u->padbank) {                           /* track layer: activity, mutes, selection */
         for (u8 i = 0; i < 16; i++) {
@@ -918,7 +961,7 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
                 rgb[i] = p->track[i].mute ? rgbs(pc, DIM_MUTED) : (i == u->track ? rgbs(pc, 1, 4) : rgbs(pc, DIM_TRACK));
             }
         }
-        return btn;
+        goto done;
     }
     u32 c = seq_ui_track_rgb(u, u->track);
     if (u->view == SUI_VIEW_STEP) {
@@ -949,7 +992,7 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
                 rgb[pad] = rgbs(c, DIM_EMPTY);
             }
         }
-        return btn;
+        goto done;
     }
     /* play view: root pads brighter, held pads white, full colour while the note sounds */
     u8 root = seq_track_root(s, t), ch = (u8)(t->chan & 0x0f);
@@ -966,6 +1009,11 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
         } else {
             rgb[i] = (u8)(n % 12) == root ? rgbs(c, DIM_ROOT) : rgbs(c, DIM_PLAY);
         }
+    }
+done:
+    if (u->slot_mark < 16 && u->slot_mark_state != SUI_MARK_BUSY) {
+        u32 mc = u->slot_mark_state == SUI_MARK_OK ? C_OK : C_FAIL;
+        rgb[u->slot_mark] = ((now_ms - u->slot_mark_ms) / SUI_BLINK_STEP_MS) & 1 ? 0 : mc;
     }
     return btn;
 }

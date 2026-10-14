@@ -13,7 +13,8 @@
  *                              15 sync on/off, 16 tap tempo
  *   PAD BANK tap               view step <-> play
  *   hold PAD BANK              track layer (activity, mutes): pad = select track,
- *                              + Stop + pad = mute, + Shift + Stop + pad = clear that track
+ *                              hold src + tap dst = copy track notes, + Stop + pad = mute,
+ *                              + Shift + Stop + pad = clear that track
  *   Left / Right               page; Shift + Left / Right = undo / redo
  *   Play / Stop                (Stop on release; twice = to the start); Rec = live record
  *   KNOB BANK                  knob page: track / pattern (K3 / K4 = track root / scale,
@@ -50,7 +51,8 @@ enum { SUI_KNOBS_TRACK = 0, SUI_KNOBS_PATTERN };
 
 enum { SUI_SLOT_NONE = 0, SUI_SLOT_SAVE, SUI_SLOT_LOAD };
 enum { SUI_MARK_BUSY = 0, SUI_MARK_OK, SUI_MARK_FAIL };
-#define SUI_MARK_MS         1500            /* slot page: result shown on the tapped pad */
+#define SUI_BLINK_STEP_MS   80              /* target-pad feedback: 3 rapid blinks (on/off) */
+#define SUI_MARK_MS         (6 * SUI_BLINK_STEP_MS)
 
 struct seq_ui_io {
     void *ctx;
@@ -70,6 +72,7 @@ struct seq_ui {
     u8  at_start;                           /* Play starts from the top (else continues) */
     u8  shift, nr, padbank, stop;           /* buttons held */
     u8  nr_used, padbank_used, stop_used;   /* a combination happened while held */
+    u8  padbank_src;                        /* track pad held in the track layer (0xFF = none) */
     u16 held;                               /* step-view pads held */
     u16 keep;                               /* held pads that must not toggle on release */
     u16 lit_pads;                           /* play-view pads held (white) */
@@ -99,7 +102,8 @@ struct seq_ui {
     u8  slot_cur;                           /* current slot 0..15 */
     u16 slot_used;                          /* bit n: slot n holds a pattern */
     u16 slot_pads;                          /* pads pressed on the page (their release is eaten) */
-    u8  slot_mark, slot_mark_state;         /* tapped slot (0xFF none): SUI_MARK_* */
+    u8  slot_mark, slot_mark_state;         /* target pad (0xFF none): SUI_MARK_* */
+    u8  slot_mark_page;                     /* SUI_SLOT_*: keeps the slot page up during the blink */
     u32 slot_mark_ms;                       /* when the result came */
 };
 
@@ -124,7 +128,7 @@ u8   seq_ui_undo_skip(u16 off);     /* undo_init() skip rule over struct seq_pat
 /* 1 = Shift is held with nothing else claiming the pads: the caller shows / runs the Shift menu */
 u8   seq_ui_shift_page(const struct seq_ui *u);
 s8   seq_ui_play_offset(const struct seq_ui *u, u8 pad);    /* play-view pad -> scale steps */
-/* result of a slot operation: ok = white flash, else red flash */
+/* result of a slot operation: 3 rapid blinks on the target pad (green = ok, red = failed) */
 void seq_ui_notify(struct seq_ui *u, u8 ok, u32 now_ms);
 /* a different pattern is now in place: held steps, pages, recording state and undo restart */
 void seq_ui_loaded(struct seq_ui *u);

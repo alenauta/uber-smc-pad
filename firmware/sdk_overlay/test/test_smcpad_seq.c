@@ -358,18 +358,31 @@ static void test_record(void)
     run_to(1000 + 2 * 125 + 10);                               /* 10 ms after step 2 */
     u8 k = seq_record(&S, 5, 90, 0);
     CHECK(k == 2 && pat.track[5].step[2].vel == 90);
-    CHECK(pat.track[5].step[2].micro == 7);                    /* 10/125 x 96 = 7.68 */
+    CHECK(pat.track[5].step[2].micro == 7 && (pat.track[5].step[2].cond & SEQ_COND_REC));
+    CHECK(seq_step_micro(&pat.track[5], &pat.track[5].step[2]) == 7);
     run_to(1000 + 4 * 125 - 20);                               /* 20 ms before step 4 */
     k = seq_record(&S, 5, 80, 3);
     CHECK(k == 4 && pat.track[5].step[4].micro == -15 && pat.track[5].step[4].note == 3);
     CHECK(seq_playhead(&S, 5) == 3);
-    /* default quantize 100 %: snapped to the nearest step; 50 %: half the offset */
+    /* retroactive quantize: raw offset stored (22 = 57/240 x 96), scaled at playback by quantize */
     run_to(1000 + 6 * 125 + 30);
     k = seq_record(&S, 6, 70, 0);
-    CHECK(k == 6 && pat.track[6].step[6].vel == 70 && pat.track[6].step[6].micro == 0);
-    pat.track[7].quantize = 50;
-    k = seq_record(&S, 7, 70, 0);
-    CHECK(k == 6 && pat.track[7].step[6].micro == 11);         /* 30/125 x 96 = 23 -> 11 */
+    struct seq_step *s6 = &pat.track[6].step[6];
+    CHECK(k == 6 && s6->vel == 70 && s6->micro == 22 && (s6->cond & SEQ_COND_REC));
+    CHECK(seq_step_micro(&pat.track[6], s6) == 0);             /* default 100 %: snapped to grid */
+    pat.track[6].quantize = 50;                                /* adjusted after recording -> 50 % */
+    CHECK(seq_step_micro(&pat.track[6], s6) == 11);
+    pat.track[6].quantize = 0;                                 /* 0 %: full recorded offset */
+    CHECK(seq_step_micro(&pat.track[6], s6) == 22);
+    /* verify actual playback timing changes retroactively on subsequent loops */
+    pat.track[6].quantize = 100;
+    nlg = 0;
+    run_to(1000 + 2000 + 6 * 125 + 50);                        /* loop 2 step 6 at 3750 ms */
+    CHECK(near(nth_on(42, 0), 3750, 1));
+    pat.track[6].quantize = 0;                                 /* loosen to 0 % for loop 3 */
+    nlg = 0;
+    run_to(1000 + 4000 + 6 * 125 + 50);                        /* loop 3 step 6 at 5750 + 30 ms */
+    CHECK(near(nth_on(42, 0), 5780, 1));
     seq_stop(&S);
     CHECK(seq_record(&S, 5, 80, 0) == 0xFF && seq_playhead(&S, 5) == 0xFF);
 }

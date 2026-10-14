@@ -31,7 +31,7 @@ KNOBS = {
     1: ("Volume", "Velocity", "Tempo"),
     2: ("Gate", "Gate", "Swing"),
     3: ("Base note", "Note (chord)", "Track root"),
-    4: ("Rec quantize", "Micro-timing", "Track scale"),
+    4: ("Quantize", "Micro-timing", "Track scale"),
     5: ("Probability", "Probability", ""),
     6: ("Ratchet rate", "Ratchet rate", "Track colour"),
     7: ("Steps (length)", "Trig condition", "MIDI channel"),
@@ -176,8 +176,8 @@ def card():
    <li><b>Shift + Note Repeat</b> enter / leave. The Note Repeat LED flashes on the beat.
     <b>Shift + pad</b>: the normal Shift menu (preset, curve, transpose, octave).</li>
    <li><b>PAD BANK</b> tap: Step &harr; Play view (LED on = Play).</li>
-   <li><b>Hold PAD BANK</b>: track layer (activity flashes, muted dim): pad = select track,
-    <b>+ Stop + pad</b> = mute (playback goes on), <b>+ Shift + Stop + pad</b> = clear the track.</li>
+   <li><b>Hold PAD BANK</b>: track layer (activity flashes, muted dim): pad = select,
+    <b>hold src + tap dst</b> = copy notes, <b>+ Stop + pad</b> = mute, <b>+ Shift + Stop + pad</b> = clear.</li>
    <li><b>KNOB BANK</b>: Track &harr; Pattern knobs (LED on = Pattern).</li>
    <li><b>&lt; &gt;</b> step pages of 16 (LED lit = more pages). <b>Shift + &lt; / &gt;</b> undo / redo.</li>
   </ul>
@@ -192,8 +192,8 @@ def card():
   <ul>
    <li>Pads play the track from its base note in its scale (chromatic = drum kit). Root pads brighter.
     Shift-menu octave / transpose move the pads (transpose = one scale step).</li>
-   <li><b>Rec</b> + Play: live recording, snapped to the nearest step (K4 = strength); how long you
-    hold sets the step's length. Hits on a step that already plays add chord notes (up to 4).</li>
+   <li><b>Rec</b> + Play: live recording (K4 = quantize strength, adjustable after recording); hold time
+    sets the step's length. Hits on a step that already plays add chord notes (up to 4).</li>
   </ul>
   <h3>Transport &amp; sync</h3>
   <ul>
@@ -236,7 +236,7 @@ def card():
   <h3>Pattern slots (16, pad = slot)</h3>
   <ul>
    <li><b>Hold Shift + Rec</b> + pad: save (no pad = current slot). <b>Hold Shift + Play</b> + pad: load
-    (playing: on the next bar). Off empty, dim used, full current. White flash ok, red failed.</li>
+    (playing: on the next bar). Off empty, dim used, full current. Target pad blinks 3&times; green / red.</li>
    <li>Stop saves changes. Another slot: changes kept first; empty slot = new pattern; current slot = revert.</li>
   </ul>
  </div>

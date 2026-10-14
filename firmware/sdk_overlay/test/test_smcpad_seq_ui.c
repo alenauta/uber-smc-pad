@@ -599,7 +599,8 @@ static void test_undo_rec_passes(void)
     seq_ui_button(&U, SUI_SHIFT, 0, now);
 }
 
-/* pattern slots (918+): hold Shift + Rec = save page, hold Shift + Play = load page */
+/* pattern slots (918+): hold Shift + Rec = save page, hold Shift + Play = load page;
+ * 920+: only the target pad blinks 3x (green/red) before returning to the previous view */
 static void test_slots(void)
 {
     setup();
@@ -614,22 +615,29 @@ static void test_slots(void)
     tap(5);                                                    /* save into slot 6 */
     CHECK(slot_calls == 1 && slot_op == SUI_SLOT_SAVE && slot_n == 5 && rec_count(&pat.track[0]) == 0);
     seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[5] == WHITE);                                    /* tapped: busy at once */
+    CHECK(rgb[5] == WHITE && rgb[3] == C_SLOT_SAVE);           /* tapped: busy at once, others unchanged */
     seq_ui_notify(&U, 0, now);
-    seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[5] == C_FAIL);                                   /* then the result on the pad */
+    seq_ui_button(&U, SUI_REC, 0, now);                        /* released right away: page lingers for 3 blinks */
+    CHECK(slot_calls == 1 && !U.slot_page && !seq_ui_shift_page(&U));
+    for (int b = 0; b < 3; b++) {                              /* 3 rapid blinks on pad 5 only */
+        seq_ui_leds(&U, now + (u32)(2 * b) * SUI_BLINK_STEP_MS, rgb);
+        CHECK(rgb[5] == C_FAIL && rgb[3] == C_SLOT_SAVE && rgb[1] == 0);
+        seq_ui_leds(&U, now + (u32)(2 * b + 1) * SUI_BLINK_STEP_MS, rgb);
+        CHECK(rgb[5] == 0 && rgb[3] == C_SLOT_SAVE && rgb[1] == 0);
+    }
     now += SUI_MARK_MS;
     seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[5] == 0 && U.slot_mark == 0xFF);
-    seq_ui_button(&U, SUI_REC, 0, now);
-    CHECK(slot_calls == 1 && !U.slot_page);                    /* a pad was used: no extra save */
+    CHECK(U.slot_mark == 0xFF && seq_ui_shift_page(&U));       /* back to previous view */
     seq_ui_button(&U, SUI_REC, 1, now);                        /* quick save: no pad */
     seq_ui_button(&U, SUI_REC, 0, now);
     CHECK(slot_calls == 2 && slot_op == SUI_SLOT_SAVE && slot_n == 3);
     seq_ui_notify(&U, 1, now);                                 /* the app reports every result */
     seq_ui_leds(&U, now, rgb);
-    CHECK(U.slot_mark == 3 && U.slot_mark_state == SUI_MARK_OK);
+    CHECK(U.slot_mark == 3 && U.slot_mark_state == SUI_MARK_OK && rgb[3] == C_OK && rgb[1] == 0);
+    seq_ui_leds(&U, now + SUI_BLINK_STEP_MS, rgb);
+    CHECK(rgb[3] == 0 && rgb[0] == rgbs(C_SLOT_SAVE, DIM_CHOICE));
     now += SUI_MARK_MS;
+    seq_ui_leds(&U, now, rgb);
     /* load page: Play doesn't start */
     seq_ui_button(&U, SUI_PLAY, 1, now);
     CHECK(U.slot_page == SUI_SLOT_LOAD && !S.running);
@@ -644,19 +652,83 @@ static void test_slots(void)
     press(SUI_REC);                                            /* without Shift: record, as before */
     CHECK(U.rec && slot_calls == 3);
     press(SUI_REC);
-    /* results: red = failed, white = done */
-    seq_ui_notify(&U, 0, now);
-    seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[7] == rgbs(C_FAIL, 1, 3));
-    now += 3 * SUI_FLASH_MS + 1;
+    /* cued load finishing on the bar line: target pad 0 blinks 3x on the step view */
     seq_ui_notify(&U, 1, now);
     seq_ui_leds(&U, now, rgb);
-    CHECK(rgb[7] == rgbs(WHITE, 1, 6));
+    CHECK(rgb[0] == C_OK && rgb[P(0)] == rgbs(seq_ui_track_rgb(&U, 0), DIM_EMPTY));
+    seq_ui_leds(&U, now + SUI_BLINK_STEP_MS, rgb);
+    CHECK(rgb[0] == 0);
+    now += SUI_MARK_MS;
+    seq_ui_leds(&U, now, rgb);
     /* another pattern in place: held steps and recording state restart */
     seq_ui_pad(&U, P(2), 1, 90, now);
     seq_ui_loaded(&U);
     seq_ui_pad(&U, P(2), 0, 0, now);
     CHECK(!U.held && !U.keep && U.page == 0 && U.rec_step[0] == 0xFF);
+}
+
+/* 920+: track copy in the track layer (hold PAD BANK + hold src + tap dst) and manual micro-timing
+ * override on a live-recorded step */
+static void test_track_copy_and_quantize(void)
+{
+    static u8 shadow[sizeof(struct seq_track)];
+    static struct undo un;
+    setup();
+    undo_init(&un, (u8 *)&pat, (u16)sizeof(pat), shadow, (u16)sizeof(shadow), seq_ui_undo_skip);
+    U.undo = &un;
+    struct seq_track *t0 = &pat.track[0], *t3 = &pat.track[3];
+    t0->len = 12;
+    t0->rate = t0->res = SEQ_RATE_8;
+    t0->gate = 6;
+    t0->prob = 75;
+    t0->quantize = 40;
+    t0->ratchet_rate = 2;
+    t0->step[0].vel = 110;
+    t0->step[0].note = 5;
+    t0->step[4].vel = 85;
+    t0->step[4].micro = 18;
+    t0->step[4].cond = SEQ_COND_REC;
+    /* destination track 3 has its own sound settings */
+    t3->chan = 4;
+    t3->note = 64;
+    t3->vol = 95;
+    t3->mute = 1;
+    t3->root = 5;
+    t3->scale = SCALE_MINOR + 1;
+    U.colour[3] = 11;
+    /* hold PAD BANK, hold pad 0 (src), tap pad 3 (dst) */
+    seq_ui_button(&U, SUI_PAD_BANK, 1, now);
+    seq_ui_pad(&U, 0, 1, 90, now);
+    CHECK(U.track == 0 && U.padbank_src == 0);
+    tap(3);
+    CHECK(U.track == 3 && t3->len == 12 && t3->rate == SEQ_RATE_8 && t3->res == SEQ_RATE_8);
+    CHECK(t3->gate == 6 && t3->prob == 75 && t3->quantize == 40 && t3->ratchet_rate == 2);
+    CHECK(t3->step[0].vel == 110 && t3->step[0].note == 5 && t3->step[4].vel == 85 && t3->step[4].micro == 18);
+    /* destination sound settings and colour are untouched */
+    CHECK(t3->chan == 4 && t3->note == 64 && t3->vol == 95 && t3->mute == 1);
+    CHECK(t3->root == 5 && t3->scale == SCALE_MINOR + 1 && U.colour[3] == 11);
+    /* destination pad 3 blinks 3x green */
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[3] == C_OK);
+    seq_ui_leds(&U, now + SUI_BLINK_STEP_MS, rgb);
+    CHECK(rgb[3] == 0);
+    seq_ui_pad(&U, 0, 0, 0, now);
+    seq_ui_button(&U, SUI_PAD_BANK, 0, now);
+    now += SUI_MARK_MS;
+    /* Shift + Left undoes the copy in one step */
+    seq_ui_button(&U, SUI_SHIFT, 1, now);
+    press(SUI_LEFT);
+    seq_ui_button(&U, SUI_SHIFT, 0, now);
+    CHECK(t3->len == 16 && t3->step[0].vel == 0 && t3->step[4].vel == 0 && t3->note == 64);
+    /* manual step micro-timing (Hold step + K4) starts from effective micro and clears SEQ_COND_REC */
+    U.track = 0;
+    t0->quantize = 50;                                         /* effective micro on step 4: 18 * 50% = 9 */
+    seq_ui_pad(&U, P(4), 1, 90, now);
+    seq_ui_knob(&U, 3, 2, now);                                /* +2 -> 11, manual */
+    seq_ui_pad(&U, P(4), 0, 0, now);
+    CHECK(t0->step[4].micro == 11 && !(t0->step[4].cond & SEQ_COND_REC));
+    t0->quantize = 100;                                        /* manual micro stays 11 even at 100 % */
+    CHECK(seq_step_micro(t0, &t0->step[4]) == 11);
 }
 
 /* rate = editing grid: a coarser grid keeps the notes between its steps; Shift + K8 = speed;
@@ -732,6 +804,7 @@ int main(void)
     test_undo();
     test_undo_rec_passes();
     test_slots();
+    test_track_copy_and_quantize();
     test_grid_rate_colour();
     printf(failures ? "test_smcpad_seq_ui: %d FAILED\n" : "test_smcpad_seq_ui: ALL PASSED\n", failures);
     return failures != 0;

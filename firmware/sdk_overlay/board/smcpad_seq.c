@@ -129,11 +129,20 @@ s8 seq_step_offset(const struct seq_step *st, u8 i)
     return i == 0 ? st->note : st->extra[(i - 1) % (SEQ_CHORD - 1)];
 }
 
-s32 seq_step_micro_units(const struct seq_track *t, const struct seq_step *st)
+s8 seq_step_micro(const struct seq_track *t, const struct seq_step *st)
 {
     s32 m = st->micro;
     m = m > SEQ_MICRO_MAX ? SEQ_MICRO_MAX : (m < -SEQ_MICRO_MAX ? -SEQ_MICRO_MAX : m);
-    return m * (s32)seq_step_units(t->res) / 96;
+    if (st->cond & SEQ_COND_REC) {
+        s32 q = t->quantize > 100 ? 100 : t->quantize;
+        m = m * (100 - q) / 100;
+    }
+    return (s8)m;
+}
+
+s32 seq_step_micro_units(const struct seq_track *t, const struct seq_step *st)
+{
+    return (s32)seq_step_micro(t, st) * (s32)seq_step_units(t->res) / 96;
 }
 
 /* ---- grid / resolution ---------------------------------------------------------------- */
@@ -222,8 +231,9 @@ static u8 expand(struct seq *s, u8 ti, u8 m)
             }
         }
         s32 off = (s32)st.micro * m;            /* 1/96 of a new step */
-        s32 sh = off >= 0 ? (off + 48) / 96 : -((-off + 48) / 96);
-        st.micro = (s8)(off - sh * 96);
+        s32 sh = (st.cond & SEQ_COND_REC) ? 0 : (off >= 0 ? (off + 48) / 96 : -((-off + 48) / 96));
+        s32 nm = off - sh * 96;
+        st.micro = (s8)(nm > SEQ_MICRO_MAX ? SEQ_MICRO_MAX : (nm < -SEQ_MICRO_MAX ? -SEQ_MICRO_MAX : nm));
         u8 g = st.prob_gate & 0x0f;
         if (g) {
             st.prob_gate = (u8)((st.prob_gate & 0xF0) | (gate_nearest((u32)seq_gate_eighths[g - 1] * m) + 1));
@@ -846,10 +856,8 @@ u8 seq_record(struct seq *s, u8 track, u8 vel, s8 note)
     rel = ((rel % loop) + loop) % loop;
     s32 j = (rel + g / 2) / g;                  /* nearest grid step */
     s32 off = rel - j * g;
-    s32 q = t->quantize > 100 ? 100 : t->quantize;
-    s32 at = j * g + off * (100 - q) / 100;     /* pulled towards the grid by quantize % */
-    s32 i2 = at >= 0 ? (at + u / 2) / u : -((-at + u / 2) / u);
-    s32 micro = (at - i2 * u) * 96 / u;
+    s32 i2 = j * (s32)seq_track_grid(t);        /* the grid step's stored step */
+    s32 micro = off * 96 / u;
     u8 idx = (u8)(((i2 % len) + len) % len);
     struct seq_step *st = &t->step[idx];
     if (!st->vel) {                             /* empty step: this hit defines it */
@@ -857,6 +865,7 @@ u8 seq_record(struct seq *s, u8 track, u8 vel, s8 note)
         st->vel = vel ? (vel > 127 ? 127 : vel) : 1;
         st->note = note;
         st->micro = (s8)(micro > SEQ_MICRO_MAX ? SEQ_MICRO_MAX : (micro < -SEQ_MICRO_MAX ? -SEQ_MICRO_MAX : micro));
+        st->cond = SEQ_COND_REC;
         s->rec_created = 1;
         return idx;
     }

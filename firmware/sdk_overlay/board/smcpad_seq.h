@@ -51,6 +51,7 @@ enum { SEQ_COND_ALWAYS = 0,
        SEQ_COND_1_4, SEQ_COND_2_4, SEQ_COND_3_4, SEQ_COND_4_4,
        SEQ_COND_FIRST, SEQ_COND_FILL, SEQ_COND_NOT_FILL, SEQ_CONDS };
 #define SEQ_COND_MASK       0x0F
+#define SEQ_COND_REC        0x40            /* micro came from live recording: scaled by quantize */
 #define SEQ_COND_TIE        0x80
 
 #define SEQ_GATES           15              /* gate table index 0..14 */
@@ -64,9 +65,9 @@ struct seq_step {
     u8 vel;         /* 0 = off, 1..127 */
     s8 note;        /* first note: offset from the track's base note, in scale steps */
     u8 prob_gate;   /* prob << 4 | gate; prob 0 = track, 1..15 = 0..100 %; gate 0 = track, n = table[n-1] */
-    s8 micro;       /* -48..+48 in 1/96 step */
+    s8 micro;       /* -48..+48 in 1/96 step (SEQ_COND_REC: raw offset before track quantize) */
     u8 ratchet;     /* (chord notes-1) << 6 | (ratchet hits-1) << 4 | rate (0 = track, n = table[n-1]) */
-    u8 cond;        /* SEQ_COND_* | SEQ_COND_TIE */
+    u8 cond;        /* SEQ_COND_* | SEQ_COND_REC | SEQ_COND_TIE */
     s8 extra[SEQ_CHORD - 1];                /* more chord notes (offsets), count in ratchet bits 6-7 */
 };
 #define SEQ_RATCHET_HITS(r)  ((u8)((((r) >> 4) & 3) + 1))
@@ -193,13 +194,14 @@ u8   seq_track_root(const struct seq *s, const struct seq_track *t);        /* e
 u8   seq_track_note(const struct seq *s, const struct seq_track *t, s8 offset);
 u8   seq_step_count(const struct seq_step *st);                             /* chord notes 1..4 */
 s8   seq_step_offset(const struct seq_step *st, u8 i);
+s8   seq_step_micro(const struct seq_track *t, const struct seq_step *st);  /* effective -48..+48 */
 s32  seq_step_micro_units(const struct seq_track *t, const struct seq_step *st);
 
 /* live recording: writes the hit into the nearest step of the track at the current position.
- * An empty step takes the note, velocity and micro-timing (offset scaled by (100 - track
- * quantize) %, so the default 100 % snaps to the step); a step that already plays adds the note
- * to its chord (up to SEQ_CHORD, a note already there is not added twice). Returns the step
- * index (0xFF when stopped). */
+ * An empty step takes the note, velocity and raw micro-timing (marked with SEQ_COND_REC, so
+ * track quantize scales it at playback and can be adjusted afterwards); a step that already
+ * plays adds the note to its chord (up to SEQ_CHORD, a note already there is not added twice).
+ * Returns the step index (0xFF when stopped). */
 u8   seq_record(struct seq *s, u8 track, u8 vel, s8 note);
 u8   seq_playhead(const struct seq *s, u8 track);   /* step whose grid time last passed */
 
