@@ -176,8 +176,8 @@ def card():
    <li><b>Shift + Note Repeat</b> enter / leave. The Note Repeat LED flashes on the beat.
     <b>Shift + pad</b>: the normal Shift menu (preset, curve, transpose, octave).</li>
    <li><b>PAD BANK</b> tap: Step &harr; Play view (LED on = Play).</li>
-   <li><b>Hold PAD BANK</b>: track layer (activity flashes, muted dim): pad = select,
-    <b>hold src + tap dst</b> = copy notes, <b>+ Stop + pad</b> = mute, <b>+ Shift + Stop + pad</b> = clear.</li>
+   <li><b>Hold PAD BANK</b>: track layer: pad = select, <b>hold src + tap dst</b> = copy notes &amp; scale
+    (<b>+ Shift</b> = also ch/note/vol), <b>+ Stop + pad</b> = mute, <b>+ Shift + Stop + pad</b> = clear.</li>
    <li><b>KNOB BANK</b>: Track &harr; Pattern knobs (LED on = Pattern).</li>
    <li><b>&lt; &gt;</b> step pages of 16 (LED lit = more pages). <b>Shift + &lt; / &gt;</b> undo / redo.</li>
   </ul>

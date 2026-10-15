@@ -13,7 +13,8 @@
  *                              15 sync on/off, 16 tap tempo
  *   PAD BANK tap               view step <-> play
  *   hold PAD BANK              track layer (activity, mutes): pad = select track,
- *                              hold src + tap dst = copy track notes, + Stop + pad = mute,
+ *                              hold src + tap dst = copy track notes & scale (+ Shift = also
+ *                              MIDI channel, base note & volume), + Stop + pad = mute,
  *                              + Shift + Stop + pad = clear that track
  *   Left / Right               page; Shift + Left / Right = undo / redo
  *   Play / Stop                (Stop on release; twice = to the start); Rec = live record

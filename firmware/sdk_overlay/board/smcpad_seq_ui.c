@@ -550,12 +550,17 @@ static void rec_gate(struct seq_ui *u, u8 pad)
     st->prob_gate = (u8)((st->prob_gate & 0xF0) | (best + 1));
 }
 
-static void track_copy(struct seq_ui *u, u8 src, u8 dst, u32 now_ms)
+static void track_copy(struct seq_ui *u, u8 src, u8 dst, u8 full, u32 now_ms)
 {
     struct seq *s = u->seq;
     const struct seq_track *st = &s->pat->track[src & 15];
     struct seq_track *dt = &s->pat->track[dst & 15];
     undo_track(u, dst);                         /* one undo step on the destination track */
+    if (full) {                                 /* + Shift: also MIDI channel, base note, volume */
+        dt->chan = st->chan;
+        dt->note = st->note;
+        dt->vol = st->vol;
+    }
     dt->len = st->len;
     dt->rate = st->rate;
     dt->res = st->res;
@@ -563,6 +568,8 @@ static void track_copy(struct seq_ui *u, u8 src, u8 dst, u32 now_ms)
     dt->prob = st->prob;
     dt->quantize = st->quantize;
     dt->ratchet_rate = st->ratchet_rate;
+    dt->root = st->root;
+    dt->scale = st->scale;
     memcpy(dt->step, st->step, sizeof(dt->step));
     s->ts[dst & 15] = s->ts[src & 15];
     if (u->undo) {
@@ -642,7 +649,7 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
             p->track[pad].mute ^= 1;
             u->stop_used = 1;
         } else if (u->padbank_src < SEQ_TRACKS && u->padbank_src != pad) {
-            track_copy(u, u->padbank_src, pad, now_ms);
+            track_copy(u, u->padbank_src, pad, u->shift, now_ms);
         } else {
             u->track = pad;
             u->padbank_src = pad;

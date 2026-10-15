@@ -667,8 +667,8 @@ static void test_slots(void)
     CHECK(!U.held && !U.keep && U.page == 0 && U.rec_step[0] == 0xFF);
 }
 
-/* 920+: track copy in the track layer (hold PAD BANK + hold src + tap dst) and manual micro-timing
- * override on a live-recorded step */
+/* 920+: track copy in the track layer (hold PAD BANK + hold src + tap dst; + Shift also copies
+ * MIDI channel, base note and volume) and manual micro-timing override on a live-recorded step */
 static void test_track_copy_and_quantize(void)
 {
     static u8 shadow[sizeof(struct seq_track)];
@@ -676,13 +676,18 @@ static void test_track_copy_and_quantize(void)
     setup();
     undo_init(&un, (u8 *)&pat, (u16)sizeof(pat), shadow, (u16)sizeof(shadow), seq_ui_undo_skip);
     U.undo = &un;
-    struct seq_track *t0 = &pat.track[0], *t3 = &pat.track[3];
+    struct seq_track *t0 = &pat.track[0], *t3 = &pat.track[3], *t4 = &pat.track[4];
+    t0->chan = 2;
+    t0->note = 48;
+    t0->vol = 115;
     t0->len = 12;
     t0->rate = t0->res = SEQ_RATE_8;
     t0->gate = 6;
     t0->prob = 75;
     t0->quantize = 40;
     t0->ratchet_rate = 2;
+    t0->root = 3;
+    t0->scale = SCALE_DORIAN + 1;
     t0->step[0].vel = 110;
     t0->step[0].note = 5;
     t0->step[4].vel = 85;
@@ -696,30 +701,41 @@ static void test_track_copy_and_quantize(void)
     t3->root = 5;
     t3->scale = SCALE_MINOR + 1;
     U.colour[3] = 11;
-    /* hold PAD BANK, hold pad 0 (src), tap pad 3 (dst) */
+    /* normal copy: hold PAD BANK, hold pad 0 (src), tap pad 3 (dst) */
     seq_ui_button(&U, SUI_PAD_BANK, 1, now);
     seq_ui_pad(&U, 0, 1, 90, now);
     CHECK(U.track == 0 && U.padbank_src == 0);
     tap(3);
     CHECK(U.track == 3 && t3->len == 12 && t3->rate == SEQ_RATE_8 && t3->res == SEQ_RATE_8);
     CHECK(t3->gate == 6 && t3->prob == 75 && t3->quantize == 40 && t3->ratchet_rate == 2);
+    CHECK(t3->root == 3 && t3->scale == SCALE_DORIAN + 1);     /* scale & root copied */
     CHECK(t3->step[0].vel == 110 && t3->step[0].note == 5 && t3->step[4].vel == 85 && t3->step[4].micro == 18);
-    /* destination sound settings and colour are untouched */
-    CHECK(t3->chan == 4 && t3->note == 64 && t3->vol == 95 && t3->mute == 1);
-    CHECK(t3->root == 5 && t3->scale == SCALE_MINOR + 1 && U.colour[3] == 11);
+    /* destination chan, base note, vol, mute and colour are untouched */
+    CHECK(t3->chan == 4 && t3->note == 64 && t3->vol == 95 && t3->mute == 1 && U.colour[3] == 11);
     /* destination pad 3 blinks 3x green */
     seq_ui_leds(&U, now, rgb);
     CHECK(rgb[3] == C_OK);
     seq_ui_leds(&U, now + SUI_BLINK_STEP_MS, rgb);
     CHECK(rgb[3] == 0);
+    /* Shift + copy to track 4: also copies chan, base note and volume */
+    t4->chan = 7;
+    t4->note = 72;
+    t4->vol = 60;
+    seq_ui_button(&U, SUI_SHIFT, 1, now);
+    tap(4);
+    seq_ui_button(&U, SUI_SHIFT, 0, now);
+    CHECK(U.track == 4 && t4->chan == 2 && t4->note == 48 && t4->vol == 115);
+    CHECK(t4->len == 12 && t4->root == 3 && t4->scale == SCALE_DORIAN + 1 && t4->step[0].vel == 110);
     seq_ui_pad(&U, 0, 0, 0, now);
     seq_ui_button(&U, SUI_PAD_BANK, 0, now);
     now += SUI_MARK_MS;
-    /* Shift + Left undoes the copy in one step */
+    /* Shift + Left undoes each copy in turn */
     seq_ui_button(&U, SUI_SHIFT, 1, now);
     press(SUI_LEFT);
+    CHECK(t4->chan == 7 && t4->note == 72 && t4->vol == 60 && t4->len == 16 && t4->step[0].vel == 0);
+    press(SUI_LEFT);
     seq_ui_button(&U, SUI_SHIFT, 0, now);
-    CHECK(t3->len == 16 && t3->step[0].vel == 0 && t3->step[4].vel == 0 && t3->note == 64);
+    CHECK(t3->len == 16 && t3->scale == SCALE_MINOR + 1 && t3->step[0].vel == 0 && t3->note == 64);
     /* manual step micro-timing (Hold step + K4) starts from effective micro and clears SEQ_COND_REC */
     U.track = 0;
     t0->quantize = 50;                                         /* effective micro on step 4: 18 * 50% = 9 */
