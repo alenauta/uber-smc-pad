@@ -198,12 +198,12 @@ static void seq_cfg_set(u8 lead_ms, u8 groot, u8 gscale)
         seq_cfg.groot = groot;
         seq_cfg.gscale = gscale;
         seq_cfg_dirty = 1;
-        seq_cfg_ms = sys_timer_get_ms();
+        seq_cfg_ms = smcpad_hw_ms();
     }
     if (memcmp(seq_colours.colour, sui.colour, sizeof(seq_colours.colour))) {
         memcpy(seq_colours.colour, sui.colour, sizeof(seq_colours.colour));
         seq_cfg_dirty = 1;
-        seq_cfg_ms = sys_timer_get_ms();
+        seq_cfg_ms = smcpad_hw_ms();
     }
 }
 
@@ -484,7 +484,7 @@ static void ble_midi_out(const u8 *m, u32 n)
     if (!ble_smcpad_midi_ready()) {
         return;
     }
-    u16 ts = (u16)sys_timer_get_ms();
+    u16 ts = (u16)smcpad_hw_ms();
     u32 done = 0;
     for (u32 guard = 0; done < n && guard < 64; guard++) {
         done += ble_midi_enc_add(&ble_enc, ts, m + done, n - done);
@@ -696,7 +696,8 @@ static void service_seq(void)
     seq_run(&seq, ms);
     seq_clock_timeout(&seq, ms);
     slot_service();                                 /* pattern slots: cued load on Stop, auto-save */
-    seq_cfg_flush(sys_timer_get_ms());
+    ble_midi_flush();                               /* send F8 / Start / Stop / notes right away */
+    seq_cfg_flush(ms);
     seq_play_shift();
     smcpad_hw_fast_wake(seq.running || seq.ext_seen || sui.active);
     if (sui.active != app.seq_shown) {             /* mode changed: repaint everything */
@@ -1028,7 +1029,7 @@ static void diag_reply(const u8 *req, u32 len)
         }
     } else if (cmd == 0x30 || cmd == 0x31) {        /* reboot / test exception, after the reply */
         app.diag_reset = cmd == 0x30 ? 1 : 2;
-        app.diag_reset_ms = sys_timer_get_ms();
+        app.diag_reset_ms = smcpad_hw_ms();
     } else if (cmd == 0x03) {                       /* raw key-matrix frame */
         u8 f[SMCPAD_KM_STEPS];
         struct smcpad_hw_status s;
@@ -1154,7 +1155,7 @@ static void smcpad_task(void *p)
         u32 pass_t0 = smcpad_hw_ms();
         clr_wdt();                                  /* the loop runs: don't depend on idle */
         smcpad_hw_notified();
-        u32 now = sys_timer_get_ms();
+        u32 now = pass_t0;
         if (app.diag_reset && now - app.diag_reset_ms >= 100) {
             if (app.diag_reset == 1) {
                 smcpad_crash_reboot();

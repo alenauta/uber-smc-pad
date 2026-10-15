@@ -26,7 +26,8 @@ u32  ble_midi_msg_len(u8 status);
 struct ble_midi_enc {
     u16 max;            /* packet size limit (MTU - 3, capped at BLE_MIDI_PKT_MAX) */
     u16 len;
-    u8  hdr_hi;         /* ts[12:7] of the current packet */
+    u16 last_ts;        /* 13-bit ts of the last message added to the current packet */
+    u8  hdr_hi;         /* ts[12:7] of the current packet's header */
     u8  sx_cont;        /* a SysEx continues in the next packet */
     u8  buf[BLE_MIDI_PKT_MAX];
 };

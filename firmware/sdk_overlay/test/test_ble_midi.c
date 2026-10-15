@@ -54,7 +54,7 @@ static void test_encoder_basic(void)
     CHECK(ble_midi_enc_take(&e, pkt) == sizeof(want) && memcmp(pkt, want, sizeof(want)) == 0);
     CHECK(ble_midi_enc_take(&e, pkt) == 0);
 
-    /* ts[12:7] change -> new packet; full packet -> 0 */
+    /* >= 128 ms jump -> new packet; full packet -> 0 */
     CHECK(ble_midi_enc_add(&e, 0x0000, on, 3) == 3);
     CHECK(ble_midi_enc_add(&e, 0x0080, on, 3) == 0);
     for (int i = 0; i < 3; i++) {
@@ -69,6 +69,11 @@ static void test_encoder_basic(void)
     const u8 clk = 0xF8;
     CHECK(ble_midi_enc_add(&e, 0, &clk, 1) == 1);
     CHECK(ble_midi_enc_take(&e, pkt) == 3 && pkt[2] == 0xF8);
+    /* 7-bit timestampLow wraps across a 128 ms boundary within the same packet (< 128 ms step) */
+    CHECK(ble_midi_enc_add(&e, 117, &clk, 1) == 1);
+    CHECK(ble_midi_enc_add(&e, 138, &clk, 1) == 1);        /* 21 ms later: hi 0 -> 1, lo 117 -> 10 */
+    const u8 wrap_want[] = {0x80, 0x80 | 117, 0xF8, 0x80 | 10, 0xF8};
+    CHECK(ble_midi_enc_take(&e, pkt) == sizeof(wrap_want) && memcmp(pkt, wrap_want, sizeof(wrap_want)) == 0);
 }
 
 static void test_encoder_sysex_split(void)

@@ -81,9 +81,10 @@ u32 ble_midi_enc_add(struct ble_midi_enc *e, u16 ts_ms, const u8 *msg, u32 len)
             return 0;
         }
         put_header(e, hi);
+        e->last_ts = ts;
         return put_sysex(e, tsb, msg, len);
     }
-    if (e->len && hi != e->hdr_hi) {            /* keep one ts[12:7] per packet */
+    if (e->len && ((ts - e->last_ts) & 0x1FFF) >= 0x80) {   /* >= 128 ms jump: new packet */
         return 0;
     }
     const u32 hdr = e->len ? 0 : 1;
@@ -94,6 +95,7 @@ u32 ble_midi_enc_add(struct ble_midi_enc *e, u16 ts_ms, const u8 *msg, u32 len)
         if (hdr) {
             put_header(e, hi);
         }
+        e->last_ts = ts;
         e->buf[e->len++] = tsb;
         return put_sysex(e, tsb, msg, len);
     }
@@ -103,6 +105,7 @@ u32 ble_midi_enc_add(struct ble_midi_enc *e, u16 ts_ms, const u8 *msg, u32 len)
     if (hdr) {
         put_header(e, hi);
     }
+    e->last_ts = ts;
     e->buf[e->len++] = tsb;
     memcpy(e->buf + e->len, msg, len);
     e->len = (u16)(e->len + len);
