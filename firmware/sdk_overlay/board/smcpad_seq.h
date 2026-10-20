@@ -185,6 +185,7 @@ void seq_run(struct seq *s, u32 now_ms);            /* emit everything due */
 void seq_clock_in(struct seq *s, u8 rt, u32 now_ms);/* F8 FA FB FC from a host */
 void seq_clock_timeout(struct seq *s, u32 now_ms);  /* call regularly: lost clock -> internal */
 u32  seq_ext_centibpm(const struct seq *s);         /* measured external tempo (0 = none) */
+s32  seq_lead_units(const struct seq *s);           /* sync offset in position units (+early, -late) */
 
 /* step / note helpers */
 u8   seq_step_prob(const struct seq_track *t, const struct seq_step *st);   /* 0..100 */

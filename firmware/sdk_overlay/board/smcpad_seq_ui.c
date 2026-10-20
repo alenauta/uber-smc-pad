@@ -127,13 +127,19 @@ u8 seq_ui_step_pad(u8 i)
 
 u8 seq_ui_beat_led(const struct seq *s, u32 now_ms)
 {
-    if (s->running) {                           /* locked to the play position: bar 1 longer */
-        return (u8)(s->pos % (4 * SEQ_PPQN) < SEQ_PPQN / 4 || s->pos % SEQ_PPQN < SEQ_PPQN / 8);
+    if (s->running) {                           /* locked to the offset play position: bar 1 longer */
+        s32 p = (s32)s->pos + seq_lead_units(s);
+        if (p < 0) {
+            return 0;
+        }
+        u32 up = (u32)p;
+        return (u8)(up % (4 * SEQ_PPQN) < SEQ_PPQN / 4 || up % SEQ_PPQN < SEQ_PPQN / 8);
     }
     u32 c = s->sync && s->ext_seen && s->ext_interval_q8 ? seq_ext_centibpm(s) : s->centibpm;
     c = c < 2000 ? 2000 : (c > 40000 ? 40000 : c);      /* div0 traps on this CPU */
     u32 beat = 6000000u / c;
-    return (u8)(now_ms % beat < beat / 8);
+    u32 t = (u32)((s32)now_ms - s->lead_ms);
+    return (u8)(t % beat < beat / 8);
 }
 
 /* undo journal: mutes are performance state, not edits */
@@ -168,6 +174,9 @@ static void undo_track(struct seq_ui *u, u8 t)
 
 static void overlay(struct seq_ui *u, u8 kind, u8 colour, s32 v, s32 lo, s32 hi, u32 now)
 {
+    if (kind != SUI_OV_KEYS) {
+        live_off(u, 16);
+    }
     u->ov_kind = kind;
     u->ov_colour = colour;
     u->ov_val = (s16)v;
@@ -286,6 +295,9 @@ static void knob_step(struct seq_ui *u, u8 k, s32 d, u32 now)
             continue;
         }
         struct seq_step *st = &t->step[si];
+        if (!st->vel) {
+            st->vel = SUI_DEFAULT_VEL;
+        }
         s32 v = 0;
         switch (k) {
         case 0:
@@ -464,6 +476,7 @@ void seq_ui_knob(struct seq_ui *u, u8 knob, s32 steps, u32 now_ms)
     }
     u->dirty = 1;
     u->act_ms = now_ms;
+    u->padbank_used = 1;
     undo_track(u, u->track);
     if (u->shift && knob_global(u, knob, steps, now_ms)) {
         return;
@@ -617,8 +630,12 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
         }
         if (u->held & sbit) {
             u32 si = (u32)(u->page * 16 + sp) * seq_track_grid(t);
-            if (!(u->keep & sbit) && si < SEQ_STEPS) {
-                memset(&t->step[si], 0, sizeof(t->step[si]));
+            if (!(u->keep & sbit) && now_ms - u->held_ms[sp] < SUI_TAP_MS && si < SEQ_STEPS) {
+                if (t->step[si].vel) {
+                    memset(&t->step[si], 0, sizeof(t->step[si]));
+                } else {
+                    t->step[si].vel = SUI_DEFAULT_VEL;
+                }
             }
             u->held &= (u16)~sbit;
             u->keep &= (u16)~sbit;
@@ -664,12 +681,8 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
             return;
         }
         u->held |= sbit;
-        if (!t->step[si].vel) {
-            t->step[si].vel = SUI_DEFAULT_VEL;
-            u->keep |= sbit;                    /* just created: stays on at release */
-        } else {
-            u->keep &= (u16)~sbit;
-        }
+        u->keep &= (u16)~sbit;
+        u->held_ms[sp] = now_ms;
         return;
     }
     /* play view: pad = scale step above the track's base note (chromatic = drum kit), moved by
@@ -712,6 +725,12 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
     }
     u->dirty = 1;
     u->act_ms = now_ms;
+    if (pressed && hw != SUI_PAD_BANK) {
+        u->padbank_used = 1;
+    }
+    if (pressed) {
+        u->keep |= u->held;
+    }
     undo_track(u, u->track);
     switch (hw) {
     case SUI_SHIFT:
@@ -730,6 +749,9 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
                 u32 si = (u32)(u->page * 16 + i) * seq_track_grid(t);
                 if ((u->held & (1u << i)) && si < SEQ_STEPS) {
                     struct seq_step *st = &t->step[si];
+                    if (!st->vel) {
+                        st->vel = SUI_DEFAULT_VEL;
+                    }
                     c = (u8)((((st->ratchet >> 4) & 3) + 1) & 3);   /* bits 6-7 = chord: keep */
                     st->ratchet = (u8)((st->ratchet & 0xCF) | (c << 4));
                 }
@@ -744,12 +766,13 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
     case SUI_PAD_BANK:
         if (pressed) {
             u->padbank = 1;
-            u->padbank_used = 0;
+            u->padbank_used = (u8)(u->shift || u->stop || u->nr);
             u->padbank_src = 0xFF;
+            u->padbank_ms = now_ms;
         } else {
             u->padbank = 0;
             u->padbank_src = 0xFF;
-            if (!u->padbank_used) {
+            if (!u->padbank_used && now_ms - u->padbank_ms < SUI_TAP_MS) {
                 all_live_off(u);
                 u->held = u->keep = 0;
                 u->view = (u8)((u->view + 1) % SUI_VIEWS);
@@ -798,6 +821,7 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
         if (pressed) {
             u->stop_used = 0;
         } else if (!u->stop_used) {
+            live_off(u, 16);
             if (s->running) {
                 seq_stop(s);
             } else {
@@ -939,6 +963,11 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
                                 (((now_ms - u->slot_mark_ms) / SUI_BLINK_STEP_MS) & 1 ? 0 : mc);
         }
         return btn;
+    }
+    if (u->live_note[16] != 0xFF &&
+        (u->ov_kind != SUI_OV_KEYS || (!u->held && now_ms - u->act_ms >= SUI_PREVIEW_MS) ||
+         !u->ov_until || (s32)(u->ov_until - now_ms) <= 0)) {
+        live_off(u, 16);
     }
     if (u->ov_until && (s32)(u->ov_until - now_ms) > 0) {
         draw_overlay(u, rgb);

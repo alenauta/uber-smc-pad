@@ -82,6 +82,11 @@ static void test_mode_and_steps(void)
     CHECK(pat.track[0].step[3].vel == SUI_DEFAULT_VEL);       /* tap = on */
     tap(P(3));
     CHECK(pat.track[0].step[3].vel == 0);                     /* tap again = off */
+    /* holding an empty step >= SUI_TAP_MS without changing a parameter does not toggle it on */
+    seq_ui_pad(&U, P(3), 1, 90, now);
+    now += SUI_TAP_MS;
+    seq_ui_pad(&U, P(3), 0, 0, now);
+    CHECK(pat.track[0].step[3].vel == 0);
     /* hold + knob edits and keeps the step */
     seq_ui_pad(&U, P(5), 1, 90, now);
     seq_ui_knob(&U, 0, -10, now);                              /* K1 velocity */
@@ -101,6 +106,11 @@ static void test_mode_and_steps(void)
     /* an existing step held + edited stays on */
     seq_ui_pad(&U, P(5), 1, 90, now);
     seq_ui_knob(&U, 0, 1, now);
+    seq_ui_pad(&U, P(5), 0, 0, now);
+    CHECK(st->vel == SUI_DEFAULT_VEL - 39);
+    /* holding an existing step >= SUI_TAP_MS without changing a parameter does not toggle it off */
+    seq_ui_pad(&U, P(5), 1, 90, now);
+    now += SUI_TAP_MS;
     seq_ui_pad(&U, P(5), 0, 0, now);
     CHECK(st->vel == SUI_DEFAULT_VEL - 39);
     /* ratchet: hold step + Note Repeat cycles 2, 3, 4, 1; the chord bits stay */
@@ -173,7 +183,12 @@ static void test_views_play_and_tracks(void)
     tap(5);
     seq_ui_button(&U, SUI_PAD_BANK, 0, now);
     CHECK(U.track == 5 && U.view == SUI_VIEW_STEP);
-    press(SUI_PAD_BANK);                                       /* tap: step <-> play */
+    /* PAD BANK held >= SUI_TAP_MS without pressing a pad also does not toggle view */
+    seq_ui_button(&U, SUI_PAD_BANK, 1, now);
+    now += SUI_TAP_MS;
+    seq_ui_button(&U, SUI_PAD_BANK, 0, now);
+    CHECK(U.view == SUI_VIEW_STEP);
+    press(SUI_PAD_BANK);                                       /* short tap: step <-> play */
     u16 b = seq_ui_leds(&U, now, rgb);
     CHECK(U.view == SUI_VIEW_PLAY && (b & (1u << SUI_PAD_BANK)));
     /* global "follow preset" = chromatic here: pad n = base + n (a drum kit) */
@@ -389,9 +404,16 @@ static void test_knob_pages_and_leds(void)
     CHECK(rgb[3] == seq_ui_track_rgb(&U, 0) && rgb[4] == rgbs(seq_ui_track_rgb(&U, 0), DIM_CHOICE) && rgb[8] == 0);
     seq_ui_knob(&U, 2, 2, now);                                /* K3 base note + preview */
     CHECK(pat.track[0].note == 37 && last[0] == 0x99 && last[1] == 37);
-    /* overlay for K1 volume (bar) */
+    seq_ui_leds(&U, now + SUI_PREVIEW_MS - 1, rgb);
+    CHECK(U.live_note[16] == 37);
+    seq_ui_leds(&U, now + SUI_PREVIEW_MS, rgb);                /* Note Off after SUI_PREVIEW_MS */
+    CHECK(last[0] == 0x89 && last[1] == 37 && U.live_note[16] == 0xFF && U.ov_until != 0);
+    now += SUI_PREVIEW_MS;
+    seq_ui_knob(&U, 2, -1, now);                               /* 37 -> 36: Note On */
+    CHECK(pat.track[0].note == 36 && last[0] == 0x99 && last[1] == 36);
+    /* overlay for K1 volume (bar) immediately ends the K3 preview note */
     seq_ui_knob(&U, 0, -64, now);                              /* 127 -> 0 (accel) */
-    CHECK(pat.track[0].vol == 0);
+    CHECK(pat.track[0].vol == 0 && last[0] == 0x89 && last[1] == 36 && U.live_note[16] == 0xFF);
     seq_ui_leds(&U, now, rgb);
     CHECK(rgb[0] == rgbs(seq_ui_track_rgb(&U, 0), DIM_BAR));                  /* empty bar */
     now += SUI_OVERLAY_MS + 1;
@@ -445,6 +467,12 @@ static void test_knob_pages_and_leds(void)
     CHECK(S.lead_ms == -SEQ_LEAD_MAX_MS && lead_seen == -SEQ_LEAD_MAX_MS);
     seq_ui_leds(&U, now, rgb);
     CHECK(rgb[0] == seq_ui_track_rgb(&U, 0) && rgb[7] == seq_ui_track_rgb(&U, 0)); /* left pads 1..8 */
+    /* beat LED and playhead follow lead_ms */
+    S.pos = 900;                                               /* 60 units (~30 ms) before beat 2 */
+    S.lead_ms = 0;
+    CHECK(!seq_ui_beat_led(&S, now));
+    S.lead_ms = -40;                                           /* 40 ms early -> beat 2 LED already on */
+    CHECK(seq_ui_beat_led(&S, now));
     S.lead_ms = 0;
     /* pattern K7: MIDI channel, 1 pad lit = ch 1 ... 16 pads = ch 16 */
     pat.track[0].chan = 0;

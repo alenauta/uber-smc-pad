@@ -45,6 +45,8 @@ enum { SUI_VIEW_STEP = 0, SUI_VIEW_PLAY, SUI_VIEWS };
 enum { SUI_KNOBS_TRACK = 0, SUI_KNOBS_PATTERN };
 
 #define SUI_OVERLAY_MS      1000            /* knob value shown on the pads after the last turn */
+#define SUI_PREVIEW_MS      250             /* K3 base-note preview length when no step is held */
+#define SUI_TAP_MS          300             /* holding PAD BANK or a step pad longer than this does not toggle */
 #define SUI_FLASH_MS        120             /* pads blink after an undo / redo */
 #define SUI_UNDO_IDLE_MS    600             /* edits this far apart are separate undo steps */
 #define SUI_UNDO_REC_IDLE_MS 1000           /* while recording: this long without a hit */
@@ -74,8 +76,10 @@ struct seq_ui {
     u8  shift, nr, padbank, stop;           /* buttons held */
     u8  nr_used, padbank_used, stop_used;   /* a combination happened while held */
     u8  padbank_src;                        /* track pad held in the track layer (0xFF = none) */
+    u32 padbank_ms;                         /* when PAD BANK was pressed */
     u16 held;                               /* step-view pads held */
-    u16 keep;                               /* held pads that must not toggle on release */
+    u16 keep;                               /* held pads edited while held (do not toggle on release) */
+    u32 held_ms[16];                        /* when each step-view pad was pressed */
     u16 lit_pads;                           /* play-view pads held (white) */
     u8  live_note[17], live_chan[17];       /* notes sounding: pads 0-15, 16 = knob preview */
     s8  play_oct, play_tr;                  /* play view: octaves / scale steps (Shift menu) */

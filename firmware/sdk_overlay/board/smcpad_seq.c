@@ -541,7 +541,7 @@ static void schedule(struct seq *s, u8 ti)
 }
 
 /* sync offset: lead_ms (-120..+120 ms) in position units; < 0 = early (+units), > 0 = late (-units) */
-static s32 lead_units(const struct seq *s)
+s32 seq_lead_units(const struct seq *s)
 {
     if (!s->lead_ms) {
         return 0;
@@ -569,7 +569,7 @@ u8 seq_cue(struct seq *s, void (*fn)(void *ctx, struct seq *s), void *ctx)
     if (!s->running) {
         return 0;
     }
-    u32 ahead = (u32)((s32)s->pos + lead_units(s));
+    u32 ahead = (u32)((s32)s->pos + seq_lead_units(s));
     u32 b = (s->pos / SEQ_BAR_UNITS + 1) * SEQ_BAR_UNITS;
     if ((s32)(b - (ahead + max_half(s))) <= 0) {
         b += SEQ_BAR_UNITS;                     /* too close: tracks may have scheduled it */
@@ -606,7 +606,7 @@ static void cue_fire(struct seq *s)
 
 static void process(struct seq *s)
 {
-    u32 ahead = (u32)((s32)s->pos + lead_units(s));
+    u32 ahead = (u32)((s32)s->pos + seq_lead_units(s));
     if (s->cued && (s32)(ahead + max_half(s) - s->cue_at) >= 0) {
         cue_fire(s);
     }
@@ -836,7 +836,8 @@ u8 seq_playhead(const struct seq *s, u8 track)
     if (ts->next_grid == 0) {
         return 0;
     }
-    if ((s32)(s->pos - (ts->next_grid - u)) >= 0) {
+    u32 ahead = (u32)((s32)s->pos + seq_lead_units(s));
+    if ((s32)(ahead - (ts->next_grid - u)) >= 0) {
         return prev < len ? prev : 0;
     }
     return prev ? (u8)(prev - 1) : (u8)(len - 1);
