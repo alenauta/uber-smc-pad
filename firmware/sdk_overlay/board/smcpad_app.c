@@ -181,9 +181,9 @@ static void seq_midi(void *ctx, const u8 *m, u32 n)
  * change (tempo / swing stay in globals 0-2). groot / gscale = the global root / scale, shared
  * by normal mode and the sequencer (were reserved zeros: old items read as C / follow preset). */
 #define SMCPAD_SEQCFG_VM_ID     43                  /* free user VM id */
-#define SEQCFG_VER              2                   /* 2: groot 0 = follow preset, 1..12 = C..B */
+#define SEQCFG_VER              3                   /* 3: signed lead_ms (< 0 early, > 0 late) */
 #define SEQCFG_FLUSH_MS         2000
-static struct { u8 ver, lead_ms, groot, gscale; } seq_cfg;
+static struct { u8 ver; s8 lead_ms; u8 groot, gscale; } seq_cfg;
 static u8 seq_cfg_dirty;
 static u32 seq_cfg_ms;
 /* track colours (KNOB BANK K6): own item so the seq_cfg layout stays; 42 is free in spp_and_le
@@ -191,7 +191,7 @@ static u32 seq_cfg_ms;
 #define SMCPAD_COLOURS_VM_ID    42
 static struct { u8 ver, colour[SEQ_TRACKS]; } seq_colours;
 
-static void seq_cfg_set(u8 lead_ms, u8 groot, u8 gscale)
+static void seq_cfg_set(s8 lead_ms, u8 groot, u8 gscale)
 {
     if (lead_ms != seq_cfg.lead_ms || groot != seq_cfg.groot || gscale != seq_cfg.gscale) {
         seq_cfg.lead_ms = lead_ms;
@@ -383,8 +383,14 @@ static void seq_app_init(void)
     u8 sw = store.globals[GLOB_SWING];
     seq.swing = sw < 50 || sw > 75 ? 50 : sw;
     if (syscfg_read(SMCPAD_SEQCFG_VM_ID, (u8 *)&seq_cfg, sizeof(seq_cfg)) != sizeof(seq_cfg) ||
-        (seq_cfg.ver != SEQCFG_VER && seq_cfg.ver != 1) || seq_cfg.lead_ms > SEQ_LEAD_MAX_MS) {
+        seq_cfg.ver < 1 || seq_cfg.ver > SEQCFG_VER) {
         memset(&seq_cfg, 0, sizeof(seq_cfg));
+    }
+    if (seq_cfg.ver < 3 && seq_cfg.lead_ms > 0 && seq_cfg.lead_ms <= 63) {
+        seq_cfg.lead_ms = (s8)-seq_cfg.lead_ms;     /* v1/v2 positive lead_ms meant play early */
+    }
+    if (seq_cfg.lead_ms < -SEQ_LEAD_MAX_MS || seq_cfg.lead_ms > SEQ_LEAD_MAX_MS) {
+        seq_cfg.lead_ms = 0;
     }
     if (seq_cfg.ver == 1 || seq_cfg.groot > 12 || seq_cfg.gscale > SCALE_COUNT) {
         seq_cfg.groot = seq_cfg.gscale = 0;         /* v1 root meant 0..11: back to follow */

@@ -421,10 +421,10 @@ static void knob_pattern(struct seq_ui *u, u8 k, s32 d, u32 now)
         overlay(u, SUI_OV_BAR, u->track, t->chan, -1, 15, now);
         break;
     }
-    case 7: {                                   /* play early: 1 ms per report, faster when spun */
+    case 7: {                                   /* sync offset: < 0 = early, > 0 = late */
         s32 step = (d >= 3 || d <= -3) ? d : one(d);
-        s->lead_ms = (u8)clampi(s->lead_ms + step, 0, SEQ_LEAD_MAX_MS);
-        overlay(u, SUI_OV_BAR, u->track, s->lead_ms, 0, SEQ_LEAD_MAX_MS, now);
+        s->lead_ms = (s8)clampi(s->lead_ms + step, -SEQ_LEAD_MAX_MS, SEQ_LEAD_MAX_MS);
+        overlay(u, SUI_OV_SIGNED, u->track, s->lead_ms, -SEQ_LEAD_MAX_MS, SEQ_LEAD_MAX_MS, now);
         tempo_changed(u);
         break;
     }
@@ -850,6 +850,9 @@ static void draw_overlay(const struct seq_ui *u, u32 rgb[16])
     if (u->ov_kind == SUI_OV_SIGNED) {          /* centre-out: pads 9.. positive, 8.. negative */
         s32 m = hi > 0 ? hi : 1;
         s32 fill = (v < 0 ? -v : v) * 64 / m;   /* eighths over 8 pads */
+        if (v && !fill) {
+            fill = 1;
+        }
         for (u8 i = 0; i < 8; i++) {
             s32 part = clampi(fill - i * 8, 0, 8);
             u8 pad = v < 0 ? (u8)(7 - i) : (u8)(8 + i);

@@ -299,7 +299,7 @@ static void test_external_clock(void)
     CHECK(S.running && !S.following && S.pos > 0);
 }
 
-/* play early + a Bluetooth-like clock: pulses arrive in 15 ms connection events */
+/* sync offset (lead_ms < 0 early, > 0 late) in Slave and Master modes + BLE clock bunching */
 static void test_external_clock_lead_jitter(void)
 {
     setup();
@@ -307,7 +307,7 @@ static void test_external_clock_lead_jitter(void)
     for (int k = 0; k < 16; k += 4) {
         t->step[k].vel = 100;
     }
-    S.lead_ms = 21;
+    S.lead_ms = -21;                                           /* 21 ms early in Slave mode */
     seq_clock_in(&S, 0xFA, now);
     int pulse = 0;
     while (now < 1000 + 3000) {
@@ -321,7 +321,48 @@ static void test_external_clock_lead_jitter(void)
     }
     /* beats at 1600, 2200, 2800 ms, sent 21 ms early (the first one can't be: Start just came) */
     CHECK(near(nth_on(36, 1), 1579, 2) && near(nth_on(36, 2), 2179, 2) && near(nth_on(36, 3), 2779, 2));
-    CHECK(S.ext_err_max <= 4);
+    CHECK(S.ext_err_max <= 4 && S.late == 0);
+
+    /* +25 ms late in Slave mode: every beat (including beat 0) fires 25 ms after its F8 */
+    setup();
+    for (int k = 0; k < 16; k += 4) {
+        pat.track[0].step[k].vel = 100;
+    }
+    S.lead_ms = 25;
+    seq_clock_in(&S, 0xFA, now);
+    pulse = 0;
+    while (now < 1000 + 2500) {
+        while (1000 + (u32)pulse * 25 <= now) {
+            seq_clock_in(&S, 0xF8, now);
+            pulse++;
+        }
+        now++;
+        seq_run(&S, now);
+        seq_clock_timeout(&S, now);
+    }
+    CHECK(near(nth_on(36, 0), 1025, 2) && near(nth_on(36, 1), 1625, 2) && near(nth_on(36, 2), 2225, 2));
+    CHECK(S.late == 0);
+
+    /* Master mode (120 BPM = 500 ms/beat): -25 ms early and +25 ms late relative to internal F8 */
+    setup();
+    for (int k = 0; k < 16; k += 4) {
+        pat.track[0].step[k].vel = 100;
+    }
+    S.lead_ms = -25;
+    seq_start(&S, now);
+    run_to(now + 2000);
+    CHECK(near(nth_on(36, 1), 1475, 2) && near(nth_on(36, 2), 1975, 2) && near(nth_on(36, 3), 2475, 2));
+    CHECK(S.late == 0);
+
+    setup();
+    for (int k = 0; k < 16; k += 4) {
+        pat.track[0].step[k].vel = 100;
+    }
+    S.lead_ms = 25;
+    seq_start(&S, now);
+    run_to(now + 2000);
+    CHECK(near(nth_on(36, 0), 1025, 2) && near(nth_on(36, 1), 1525, 2) && near(nth_on(36, 2), 2025, 2));
+    CHECK(S.late == 0);
 
     setup();
     for (int k = 0; k < 16; k += 4) {

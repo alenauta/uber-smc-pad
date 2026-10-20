@@ -15,7 +15,8 @@ static int failures;
 static u8 last[3];
 static int nmidi, ntempo;
 static u32 tempo_seen;
-static u8 swing_seen, lead_seen, groot_seen, gscale_seen;
+static u8 swing_seen, groot_seen, gscale_seen;
+static s8 lead_seen;
 static void cap(void *ctx, const u8 *m, u32 n)
 {
     (void)ctx;
@@ -422,18 +423,29 @@ static void test_knob_pages_and_leds(void)
     press(SUI_RIGHT);
     seq_ui_leds(&U, now, rgb);
     CHECK(rgb[P(3)] != 0 && rgb[P(4)] == 0);                   /* page 2: steps 17-20 only */
-    /* pattern K8: play early, 1 ms per slow knob report, faster when spun, persisted */
+    /* pattern K8: sync offset (-120..+120 ms), < 0 early (pads 8..1), > 0 late (pads 9..16) */
     press(SUI_KNOB_BANK);
     for (int i = 0; i < 3; i++) {
-        seq_ui_knob(&U, 7, 2, now);                            /* slow: 1 ms each */
+        seq_ui_knob(&U, 7, 2, now);                            /* slow: +1 ms each */
     }
     CHECK(S.lead_ms == 3 && lead_seen == 3);
-    seq_ui_knob(&U, 7, 5, now);                                /* spun: 5 ms */
+    seq_ui_knob(&U, 7, 5, now);                                /* spun: +5 ms */
     CHECK(S.lead_ms == 8);
-    for (int i = 0; i < 20; i++) {
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[8] == rgbs(seq_ui_track_rgb(&U, 0), 4, 8));      /* +8 ms: right pad 9 lit */
+    for (int i = 0; i < 30; i++) {
         seq_ui_knob(&U, 7, 5, now);
     }
     CHECK(S.lead_ms == SEQ_LEAD_MAX_MS);
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[8] == seq_ui_track_rgb(&U, 0) && rgb[15] == seq_ui_track_rgb(&U, 0)); /* right pads 9..16 */
+    for (int i = 0; i < 60; i++) {
+        seq_ui_knob(&U, 7, -5, now);                           /* CCW: early (< 0) */
+    }
+    CHECK(S.lead_ms == -SEQ_LEAD_MAX_MS && lead_seen == -SEQ_LEAD_MAX_MS);
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[0] == seq_ui_track_rgb(&U, 0) && rgb[7] == seq_ui_track_rgb(&U, 0)); /* left pads 1..8 */
+    S.lead_ms = 0;
     /* pattern K7: MIDI channel, 1 pad lit = ch 1 ... 16 pads = ch 16 */
     pat.track[0].chan = 0;
     seq_ui_knob(&U, 6, 3, now);                                /* -> ch 2 */

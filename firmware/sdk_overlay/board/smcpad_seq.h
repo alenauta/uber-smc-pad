@@ -15,8 +15,8 @@
  * 40 units (24 PPQN). The host tempo is measured over the last 24 pulses (one beat), so bunched
  * Bluetooth packets do not upset it; between pulses the position runs at that tempo and each F8
  * pulls it towards the pulse's position (snap if far off, otherwise a quarter of the error).
- * "Play early" (lead_ms) sends notes that many ms ahead of the host's clock to cancel the
- * round trip through the DAW. Clock out (F8 / FA / FC) only while internal.
+ * Sync offset (lead_ms, -120..+120 ms) shifts notes earlier (< 0) or later (> 0) relative to
+ * the MIDI clock (both internal and external). Clock out (F8 / FA / FC) only while internal.
  */
 #ifndef SMCPAD_SEQ_H
 #define SMCPAD_SEQ_H
@@ -57,7 +57,7 @@ enum { SEQ_COND_ALWAYS = 0,
 #define SEQ_GATES           15              /* gate table index 0..14 */
 #define SEQ_RATCHET_RATES   7               /* auto (split the step), 1/8 1/16 1/16T 1/32 1/32T 1/64 */
 #define SEQ_EXT_RING        24              /* F8 timestamps kept for the tempo (one beat) */
-#define SEQ_LEAD_MAX_MS     63              /* play early: 0..63 ms, 1 ms steps */
+#define SEQ_LEAD_MAX_MS     120             /* sync offset: -120..+120 ms (< 0 early, > 0 late) */
 
 #define SEQ_CHORD           4               /* notes per step */
 
@@ -142,7 +142,7 @@ struct seq {
     u32 ext_ts[SEQ_EXT_RING];           /* arrival times of the last F8s */
     u8  ext_n, ext_i;                   /* entries in use, next slot */
     u8  ext_seen;
-    u8  lead_ms;                        /* play early while following (0..SEQ_LEAD_MAX_MS) */
+    s8  lead_ms;                        /* sync offset: < 0 = early, > 0 = late (-/+SEQ_LEAD_MAX_MS) */
     s16 ext_err;                        /* diag: pulse position - play position at the last F8 */
     u16 ext_err_max;                    /* diag: largest |ext_err| since the host's Start */
     struct seq_track_state ts[SEQ_TRACKS];

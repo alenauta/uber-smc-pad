@@ -35,7 +35,7 @@ KNOBS = {
     5: ("Probability", "Probability", ""),
     6: ("Ratchet rate", "Ratchet rate", "Track colour"),
     7: ("Steps (length)", "Trig condition", "MIDI channel"),
-    8: ("Rate (\u21e7 speed)", "Tie", "Play early"),
+    8: ("Rate (\u21e7 speed)", "Tie", "Sync offset"),
 }
 KNOB_POS = {7: (0, 0), 8: (1, 0), 5: (0, 1), 6: (1, 1), 3: (0, 2), 4: (1, 2), 1: (0, 3), 2: (1, 3)}
 
@@ -199,7 +199,7 @@ def card():
   <ul>
    <li><b>Play</b>: start / continue. <b>Stop</b>: stop; press again = back to the top.</li>
    <li>Sync on (timing pad 15): the DAW's Start / Stop / clock drive the pad. Otherwise the pad sends clock.</li>
-   <li><b>Play early</b> (KNOB BANK K8) sends notes ahead to cancel DAW / Bluetooth latency.</li>
+   <li><b>Sync offset</b> (KNOB BANK K8, &minus;120&hellip;+120 ms): &minus; early / + late (master &amp; slave).</li>
   </ul>
   <h3>Root &amp; scale</h3>
   <ul>
@@ -221,7 +221,7 @@ def card():
   {knob_rows}</table>
   <h3>Reading the pads while turning a knob</h3>
   <ul>
-   <li><b>Amounts</b> (volume, velocity, probability, quantize, steps, tempo, swing, play early 0&ndash;63 ms): bar from pad 1, dim &rarr; full. Micro-timing: centre-out.</li>
+   <li><b>Amounts</b> (volume, velocity, probability, quantize, steps, tempo, swing): bar from pad 1, dim &rarr; full. Micro-timing &amp; sync offset: centre-out (&minus; pads 8&hellip;1 early, + pads 9&hellip;16 late).</li>
    <li><b>Choices</b> light one pad: rate (pads 1&ndash;8 = printed 1/4&hellip;1/32T), ratchet rate, trig condition, root, scale.</li>
    <li><b>Counts</b>: MIDI channel (1 pad = ch 1 &hellip; 16 = ch 16), gate.</li>
    <li>Base note / step note: pads 1&ndash;12 = keyboard, top row = octave. Ratchet count: pads 1&ndash;4.</li>
