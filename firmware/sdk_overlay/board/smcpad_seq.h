@@ -189,6 +189,7 @@ void seq_set_tempo(struct seq *s, u32 centibpm);   /* clamped SEQ_BPM_MIN..SEQ_B
 void seq_start(struct seq *s, u32 now_ms);          /* from the top */
 void seq_continue(struct seq *s, u32 now_ms);
 void seq_stop(struct seq *s);                       /* all sounding notes off */
+void seq_rewind(struct seq *s);                     /* stopped: back to the start + SPP 0 (F2 00 00) */
 void seq_run(struct seq *s, u32 now_ms);            /* emit everything due */
 void seq_clock_in(struct seq *s, u8 rt, u32 now_ms);/* F8 FA FB FC from a host */
 void seq_clock_timeout(struct seq *s, u32 now_ms);  /* call regularly: lost clock -> internal */

@@ -852,6 +852,7 @@ void seq_ui_button(struct seq_ui *u, u8 hw, u8 pressed, u32 now_ms)
                 seq_stop(s);
             } else {
                 u->at_start = 1;                /* second Stop: back to the start */
+                seq_rewind(s);                  /* + Song Position Pointer 0 for the DAW */
             }
         }
         break;

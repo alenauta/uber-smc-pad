@@ -275,6 +275,24 @@ static void test_long_notes(void)
     CHECK(seq_step_gate_eighths(t, &t->step[2]) == 24 && !(t->step[2].cond & SEQ_COND_LONG));
 }
 
+static void test_rewind(void)
+{
+    setup();
+    pat.track[0].step[0].vel = 100;
+    seq_start(&S, now);
+    run_to(1000 + 500);
+    int n0 = nlg;
+    seq_rewind(&S);                                            /* running: ignored */
+    CHECK(nlg == n0 && S.running && S.pos > 0);
+    seq_stop(&S);
+    nlg = 0;
+    seq_rewind(&S);
+    CHECK(nlg == 1 && lg[0].n == 3 && lg[0].m[0] == 0xF2 && lg[0].m[1] == 0 && lg[0].m[2] == 0);
+    CHECK(S.pos == 0 && !S.running);
+    seq_clock_in(&S, 0xF2, now);                               /* our own SPP echoed: ignored */
+    CHECK(!S.running);
+}
+
 static void test_conditions_tie(void)
 {
     setup();
@@ -746,6 +764,7 @@ int main(void)
     test_long_notes();
     test_conditions_tie();
     test_stop_flush_retrigger();
+    test_rewind();
     test_external_clock();
     test_external_clock_lead_jitter();
     test_record();

@@ -386,11 +386,24 @@ static void test_transport(void)
     CHECK(!S.running && !U.at_start);
     press(SUI_PLAY);                                           /* continue */
     CHECK(S.running);
+    last[0] = 0;
     press(SUI_STOP);
+    CHECK(!S.running && last[0] != 0xF2);                      /* first Stop: no SPP */
     press(SUI_STOP);                                           /* twice: to the start */
-    CHECK(U.at_start);
+    CHECK(U.at_start && last[0] == 0xF2 && last[1] == 0 && last[2] == 0);   /* SPP 0 for the DAW */
     press(SUI_PLAY);
     CHECK(S.running && S.pos == 0);
+    /* Stop + pad (mute) does not stop or rewind */
+    last[0] = 0;
+    press(SUI_STOP);
+    seq_ui_button(&U, SUI_STOP, 1, now);
+    seq_ui_button(&U, SUI_PAD_BANK, 1, now);
+    seq_ui_pad(&U, 3, 1, 90, now);
+    seq_ui_pad(&U, 3, 0, 0, now);
+    seq_ui_button(&U, SUI_PAD_BANK, 0, now);
+    seq_ui_button(&U, SUI_STOP, 0, now);
+    CHECK(pat.track[3].mute && last[0] != 0xF2);
+    pat.track[3].mute = 0;
 }
 
 static void test_knob_pages_and_leds(void)

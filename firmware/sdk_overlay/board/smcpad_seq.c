@@ -728,6 +728,16 @@ void seq_stop(struct seq *s)
     s->qh = 0;
 }
 
+void seq_rewind(struct seq *s)
+{
+    if (s->running) {
+        return;                                 /* SPP is only valid while stopped */
+    }
+    reset_tracks(s);
+    const u8 spp[3] = {0xF2, 0x00, 0x00};       /* Song Position Pointer = 0 */
+    send(s, spp, 3);
+}
+
 void seq_run(struct seq *s, u32 now_ms)
 {
     if (!s->running) {
