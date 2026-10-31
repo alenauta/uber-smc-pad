@@ -304,9 +304,19 @@ static void knob_step(struct seq_ui *u, u8 k, s32 d, u32 now)
             v = st->vel = (u8)clampi(st->vel + accel(d, 127), 1, 127);
             if (first) overlay(u, SUI_OV_BAR, u->track, v, 0, 127, now);
             break;
-        case 1: {                               /* gate: starts from the track's gate */
+        case 1: {                               /* gate: starts from the track's gate; past the
+                                                 * table's 4 steps it goes on in whole steps */
             u8 g = st->prob_gate & 0x0f;
-            v = clampi((g ? g - 1 : t->gate) + one(d), 0, SEQ_GATES - 1);
+            u8 cur = g ? (u8)(g - 1) : t->gate;
+            if ((st->cond & SEQ_COND_LONG) || (d > 0 && cur >= SEQ_GATES - 1)) {
+                s32 n = clampi((s32)(seq_step_gate_eighths(t, st) / 8) + one(d), 1, SEQ_LONG_MAX);
+                seq_step_set_gate(st, (u32)n * 8);
+                u8 lng = (u8)((st->cond & SEQ_COND_LONG) != 0);    /* else back on the table's top */
+                if (first) overlay(u, SUI_OV_BAR, u->track, lng ? n : SEQ_GATES - 1, lng ? 0 : -1,
+                                   lng ? SEQ_LONG_MAX : SEQ_GATES - 1, now);
+                break;
+            }
+            v = clampi(cur + one(d), 0, SEQ_GATES - 1);
             st->prob_gate = (u8)((st->prob_gate & 0xF0) | (v + 1));
             if (first) overlay(u, SUI_OV_BAR, u->track, v, -1, SEQ_GATES - 1, now);
             break;
@@ -406,8 +416,9 @@ static void knob_pattern(struct seq_ui *u, u8 k, s32 d, u32 now)
     struct seq_pattern *p = s->pat;
     switch (k) {
     case 0:
-        seq_set_tempo(s, (u32)clampi((s32)s->centibpm + accel(d, 270) * 100, 3000, 30000));
-        overlay(u, SUI_OV_BAR, u->track, (s32)(s->centibpm / 100), 30, 300, now);
+        seq_set_tempo(s, (u32)clampi((s32)s->centibpm + accel(d, SEQ_BPM_MAX - SEQ_BPM_MIN) * 100,
+                                     SEQ_BPM_MIN * 100, SEQ_BPM_MAX * 100));
+        overlay(u, SUI_OV_BAR, u->track, (s32)(s->centibpm / 100), SEQ_BPM_MIN, SEQ_BPM_MAX, now);
         tempo_changed(u);
         break;
     case 1:
@@ -503,7 +514,7 @@ static void tap_tempo(struct seq_ui *u, u32 now)
     u->tap[u->ntap++] = now;
     if (u->ntap >= 2) {
         u32 avg = (u->tap[u->ntap - 1] - u->tap[0]) / (u32)(u->ntap - 1);
-        if (avg >= 200 && avg <= 2000) {
+        if (avg >= 200 && avg <= 2000) {        /* 30..300 BPM taps, set within the range */
             seq_set_tempo(u->seq, 6000000u / avg);
             tempo_changed(u);
         }
@@ -548,19 +559,10 @@ static void rec_gate(struct seq_ui *u, u8 pad)
         return;                                 /* cleared meanwhile / position jumped back */
     }
     u32 e8 = (held * 8 + su / 2) / su;          /* eighths of a step */
-    u8 best = 0;
-    for (u8 i = 1; i < SEQ_GATES; i++) {
-        u32 db = e8 > seq_gate_eighths[best] ? e8 - seq_gate_eighths[best] : seq_gate_eighths[best] - e8;
-        u32 di = e8 > seq_gate_eighths[i] ? e8 - seq_gate_eighths[i] : seq_gate_eighths[i] - e8;
-        if (di < db) {
-            best = i;
-        }
+    if (seq_step_has_gate(st) && seq_step_gate_eighths(t, st) > e8) {
+        return;                                 /* set by a longer chord note */
     }
-    u8 cur = st->prob_gate & 0x0f;              /* 0 = new step; else set by a chord note */
-    if (cur && (u8)(cur - 1) > best) {
-        best = (u8)(cur - 1);
-    }
-    st->prob_gate = (u8)((st->prob_gate & 0xF0) | (best + 1));
+    seq_step_set_gate(st, e8);                  /* past 4 steps: whole steps */
 }
 
 static void track_copy(struct seq_ui *u, u8 src, u8 dst, u8 full, u32 now_ms)
@@ -594,6 +596,29 @@ static void track_copy(struct seq_ui *u, u8 src, u8 dst, u8 full, u32 now_ms)
     u->slot_mark_state = SUI_MARK_OK;
     u->slot_mark_page = SUI_SLOT_NONE;
     u->slot_mark_ms = now_ms;
+}
+
+/* hold a step + tap a later one on the page (Push style): the held notes last to the end of the
+ * tapped step (an empty held step gets a note). Returns 0 when no step before sp is held: the
+ * tap toggles sp as usual. */
+static u8 step_lengths(struct seq_ui *u, struct seq_track *t, u8 sp)
+{
+    u8 grid = seq_track_grid(t), done = 0;
+    for (u8 i = 0; i < sp && i < 16; i++) {
+        u32 si = (u32)(u->page * 16 + i) * grid;
+        if (!(u->held & (1u << i)) || si >= SEQ_STEPS) {
+            continue;
+        }
+        struct seq_step *st = &t->step[si];
+        if (!st->vel) {
+            st->vel = SUI_DEFAULT_VEL;
+        }
+        seq_step_set_gate(st, (u32)(sp - i + 1) * grid * 8);   /* stored steps, in eighths */
+        st->cond &= (u8)~SEQ_COND_TIE;
+        u->keep |= (u16)(1u << i);              /* stays on when released */
+        done = 1;
+    }
+    return done;
 }
 
 void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
@@ -630,7 +655,8 @@ void seq_ui_pad(struct seq_ui *u, u8 pad, u8 on, u8 vel, u32 now_ms)
         }
         if (u->held & sbit) {
             u32 si = (u32)(u->page * 16 + sp) * seq_track_grid(t);
-            if (!(u->keep & sbit) && now_ms - u->held_ms[sp] < SUI_TAP_MS && si < SEQ_STEPS) {
+            if (!(u->keep & sbit) && now_ms - u->held_ms[sp] < SUI_TAP_MS && si < SEQ_STEPS &&
+                !step_lengths(u, t, sp)) {
                 if (t->step[si].vel) {
                     memset(&t->step[si], 0, sizeof(t->step[si]));
                 } else {
@@ -1005,6 +1031,21 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
     u32 c = seq_ui_track_rgb(u, u->track);
     if (u->view == SUI_VIEW_STEP) {
         u8 ph = seq_playhead(s, u->track);
+        u16 tail = 0;                           /* steps the held notes last into */
+        u32 gstep = seq_step_units(t->res) * grid;
+        if (!gstep) {
+            gstep = 1;                          /* div0 traps on this CPU */
+        }
+        for (u8 i = 0; i < 16 && u->held; i++) {
+            u32 si = (u32)(u->page * 16 + i) * grid;
+            if (!(u->held & (1u << i)) || si >= SEQ_STEPS || !t->step[si].vel) {
+                continue;
+            }
+            u32 n = (seq_step_gate_units(t, &t->step[si]) + gstep - 1) / gstep;
+            for (u32 j = (u32)i + 1; j < (u32)i + n && j < 16; j++) {
+                tail |= (u16)(1u << j);
+            }
+        }
         u8 len = t->len ? (t->len > SEQ_STEPS ? SEQ_STEPS : t->len) : 1;
         for (u8 i = 0; i < 16; i++) {           /* i = grid step on the page */
             u8 vi = (u8)(u->page * 16 + i);
@@ -1025,6 +1066,8 @@ u16 seq_ui_leds(struct seq_ui *u, u32 now_ms, u32 rgb[16])
                 rgb[pad] = st->vel ? WHITE : rgbs(WHITE, 1, 6);
             } else if (st->vel) {
                 rgb[pad] = rgbs(c, LIT_MIN + (u32)st->vel * (128 - LIT_MIN) / 127, 128);
+            } else if (tail & (1u << i)) {
+                rgb[pad] = rgbs(c, 1, 4);
             } else if (between) {
                 rgb[pad] = rgbs(WHITE, 1, 12);
             } else {

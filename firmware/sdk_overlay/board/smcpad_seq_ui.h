@@ -6,6 +6,9 @@
  *
  *   Shift + Note Repeat        enter / leave (seq_ui_toggle); Note Repeat LED flashes on the beat
  *   step view pads             tap = step on / off; hold + knobs = step parameters
+ *   hold step + tap later step note length: lasts to the end of the tapped step (Push style;
+ *                              the held steps light dim where the note lasts). K2 on a held
+ *                              step: gate table up to 4 steps, then whole steps up to 32
  *   play view pads             play the track in its scale from its base note (chromatic = drum
  *                              kit); with Rec on and running they record (same step = chord)
  *   hold step + Note Repeat    ratchet count 1 -> 2 -> 3 -> 4 -> 1

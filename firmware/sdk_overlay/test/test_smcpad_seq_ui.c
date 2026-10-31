@@ -846,6 +846,113 @@ static void test_grid_rate_colour(void)
     CHECK(U.colour[0] == 15);
 }
 
+/* 924: hold a step + tap a later one = note length (Push style) */
+static void test_step_length(void)
+{
+    setup();
+    struct seq_track *t = &pat.track[0];
+    /* hold step 1, tap step 6: step 1 lasts 6 steps; step 6 is not toggled */
+    seq_ui_pad(&U, P(0), 1, 90, now);
+    tap(P(5));
+    CHECK(t->step[0].vel == SUI_DEFAULT_VEL && !t->step[5].vel);
+    CHECK(seq_step_gate_eighths(t, &t->step[0]) == 6 * 8 && (t->step[0].cond & SEQ_COND_LONG));
+    /* while held, the steps it lasts into light dim (brighter than empty steps) */
+    seq_ui_leds(&U, now, rgb);
+    u32 empty = rgb[P(7)];
+    CHECK(rgb[P(0)] == WHITE && rgb[P(1)] != empty && rgb[P(5)] == rgb[P(1)] && rgb[P(6)] == empty);
+    seq_ui_pad(&U, P(0), 0, 0, now);
+    CHECK(t->step[0].vel == SUI_DEFAULT_VEL);                 /* released quickly: still on */
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[P(1)] == empty);                                /* tail only while held */
+    /* 4 steps or less: the gate table; a tie is cleared */
+    t->step[0].cond |= SEQ_COND_TIE;
+    seq_ui_pad(&U, P(0), 1, 90, now);
+    tap(P(3));
+    seq_ui_pad(&U, P(0), 0, 0, now);
+    CHECK(seq_step_gate_eighths(t, &t->step[0]) == 32 && !(t->step[0].cond & (SEQ_COND_LONG | SEQ_COND_TIE)));
+    CHECK(t->step[0].vel && !t->step[3].vel);
+    /* an empty held step gets a note */
+    seq_ui_pad(&U, P(8), 1, 90, now);
+    tap(P(9));
+    seq_ui_pad(&U, P(8), 0, 0, now);
+    CHECK(t->step[8].vel && !t->step[9].vel && seq_step_gate_eighths(t, &t->step[8]) == 16);
+    /* a tap on an earlier step toggles as before (and so does the quick release of the held one) */
+    seq_ui_pad(&U, P(12), 1, 90, now);
+    tap(P(10));
+    seq_ui_pad(&U, P(12), 0, 0, now);
+    CHECK(t->step[10].vel && t->step[12].vel);
+    CHECK(!seq_step_has_gate(&t->step[10]) && !seq_step_has_gate(&t->step[12]));
+    /* a knob turned while both are held edits both, no length */
+    seq_ui_pad(&U, P(0), 1, 90, now);
+    seq_ui_pad(&U, P(2), 1, 90, now);
+    seq_ui_knob(&U, 0, -1, now);                              /* K1 velocity */
+    seq_ui_pad(&U, P(2), 0, 0, now);
+    seq_ui_pad(&U, P(0), 0, 0, now);
+    CHECK(t->step[0].vel == SUI_DEFAULT_VEL - 1 && t->step[2].vel == SUI_DEFAULT_VEL - 1);
+    CHECK(seq_step_gate_eighths(t, &t->step[0]) == 32);
+    /* K2 goes on past the table's 4 steps in whole steps, and back down */
+    seq_ui_pad(&U, P(0), 1, 90, now);
+    seq_ui_knob(&U, 1, 1, now);
+    CHECK(seq_step_gate_eighths(t, &t->step[0]) == 40 && (t->step[0].cond & SEQ_COND_LONG));
+    seq_ui_knob(&U, 1, -1, now);
+    CHECK(seq_step_gate_eighths(t, &t->step[0]) == 32 && !(t->step[0].cond & SEQ_COND_LONG));
+    seq_ui_knob(&U, 1, -1, now);
+    CHECK(seq_step_gate_eighths(t, &t->step[0]) == 28);
+    seq_ui_pad(&U, P(0), 0, 0, now);
+    /* a coarser grid (1/8 over 1/16 storage): lengths count stored steps */
+    CHECK(seq_set_rate(&S, 0, SEQ_RATE_8, 1) && seq_track_grid(t) == 2);
+    seq_ui_pad(&U, P(0), 1, 90, now);
+    tap(P(2));                                                /* grid steps 1-3 = 6 sixteenths */
+    seq_ui_pad(&U, P(0), 0, 0, now);
+    CHECK(seq_step_gate_eighths(t, &t->step[0]) == 6 * 8);
+    /* undo takes a length back */
+    static u8 shadow[sizeof(struct seq_track)];
+    static struct undo un;
+    setup();
+    undo_init(&un, (u8 *)&pat, (u16)sizeof(pat), shadow, (u16)sizeof(shadow), seq_ui_undo_skip);
+    U.undo = &un;
+    seq_ui_pad(&U, P(0), 1, 90, now);
+    tap(P(7));
+    seq_ui_pad(&U, P(0), 0, 0, now);
+    CHECK(t->step[0].vel && seq_step_gate_eighths(t, &t->step[0]) == 8 * 8);
+    now += SUI_UNDO_IDLE_MS;
+    seq_ui_leds(&U, now, rgb);                                /* settles: committed */
+    seq_ui_button(&U, SUI_SHIFT, 1, now);
+    press(SUI_LEFT);
+    seq_ui_button(&U, SUI_SHIFT, 0, now);
+    CHECK(!t->step[0].vel && !seq_step_has_gate(&t->step[0]));
+}
+
+static void test_tempo_range(void)
+{
+    setup();
+    press(SUI_KNOB_BANK);                                     /* pattern page: K1 = tempo */
+    seq_ui_knob(&U, 0, 100, now);
+    CHECK(S.centibpm == SEQ_BPM_MAX * 100 && tempo_seen == SEQ_BPM_MAX * 100);
+    CHECK(U.ov_kind == SUI_OV_BAR && U.ov_min == SEQ_BPM_MIN && U.ov_max == SEQ_BPM_MAX);
+    seq_ui_knob(&U, 0, -200, now);
+    CHECK(S.centibpm == SEQ_BPM_MIN * 100);
+    /* 120 BPM = the middle of the bar: pads 1-8 full, 9-16 dim */
+    seq_set_tempo(&S, 11900);
+    seq_ui_knob(&U, 0, 1, now);
+    CHECK(S.centibpm == 12000);
+    seq_ui_leds(&U, now, rgb);
+    CHECK(rgb[7] == seq_ui_track_rgb(&U, 0) && rgb[8] != rgb[7]);
+    /* engine clamp */
+    seq_set_tempo(&S, 30000);
+    CHECK(S.centibpm == 20000);
+    seq_set_tempo(&S, 3000);
+    CHECK(S.centibpm == 4000);
+    /* tap tempo faster than 200 BPM (250 ms) is held at 200 */
+    seq_ui_button(&U, SUI_NOTE_REPEAT, 1, now);
+    for (int i = 0; i < 4; i++) {
+        tap(15);
+        now += 250;
+    }
+    CHECK(S.centibpm == 20000);
+    seq_ui_button(&U, SUI_NOTE_REPEAT, 0, now);
+}
+
 int main(void)
 {
     test_mode_and_steps();
@@ -862,6 +969,8 @@ int main(void)
     test_slots();
     test_track_copy_and_quantize();
     test_grid_rate_colour();
+    test_step_length();
+    test_tempo_range();
     printf(failures ? "test_smcpad_seq_ui: %d FAILED\n" : "test_smcpad_seq_ui: ALL PASSED\n", failures);
     return failures != 0;
 }

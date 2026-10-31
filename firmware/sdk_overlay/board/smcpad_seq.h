@@ -51,6 +51,11 @@ enum { SEQ_COND_ALWAYS = 0,
        SEQ_COND_1_4, SEQ_COND_2_4, SEQ_COND_3_4, SEQ_COND_4_4,
        SEQ_COND_FIRST, SEQ_COND_FILL, SEQ_COND_NOT_FILL, SEQ_CONDS };
 #define SEQ_COND_MASK       0x0F
+#define SEQ_COND_LONG       0x10            /* long note (924+): length in whole stored steps =
+                                             * (prob_gate & 0x0f) + (SEQ_COND_LONG16 ? 16 : 0) + 1,
+                                             * replaces the gate table index */
+#define SEQ_COND_LONG16     0x20
+#define SEQ_LONG_MAX        32              /* longest note, in stored steps */
 #define SEQ_COND_REC        0x40            /* micro came from live recording: scaled by quantize */
 #define SEQ_COND_TIE        0x80
 
@@ -64,7 +69,8 @@ enum { SEQ_COND_ALWAYS = 0,
 struct seq_step {
     u8 vel;         /* 0 = off, 1..127 */
     s8 note;        /* first note: offset from the track's base note, in scale steps */
-    u8 prob_gate;   /* prob << 4 | gate; prob 0 = track, 1..15 = 0..100 %; gate 0 = track, n = table[n-1] */
+    u8 prob_gate;   /* prob << 4 | gate; prob 0 = track, 1..15 = 0..100 %; gate 0 = track, n = table[n-1]
+                     * (SEQ_COND_LONG: the gate nibble is part of the length in steps) */
     s8 micro;       /* -48..+48 in 1/96 step (SEQ_COND_REC: raw offset before track quantize) */
     u8 ratchet;     /* (chord notes-1) << 6 | (ratchet hits-1) << 4 | rate (0 = track, n = table[n-1]) */
     u8 cond;        /* SEQ_COND_* | SEQ_COND_REC | SEQ_COND_TIE */
@@ -177,7 +183,9 @@ u8   seq_set_rate(struct seq *s, u8 track, u8 rate, u8 keep_timing);
 
 void seq_pattern_default(struct seq_pattern *p, const u8 *notes, const u8 *chans);
 void seq_init(struct seq *s, const struct seq_out *out, struct seq_pattern *pat, u32 seed);
-void seq_set_tempo(struct seq *s, u32 centibpm);   /* clamped 30.00..300.00 BPM */
+#define SEQ_BPM_MIN         40              /* internal tempo range: 120 BPM in the middle */
+#define SEQ_BPM_MAX         200
+void seq_set_tempo(struct seq *s, u32 centibpm);   /* clamped SEQ_BPM_MIN..SEQ_BPM_MAX */
 void seq_start(struct seq *s, u32 now_ms);          /* from the top */
 void seq_continue(struct seq *s, u32 now_ms);
 void seq_stop(struct seq *s);                       /* all sounding notes off */
@@ -190,6 +198,12 @@ s32  seq_lead_units(const struct seq *s);           /* sync offset in position u
 /* step / note helpers */
 u8   seq_step_prob(const struct seq_track *t, const struct seq_step *st);   /* 0..100 */
 u32  seq_step_gate_units(const struct seq_track *t, const struct seq_step *st);
+/* note length in 1/8 stored step (the track's gate when the step has none) */
+u32  seq_step_gate_eighths(const struct seq_track *t, const struct seq_step *st);
+u8   seq_step_has_gate(const struct seq_step *st);  /* 1 = the step sets its own length */
+/* store the nearest length the step can hold: the gate table up to 4 steps, then whole steps up
+ * to SEQ_LONG_MAX (longer = SEQ_LONG_MAX). Leaves SEQ_COND_TIE alone. */
+void seq_step_set_gate(struct seq_step *st, u32 eighths);
 u8   seq_track_scale(const struct seq *s, const struct seq_track *t);       /* effective scale */
 u8   seq_track_root(const struct seq *s, const struct seq_track *t);        /* effective root */
 u8   seq_track_note(const struct seq *s, const struct seq_track *t, s8 offset);

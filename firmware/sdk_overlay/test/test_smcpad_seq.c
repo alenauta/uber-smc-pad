@@ -178,22 +178,101 @@ static void test_probability(void)
 {
     setup();
     seq_set_tempo(&S, 30000);
+    CHECK(S.centibpm == SEQ_BPM_MAX * 100);                    /* clamped to 200 BPM */
     struct seq_track *t = &pat.track[0];
     t->len = 1;
-    t->rate = t->res = SEQ_RATE_32T;                           /* 60 steps per second */
+    t->rate = t->res = SEQ_RATE_32T;                           /* 40 steps per second */
     t->step[0].vel = 100;
     t->step[0].prob_gate = (u8)(8 << 4);                       /* (8-1)*100/14 = 50 % */
     CHECK(seq_step_prob(t, &t->step[0]) == 50);
     seq_start(&S, now);
     run_to(1000 + 40000);
     int n = count_on(36, 0, 0xFFFFFFFF);
-    CHECK(n > 2400 * 45 / 100 && n < 2400 * 55 / 100);
+    CHECK(n > 1600 * 45 / 100 && n < 1600 * 55 / 100);
     setup();
     pat.track[0].step[0].vel = 100;
     pat.track[0].prob = 0;                                     /* track probability 0 */
     seq_start(&S, now);
     run_to(1000 + 4000);
     CHECK(count_on(36, 0, 0xFFFFFFFF) == 0);
+}
+
+/* 924: long notes (SEQ_COND_LONG): whole steps past the gate table's 4 steps */
+static void test_long_notes(void)
+{
+    struct seq_track tr;
+    struct seq_step st;
+    memset(&tr, 0, sizeof(tr));
+    tr.gate = 3;
+    tr.res = SEQ_RATE_16;
+    memset(&st, 0, sizeof(st));
+    st.prob_gate = 0x50;
+    st.cond = SEQ_COND_TIE | SEQ_COND_2_2;
+    CHECK(!seq_step_has_gate(&st) && seq_step_gate_eighths(&tr, &st) == 4);    /* track gate */
+    seq_step_set_gate(&st, 16);                                /* table index 10 */
+    CHECK((st.prob_gate & 0x0f) == 11 && !(st.cond & SEQ_COND_LONG) && seq_step_gate_eighths(&tr, &st) == 16);
+    seq_step_set_gate(&st, 5 * 8);
+    CHECK((st.cond & SEQ_COND_LONG) && !(st.cond & SEQ_COND_LONG16) && (st.prob_gate & 0x0f) == 4);
+    CHECK(seq_step_gate_eighths(&tr, &st) == 40 && seq_step_gate_units(&tr, &st) == 5 * 240);
+    CHECK((st.prob_gate >> 4) == 5 && (st.cond & SEQ_COND_TIE) && (st.cond & SEQ_COND_MASK) == SEQ_COND_2_2);
+    seq_step_set_gate(&st, 20 * 8);
+    CHECK((st.cond & SEQ_COND_LONG16) && seq_step_gate_eighths(&tr, &st) == 160);
+    seq_step_set_gate(&st, 99 * 8);                            /* capped */
+    CHECK(seq_step_gate_eighths(&tr, &st) == SEQ_LONG_MAX * 8);
+    seq_step_set_gate(&st, 33);                                /* rounds to the table's 4 steps */
+    CHECK(!(st.cond & SEQ_COND_LONG) && seq_step_gate_eighths(&tr, &st) == 32);
+    seq_step_set_gate(&st, 6 * 8);
+    seq_step_set_gate(&st, 6);                                 /* back on the table: bits cleared */
+    CHECK(!(st.cond & (SEQ_COND_LONG | SEQ_COND_LONG16)) && (st.prob_gate & 0x0f) == 6);
+    CHECK((st.prob_gate >> 4) == 5 && (st.cond & SEQ_COND_TIE));
+
+    /* playback: 6 steps = 750 ms; 12 steps from step 9 run past the loop end */
+    setup();
+    struct seq_track *t = &pat.track[0];
+    t->step[0].vel = 100;
+    seq_step_set_gate(&t->step[0], 6 * 8);
+    t->step[8].vel = 100;
+    t->step[8].note = 1;                                       /* 37 */
+    seq_step_set_gate(&t->step[8], 12 * 8);
+    seq_start(&S, now);
+    run_to(1000 + 4100);
+    CHECK(near(nth_on(36, 0), 1000, 1) && near(nth_off(36, 0), 1750, 1));
+    CHECK(near(nth_on(37, 0), 2000, 1) && near(nth_off(37, 0), 3500, 1));
+    CHECK(near(nth_on(36, 1), 3000, 1) && near(nth_off(36, 1), 3750, 1));
+    seq_stop(&S);
+    CHECK(S.nactive == 0);
+
+    /* longer than the loop on the same key: the next hit ends it first */
+    setup();
+    t->len = 8;                                                /* 1 s loop */
+    t->step[0].vel = 100;
+    seq_step_set_gate(&t->step[0], 20 * 8);
+    seq_start(&S, now);
+    run_to(1000 + 2100);
+    CHECK(near(nth_off(36, 0), 2000, 1) && near(nth_on(36, 1), 2000, 1));
+    int ioff = -1, ion = -1;
+    for (int i = 0; i < nlg; i++) {
+        if (lg[i].n == 3 && lg[i].m[1] == 36 && lg[i].t >= 1990) {
+            if ((lg[i].m[0] & 0xF0) == 0x80 && ioff < 0) ioff = i;
+            if ((lg[i].m[0] & 0xF0) == 0x90 && ion < 0) ion = i;
+        }
+    }
+    CHECK(ioff >= 0 && ion > ioff);                            /* off before the new on */
+    CHECK(S.nactive == 1);
+    seq_stop(&S);
+
+    /* rate changes keep long lengths: 1/32 doubles the stored steps, 1/16 halves them again;
+     * a 3-step table gate becomes 6 whole steps (was clipped to 4 before 924) */
+    setup();
+    t->step[0].vel = 100;
+    seq_step_set_gate(&t->step[0], 6 * 8);
+    t->step[2].vel = 100;
+    seq_step_set_gate(&t->step[2], 24);
+    CHECK(seq_set_rate(&S, 0, SEQ_RATE_32, 1) && t->res == SEQ_RATE_32);
+    CHECK(seq_step_gate_eighths(t, &t->step[0]) == 12 * 8 && seq_step_gate_eighths(t, &t->step[4]) == 6 * 8);
+    CHECK(seq_set_rate(&S, 0, SEQ_RATE_16, 1) && t->res == SEQ_RATE_16);
+    CHECK(seq_step_gate_eighths(t, &t->step[0]) == 6 * 8 && (t->step[0].cond & SEQ_COND_LONG));
+    CHECK(seq_step_gate_eighths(t, &t->step[2]) == 24 && !(t->step[2].cond & SEQ_COND_LONG));
 }
 
 static void test_conditions_tie(void)
@@ -664,6 +743,7 @@ int main(void)
     test_polymeter_rate();
     test_swing_micro_ratchet();
     test_probability();
+    test_long_notes();
     test_conditions_tie();
     test_stop_flush_retrigger();
     test_external_clock();

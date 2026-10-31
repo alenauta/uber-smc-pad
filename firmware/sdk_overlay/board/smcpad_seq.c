@@ -76,7 +76,8 @@ void seq_init(struct seq *s, const struct seq_out *out, struct seq_pattern *pat,
 
 void seq_set_tempo(struct seq *s, u32 centibpm)
 {
-    s->centibpm = centibpm < 3000 ? 3000 : (centibpm > 30000 ? 30000 : centibpm);
+    const u32 lo = SEQ_BPM_MIN * 100u, hi = SEQ_BPM_MAX * 100u;
+    s->centibpm = centibpm < lo ? lo : (centibpm > hi ? hi : centibpm);
 }
 
 /* ---- step parameters -------------------------------------------------------------- */
@@ -88,12 +89,7 @@ u8 seq_step_prob(const struct seq_track *t, const struct seq_step *st)
 
 u32 seq_step_gate_units(const struct seq_track *t, const struct seq_step *st)
 {
-    u8 g = st->prob_gate & 0x0f;
-    u8 idx = g ? (u8)(g - 1) : t->gate;
-    if (idx >= SEQ_GATES) {
-        idx = SEQ_GATES - 1;
-    }
-    u32 u = seq_step_units(t->res) * seq_gate_eighths[idx] / 8;
+    u32 u = seq_step_units(t->res) * seq_step_gate_eighths(t, st) / 8;
     return u ? u : 1;
 }
 
@@ -198,6 +194,67 @@ static u8 gate_exact(u32 eighths)               /* table index with exactly this
     return 0xFF;
 }
 
+u8 seq_step_has_gate(const struct seq_step *st)
+{
+    return (u8)((st->prob_gate & 0x0f) || (st->cond & SEQ_COND_LONG));
+}
+
+u32 seq_step_gate_eighths(const struct seq_track *t, const struct seq_step *st)
+{
+    u8 g = st->prob_gate & 0x0f;
+    if (st->cond & SEQ_COND_LONG) {             /* whole stored steps */
+        return 8u * (g + ((st->cond & SEQ_COND_LONG16) ? 16u : 0u) + 1u);
+    }
+    u8 idx = g ? (u8)(g - 1) : t->gate;
+    return seq_gate_eighths[idx < SEQ_GATES ? idx : SEQ_GATES - 1];
+}
+
+/* the gate table up to its 4 steps, then whole steps (SEQ_COND_LONG) up to SEQ_LONG_MAX.
+ * exact = 1: only a length that fits exactly (else returns 0 and leaves the step alone);
+ * exact = 0: the nearest one */
+static u8 gate_store(struct seq_step *st, u32 eighths, u8 exact)
+{
+    const u32 top = seq_gate_eighths[SEQ_GATES - 1];
+    u8 cond = (u8)(st->cond & ~(SEQ_COND_LONG | SEQ_COND_LONG16));
+    u8 i = gate_exact(eighths);
+    if (i == 0xFF && eighths > top) {
+        u32 n = (eighths + 4) / 8;
+        if (exact && (eighths % 8 || n > SEQ_LONG_MAX)) {
+            return 0;
+        }
+        if (n > SEQ_LONG_MAX) {
+            n = SEQ_LONG_MAX;
+        }
+        if (n * 8 > top) {
+            st->prob_gate = (u8)((st->prob_gate & 0xF0) | ((n - 1) & 0x0f));
+            st->cond = (u8)(cond | SEQ_COND_LONG | (((n - 1) & 0x10) ? SEQ_COND_LONG16 : 0));
+            return 1;
+        }
+        i = SEQ_GATES - 1;                      /* rounds to the table's longest */
+    }
+    if (i == 0xFF) {
+        if (exact) {
+            return 0;
+        }
+        i = gate_nearest(eighths);
+    }
+    st->prob_gate = (u8)((st->prob_gate & 0xF0) | (i + 1));
+    st->cond = cond;
+    return 1;
+}
+
+void seq_step_set_gate(struct seq_step *st, u32 eighths)
+{
+    gate_store(st, eighths ? eighths : 1, 0);
+}
+
+static u8 gate_fits(u32 eighths)                /* a step can hold exactly this length */
+{
+    struct seq_step tmp;
+    memset(&tmp, 0, sizeof(tmp));
+    return gate_store(&tmp, eighths, 1);
+}
+
 static u8 ratchet_auto(const struct seq_track *t, const struct seq_step *st)   /* hits split the step */
 {
     u8 rr = st->ratchet & 0x0f;
@@ -205,7 +262,8 @@ static u8 ratchet_auto(const struct seq_track *t, const struct seq_step *st)   /
 }
 
 /* stored steps m times finer: step i moves to i * m (micro-timing beyond half a step moves it to
- * the neighbouring step), gates keep their length (up to 4 steps), auto ratchets their spacing */
+ * the neighbouring step), gates keep their length (in whole steps past 4 steps, up to
+ * SEQ_LONG_MAX), auto ratchets their spacing */
 static u8 expand(struct seq *s, u8 ti, u8 m)
 {
     struct seq_track *t = &s->pat->track[ti];
@@ -234,9 +292,8 @@ static u8 expand(struct seq *s, u8 ti, u8 m)
         s32 sh = (st.cond & SEQ_COND_REC) ? 0 : (off >= 0 ? (off + 48) / 96 : -((-off + 48) / 96));
         s32 nm = off - sh * 96;
         st.micro = (s8)(nm > SEQ_MICRO_MAX ? SEQ_MICRO_MAX : (nm < -SEQ_MICRO_MAX ? -SEQ_MICRO_MAX : nm));
-        u8 g = st.prob_gate & 0x0f;
-        if (g) {
-            st.prob_gate = (u8)((st.prob_gate & 0xF0) | (gate_nearest((u32)seq_gate_eighths[g - 1] * m) + 1));
+        if (seq_step_has_gate(&st)) {
+            gate_store(&st, seq_step_gate_eighths(t, &st) * m, 0);
         }
         s32 ni = ((s32)i * m + sh) % (s32)nlen;
         step_place(&t->step[ni < 0 ? ni + (s32)nlen : ni], &st);
@@ -259,9 +316,9 @@ static u8 shrink(struct seq *s, u8 ti, u8 m)
     }
     for (u8 i = 0; i < len; i++) {
         const struct seq_step *st = &t->step[i];
-        u8 g = st->prob_gate & 0x0f;
+        u32 e = seq_step_gate_eighths(t, st);
         if (st->vel && (i % m || st->micro % m || ratchet_auto(t, st) ||
-                        (g && (seq_gate_eighths[g - 1] % m || gate_exact(seq_gate_eighths[g - 1] / m) == 0xFF)))) {
+                        (seq_step_has_gate(st) && (e % m || !gate_fits(e / m))))) {
             return 0;
         }
     }
@@ -269,10 +326,9 @@ static u8 shrink(struct seq *s, u8 ti, u8 m)
     for (u8 i = 0; i < nlen; i++) {             /* ascending: i * m >= i */
         struct seq_step st = t->step[i * m];
         if (st.vel) {
-            u8 g = st.prob_gate & 0x0f;
             st.micro = (s8)(st.micro / m);
-            if (g) {
-                st.prob_gate = (u8)((st.prob_gate & 0xF0) | (gate_exact(seq_gate_eighths[g - 1] / m) + 1));
+            if (seq_step_has_gate(&st)) {
+                gate_store(&st, seq_step_gate_eighths(t, &st) / m, 1);
             }
         }
         t->step[i] = st;
