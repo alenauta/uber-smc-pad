@@ -21,3 +21,4 @@ __pycache__/
 
 # --- SDK build outputs (reproducible via firmware/builder/build_ufw.sh) ---
 /firmware/builds/
+/firmware/build/

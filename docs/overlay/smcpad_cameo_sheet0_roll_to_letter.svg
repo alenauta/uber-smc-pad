@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="222.00mm" height="290.00mm" viewBox="0 0 222.00 290.00"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+     xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd">
+  <sodipodi:namedview inkscape:document-units="mm" pagecolor="#ffffff"/>
+  <style>.cut { fill: none; stroke: #ff0000; stroke-width: 0.15; }</style>
+  <g inkscape:groupmode="layer" id="layer-cut" inkscape:label="Cut">
+    <rect id="us-letter-blank" x="3.050" y="5.000" width="215.900" height="279.400" class="cut"/>
+  </g>
+</svg>

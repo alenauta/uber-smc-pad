@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="250.00mm" height="165.00mm" viewBox="0 0 250.00 165.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<style class="theme-style">
+    .cut-line { fill: none; stroke: #ff0000; stroke-width: 0.12; stroke-linecap: round; stroke-linejoin: round; }
+    .align-frame { fill: none; stroke: #0066ff; stroke-width: 0.10; stroke-dasharray: 2.0 1.2; }
+    .sheet-paper-bg { fill: #ffffff; stroke: #cbd5e1; stroke-width: 0.16; }
+    .sheet-annotations text { fill: #334155 !important; }
+    .sheet-ruler .box-bg { fill: #ffffff !important; fill-opacity: 1 !important; stroke: #0f172a !important; }
+    .sheet-ruler .ink, .sheet-ruler .tro-fill, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c { fill: #0f172a !important; }
+    .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi, .sheet-ruler .tro-ink { stroke: #0f172a !important; }
+    .cutout-preview-mask { display: none; fill: #0b0e14; fill-opacity: 0.76; stroke: #64748b; stroke-width: 0.14; pointer-events: none; }
+    .seam-tick { fill: none; stroke: #FACC15; stroke-width: 0.20; stroke-dasharray: 0.9 0.7; }
+    .bg-base { fill: #13171D; }
+    .bg-veil { fill: #13171D; fill-opacity: 0; pointer-events: none; }
+    .panel-sub { fill: #171C24; }
+    .box-bg { fill: #1B222C; stroke: #4A5B73; stroke-width: 0.16; }
+    .box-alt { fill: #10141A; stroke: #4A5B73; stroke-width: 0.15; }
+    .grid-min { stroke: #1C232E; stroke-width: 0.07; fill: none; }
+    .grid-maj { stroke: #252F3D; stroke-width: 0.12; fill: none; }
+    .sc-trace { stroke: #2E3B4E; stroke-width: 0.18; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .sc-rule { stroke: #4A5B73; fill: none; }
+    .sc-rule-hi { stroke: #7C91AD; fill: none; }
+    .tro-ink { stroke: #ECF0F5; fill: none; stroke-linecap: square; stroke-linejoin: miter; }
+    .tro-fill { fill: #ECF0F5; }
+    .tro-paper { fill: #1B222C; stroke: #ECF0F5; }
+    .ink { fill: #ECF0F5; }
+    .muted { fill: #8C9BAE; }
+    .step-c { fill: #FF7A1A; }
+    .step-bg { fill: #FF7A1A; }
+    .step-fg { fill: #111317; }
+    .pat-c { fill: #38BDF8; }
+    .warn-c { fill: #FACC15; }
+    .warn-stroke { stroke: #FACC15; fill: none; }
+    .ok-c { fill: #34D399; }
+    .f-cond { font-family: "Roboto Condensed", "Avenir Next Condensed", "Bahnschrift", "Liberation Sans Narrow", "Arial Narrow", sans-serif; }
+    .f-mono { font-family: "Noto Sans Mono", "JetBrains Mono", "SF Mono", "DejaVu Sans Mono", "Liberation Mono", monospace; }
+    
+    .tro-only { display: none; }
+    .non-tro { display: inline; }
+    
+    </style>
+<rect x="0.08" y="0.08" width="249.84" height="164.84" class="sheet-paper-bg"/>
+<g class="sheet-annotations f-cond"><text x="4.5" y="4.8" class="muted" font-size="1.92" font-weight="700">AN/SMC-925 // SHEET 2 OF 2: 360° PINWHEEL SIDE BANDS &amp; I/O WELL INSERT — ALIGN FRAME: 250.00 × 165.00 MM</text><text x="13.8" y="35.6" class="muted" font-size="1.58" font-weight="700">▲ REAR BULKHEAD (222.43×23.80mm)   ▼ FRONT OPERATOR CHEAT SHEET (222.43×23.80mm)</text><text x="4.5" y="65.8" class="muted" font-size="1.58" font-weight="700">▼ LEFT ENCODER SIDE (142.43×23.80mm)</text><text x="152.0" y="69.5" class="muted" font-size="1.58" font-weight="700">▼ REAR I/O WELL INSERTS (PRIMARY + SPARE, 46.00×12.80mm)</text><text x="4.5" y="95.8" class="muted" font-size="1.58" font-weight="700">▼ RIGHT TRANSPORT SIDE (142.43×23.80mm)</text><text x="4.5" y="160.8" class="muted" font-size="1.68" font-weight="700">CAMEO 5: Cut RED (#ff0000) paths · Set BLUE (#0066ff) 250×165mm Align Frame to NO CUT after centering.</text></g>
+<defs><clipPath id="s2rear-clip"><path d="M14.788,6.500 L235.212,6.500 A2.500,2.500 0 0 1 237.712,9.000 L237.712,30.800 A2.500,2.500 0 0 1 235.212,33.300 L14.788,33.300 A2.500,2.500 0 0 1 12.288,30.800 L12.288,9.000 A2.500,2.500 0 0 1 14.788,6.500 Z"/></clipPath></defs>
+<g id="s2rear-print" class="f-cond">
+<g class="piece-bg-layer" clip-path="url(#s2rear-clip)" data-sheet="s2" data-piece="side" data-rx="3.00" data-ry="6.50" data-rw="244.00" data-rh="116.80">
+<rect x="12.29" y="6.50" width="225.42" height="26.80" class="bg-base"/>
+<g class="bg-image-slot"></g>
+<rect x="12.29" y="6.50" width="225.42" height="26.80" class="bg-veil"/>
+<g class="cad-grid-lines">
+<path d="M10,6.5V33.3 M15,6.5V33.3 M20,6.5V33.3 M30,6.5V33.3 M35,6.5V33.3 M40,6.5V33.3 M45,6.5V33.3 M55,6.5V33.3 M60,6.5V33.3 M65,6.5V33.3 M70,6.5V33.3 M80,6.5V33.3 M85,6.5V33.3 M90,6.5V33.3 M95,6.5V33.3 M105,6.5V33.3 M110,6.5V33.3 M115,6.5V33.3 M120,6.5V33.3 M130,6.5V33.3 M135,6.5V33.3 M140,6.5V33.3 M145,6.5V33.3 M155,6.5V33.3 M160,6.5V33.3 M165,6.5V33.3 M170,6.5V33.3 M180,6.5V33.3 M185,6.5V33.3 M190,6.5V33.3 M195,6.5V33.3 M205,6.5V33.3 M210,6.5V33.3 M215,6.5V33.3 M220,6.5V33.3 M230,6.5V33.3 M235,6.5V33.3 M240,6.5V33.3 M12.3,5H237.7 M12.3,10H237.7 M12.3,15H237.7 M12.3,20H237.7 M12.3,30H237.7 M12.3,35H237.7" class="grid-min"/>
+<path d="M25,6.5V33.3 M50,6.5V33.3 M75,6.5V33.3 M100,6.5V33.3 M125,6.5V33.3 M150,6.5V33.3 M175,6.5V33.3 M200,6.5V33.3 M225,6.5V33.3 M12.3,25H237.7" class="grid-maj"/>
+</g></g>
+<g id="s2rear-fg" class="piece-fg-layer">
+<rect x="14.49" y="8.70" width="221.02" height="22.40" rx="0.6" class="sc-rule" stroke-width="0.16"/>
+<g class="tro-only" id="s2rear-tro-band"><rect x="14.49" y="8.70" width="221.02" height="22.40" rx="0.55" class="tro-ink" stroke-width="0.28"/></g>
+<rect x="14.69" y="9.40" width="15.04" height="21.00" rx="0.6" class="box-alt"/><text x="22.21" y="13.60" class="f-cond warn-c" font-size="1.95" font-weight="700" text-anchor="middle">CNR-BR</text><text x="22.21" y="18.30" class="f-cond ink" font-size="1.90" font-weight="700" text-anchor="middle">BTN SIDE</text><text x="22.21" y="23.00" class="f-cond pat-c" font-size="1.78" font-weight="700" text-anchor="middle">SEAM ──►</text><text x="22.21" y="27.60" class="f-cond muted" font-size="1.65" font-weight="700" text-anchor="middle">R10.7 · 90°</text><line x1="30.53" y1="8.70" x2="30.53" y2="31.10" class="seam-tick"/>
+<rect x="31.73" y="9.40" width="76.50" height="21.00" rx="0.7" class="box-bg"/>
+<path d="M31.73,10.50 L31.73,9.40 L32.83,9.40 M107.13,9.40 L108.23,9.40 L108.23,10.50 M31.73,29.30 L31.73,30.40 L32.83,30.40 M107.13,30.40 L108.23,30.40 L108.23,29.30" fill="none" class="sc-rule-hi" stroke-width="0.18"/>
+<text x="33.23" y="12.15" class="step-c" font-size="2.00" font-weight="700">REAR-01 // HARDWARE SCHEMATIC [JIELI AC636N · BR25]</text>
+<line x1="31.73" y1="13.00" x2="108.23" y2="13.00" class="sc-rule" stroke-width="0.12"/>
+<rect x="58.03" y="14.10" width="23.80" height="15.00" rx="0.6" class="box-alt"/>
+<text x="69.93" y="17.35" class="f-cond pat-c" font-size="1.88" font-weight="700" text-anchor="middle">AC636N · BR25</text>
+<text x="69.93" y="20.85" class="f-cond ink" font-size="1.68" font-weight="700" text-anchor="middle">pi32v2 · 960 PPQN</text>
+<text x="69.93" y="24.35" class="f-cond warn-c" font-size="1.65" font-weight="700" text-anchor="middle">PI32V2 · 512K NOR</text>
+<text x="69.93" y="27.75" class="f-cond ok-c" font-size="1.68" font-weight="700" text-anchor="middle">RAM ISR SAFE</text>
+<rect x="32.93" y="13.85" width="23.2" height="4.6" rx="0.45" class="box-alt"/>
+<text x="33.73" y="15.83" class="f-cond ink" font-size="1.68" font-weight="700">16× VEL PADS</text>
+<text x="33.73" y="17.80" class="f-cond muted" font-size="1.48" font-weight="700">MUX PB2/3 → PA4/6</text>
+<line x1="56.13" y1="16.15" x2="58.03" y2="16.15" class="sc-rule-hi" stroke-width="0.18"/>
+<rect x="32.93" y="19.00" width="23.2" height="4.6" rx="0.45" class="box-alt"/>
+<text x="33.73" y="20.98" class="f-cond ink" font-size="1.68" font-weight="700">8× ENC + 10× BTN</text>
+<text x="33.73" y="22.95" class="f-cond muted" font-size="1.48" font-weight="700">SPI2 595 → PB0/PC1</text>
+<line x1="56.13" y1="21.30" x2="58.03" y2="21.30" class="sc-rule-hi" stroke-width="0.18"/>
+<rect x="32.93" y="24.15" width="23.2" height="4.6" rx="0.45" class="box-alt"/>
+<text x="33.73" y="26.13" class="f-cond ink" font-size="1.68" font-weight="700">3.7V LI-ION BAT</text>
+<text x="33.73" y="28.10" class="f-cond muted" font-size="1.48" font-weight="700">704060 · 2000mAh</text>
+<line x1="56.13" y1="26.45" x2="58.03" y2="26.45" class="sc-rule-hi" stroke-width="0.18"/>
+<line x1="81.83" y1="16.15" x2="83.73" y2="16.15" class="sc-rule-hi" stroke-width="0.18"/>
+<rect x="83.73" y="13.85" width="23.3" height="4.6" rx="0.45" class="box-alt"/>
+<text x="84.53" y="15.83" class="f-cond ink" font-size="1.68" font-weight="700">16× WS2812 RGB</text>
+<text x="84.53" y="17.80" class="f-cond pat-c" font-size="1.48" font-weight="700">SPI1 PB1 · 800kHz</text>
+<line x1="81.83" y1="21.30" x2="83.73" y2="21.30" class="sc-rule-hi" stroke-width="0.18"/>
+<rect x="83.73" y="19.00" width="23.3" height="4.6" rx="0.45" class="box-alt"/>
+<text x="84.53" y="20.98" class="f-cond ink" font-size="1.68" font-weight="700">TRS MIDI OUT</text>
+<text x="84.53" y="22.95" class="f-cond pat-c" font-size="1.48" font-weight="700">UART1 PC5 · 31.25k</text>
+<line x1="81.83" y1="26.45" x2="83.73" y2="26.45" class="sc-rule-hi" stroke-width="0.18"/>
+<rect x="83.73" y="24.15" width="23.3" height="4.6" rx="0.45" class="box-alt"/>
+<text x="84.53" y="26.13" class="f-cond ink" font-size="1.68" font-weight="700">USB-C + BLE MIDI</text>
+<text x="84.53" y="28.10" class="f-cond pat-c" font-size="1.48" font-weight="700">3-CBL · AE40 OTA</text>
+<rect x="109.63" y="9.40" width="73.78" height="21.00" rx="0.7" class="box-bg"/>
+<path d="M109.63,10.50 L109.63,9.40 L110.73,9.40 M182.31,9.40 L183.41,9.40 L183.41,10.50 M109.63,29.30 L109.63,30.40 L110.73,30.40 M182.31,30.40 L183.41,30.40 L183.41,29.30" fill="none" class="sc-rule-hi" stroke-width="0.18"/>
+<text x="111.13" y="12.15" class="pat-c" font-size="2.00" font-weight="700">REAR-02 // FLASH MAP, SYSEX &amp; SAFE-MODE RECOVERY</text>
+<line x1="109.63" y1="13.00" x2="183.41" y2="13.00" class="sc-rule" stroke-width="0.12"/>
+<text x="110.93" y="15.55" class="f-cond step-c" font-size="1.78" font-weight="700">FLASH 512K:</text>
+<text x="125.23" y="15.55" class="f-cond ink" font-size="1.80" font-weight="700">0x00000 CODE · 0x30000 16×PAT · 0x50000 VM · 0x77000 PST</text>
+<text x="110.93" y="18.80" class="f-cond pat-c" font-size="1.78" font-weight="700">USB 3-CBL:</text>
+<text x="125.23" y="18.80" class="f-cond ink" font-size="1.80" font-weight="700">CBL0: Master MIDI · CBL1: Private Sinco · CBL2: Mackie</text>
+<text x="110.93" y="22.05" class="f-cond pat-c" font-size="1.78" font-weight="700">DIAG SYSEX:</text>
+<text x="125.23" y="22.05" class="f-cond ink" font-size="1.80" font-weight="700">F0 7D 53 50 01/02/05 F7 (status / counters / crash dump)</text>
+<text x="110.93" y="25.30" class="f-cond warn-c" font-size="1.78" font-weight="700">SAFE MODE:</text>
+<text x="125.23" y="25.30" class="f-cond ink" font-size="1.80" font-weight="700">Power-cycle 2× in 5s → skips pads/keys, keeps BLE + OTA!</text>
+<text x="110.93" y="28.55" class="f-cond pat-c" font-size="1.78" font-weight="700">UBOOT ROM:</text>
+<text x="125.23" y="28.55" class="f-cond ink" font-size="1.80" font-weight="700">USB_KEY handshake on DP/DM enters BR25 Mask-ROM loader</text>
+<text x="193.55" y="11.18" class="f-cond ink" font-size="1.85" font-weight="700" text-anchor="middle">PWR</text>
+<line x1="193.55" y1="11.42" x2="193.55" y2="11.96" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="204.01" y="11.18" class="f-cond warn-c" font-size="1.85" font-weight="700" text-anchor="middle">CHG</text>
+<line x1="204.01" y1="11.42" x2="204.01" y2="11.96" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="212.29" y="11.18" class="f-cond pat-c" font-size="1.85" font-weight="700" text-anchor="middle">USB-C</text>
+<line x1="212.29" y1="11.42" x2="212.29" y2="11.96" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="226.77" y="11.18" class="f-cond step-c" font-size="1.85" font-weight="700" text-anchor="middle">MIDI OUT</text>
+<line x1="226.77" y1="11.42" x2="226.77" y2="11.96" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="208.79" y="29.95" class="f-cond muted" font-size="1.65" font-weight="700" text-anchor="middle">5V ⎓ 500mA · RED=CHG / GRN=FULL · TRS-A MIDI OUT</text>
+</g>
+<g id="s2rear-hole-mask" class="cutout-preview-mask no-print"><path d="M190.612,12.185 L228.312,12.185 A5.700,5.700 0 0 1 234.012,17.885 L234.012,22.185 A5.700,5.700 0 0 1 228.312,27.885 L190.612,27.885 A5.700,5.700 0 0 1 184.912,22.185 L184.912,17.885 A5.700,5.700 0 0 1 190.612,12.185 Z"/></g>
+</g>
+<g id="s2rear-cut">
+<path id="s2rear-cut-outer" d="M14.788,8.000 L235.212,8.000 A1.000,1.000 0 0 1 236.212,9.000 L236.212,30.800 A1.000,1.000 0 0 1 235.212,31.800 L14.788,31.800 A1.000,1.000 0 0 1 13.788,30.800 L13.788,9.000 A1.000,1.000 0 0 1 14.788,8.000 Z" class="cut-line"/>
+<path id="s2rear-cut-io-well" d="M190.612,12.185 L228.312,12.185 A5.700,5.700 0 0 1 234.012,17.885 L234.012,22.185 A5.700,5.700 0 0 1 228.312,27.885 L190.612,27.885 A5.700,5.700 0 0 1 184.912,22.185 L184.912,17.885 A5.700,5.700 0 0 1 190.612,12.185 Z" class="cut-line"/>
+</g>
+<defs><clipPath id="s2front-clip"><path d="M14.788,36.500 L235.212,36.500 A2.500,2.500 0 0 1 237.712,39.000 L237.712,60.800 A2.500,2.500 0 0 1 235.212,63.300 L14.788,63.300 A2.500,2.500 0 0 1 12.288,60.800 L12.288,39.000 A2.500,2.500 0 0 1 14.788,36.500 Z"/></clipPath></defs>
+<g id="s2front-print" class="f-cond">
+<g class="piece-bg-layer" clip-path="url(#s2front-clip)" data-sheet="s2" data-piece="side" data-rx="3.00" data-ry="6.50" data-rw="244.00" data-rh="116.80">
+<rect x="12.29" y="36.50" width="225.42" height="26.80" class="bg-base"/>
+<g class="bg-image-slot"></g>
+<rect x="12.29" y="36.50" width="225.42" height="26.80" class="bg-veil"/>
+<g class="cad-grid-lines">
+<path d="M10,36.5V63.3 M15,36.5V63.3 M20,36.5V63.3 M30,36.5V63.3 M35,36.5V63.3 M40,36.5V63.3 M45,36.5V63.3 M55,36.5V63.3 M60,36.5V63.3 M65,36.5V63.3 M70,36.5V63.3 M80,36.5V63.3 M85,36.5V63.3 M90,36.5V63.3 M95,36.5V63.3 M105,36.5V63.3 M110,36.5V63.3 M115,36.5V63.3 M120,36.5V63.3 M130,36.5V63.3 M135,36.5V63.3 M140,36.5V63.3 M145,36.5V63.3 M155,36.5V63.3 M160,36.5V63.3 M165,36.5V63.3 M170,36.5V63.3 M180,36.5V63.3 M185,36.5V63.3 M190,36.5V63.3 M195,36.5V63.3 M205,36.5V63.3 M210,36.5V63.3 M215,36.5V63.3 M220,36.5V63.3 M230,36.5V63.3 M235,36.5V63.3 M240,36.5V63.3 M12.3,35H237.7 M12.3,40H237.7 M12.3,45H237.7 M12.3,55H237.7 M12.3,60H237.7 M12.3,65H237.7" class="grid-min"/>
+<path d="M25,36.5V63.3 M50,36.5V63.3 M75,36.5V63.3 M100,36.5V63.3 M125,36.5V63.3 M150,36.5V63.3 M175,36.5V63.3 M200,36.5V63.3 M225,36.5V63.3 M12.3,50H237.7" class="grid-maj"/>
+</g></g>
+<g id="s2front-fg" class="piece-fg-layer">
+<rect x="14.49" y="38.70" width="221.02" height="22.40" rx="0.6" class="sc-rule" stroke-width="0.16"/>
+<g class="tro-only" id="s2front-tro-band"><rect x="14.49" y="38.70" width="221.02" height="22.40" rx="0.55" class="tro-ink" stroke-width="0.28"/></g>
+<rect x="14.69" y="39.40" width="15.04" height="21.00" rx="0.6" class="box-alt"/><text x="22.21" y="43.60" class="f-cond warn-c" font-size="1.95" font-weight="700" text-anchor="middle">CNR-FL</text><text x="22.21" y="48.30" class="f-cond ink" font-size="1.90" font-weight="700" text-anchor="middle">KNOB SIDE</text><text x="22.21" y="53.00" class="f-cond step-c" font-size="1.78" font-weight="700" text-anchor="middle">⇧+RPT=SEQ</text><text x="22.21" y="57.60" class="f-cond ok-c" font-size="1.65" font-weight="700" text-anchor="middle">FW ≥ 925</text><line x1="30.53" y1="38.70" x2="30.53" y2="61.10" class="seam-tick"/>
+<rect x="31.68" y="39.40" width="50.60" height="21.00" rx="0.65" class="box-bg"/>
+<path d="M31.68,40.40 L31.68,39.40 L32.68,39.40 M81.28,39.40 L82.28,39.40 L82.28,40.40 M31.68,59.40 L31.68,60.40 L32.68,60.40 M81.28,60.40 L82.28,60.40 L82.28,59.40" fill="none" class="sc-rule-hi" stroke-width="0.18"/>
+<text x="32.88" y="42.12" class="step-c" font-size="1.95" font-weight="700">F1 // STEP &amp; NOTE LENGTH</text>
+<line x1="31.68" y1="42.95" x2="82.28" y2="42.95" class="sc-rule" stroke-width="0.12"/>
+<text x="32.83" y="45.52" class="f-cond step-c" font-size="1.76" font-weight="700">TAP PAD:</text>
+<text x="45.58" y="45.52" class="f-cond ink" font-size="1.80" font-weight="700">Step On / Off (S01..S16)</text>
+<text x="32.83" y="48.77" class="f-cond step-c" font-size="1.76" font-weight="700">HOLD+PAD:</text>
+<text x="45.58" y="48.77" class="f-cond ink" font-size="1.80" font-weight="700">Note Length 1–32 steps!</text>
+<text x="32.83" y="52.02" class="f-cond step-c" font-size="1.76" font-weight="700">HOLD+KNOB:</text>
+<text x="45.58" y="52.02" class="f-cond ink" font-size="1.80" font-weight="700">Step P-Lock (K3 moves chord)</text>
+<text x="32.83" y="55.27" class="f-cond step-c" font-size="1.76" font-weight="700">HOLD+RPT:</text>
+<text x="45.58" y="55.27" class="f-cond ink" font-size="1.80" font-weight="700">Ratchet ×1 → ×2 → ×3 → ×4</text>
+<text x="32.83" y="58.52" class="f-cond step-c" font-size="1.76" font-weight="700">PG &lt; / &gt;:</text>
+<text x="45.58" y="58.52" class="f-cond ink" font-size="1.80" font-weight="700">Page 1–4  ·  ⇧+&lt; / &gt; Undo/Redo</text>
+<rect x="83.08" y="39.40" width="51.20" height="21.00" rx="0.65" class="box-bg"/>
+<path d="M83.08,40.40 L83.08,39.40 L84.08,39.40 M133.28,39.40 L134.28,39.40 L134.28,40.40 M83.08,59.40 L83.08,60.40 L84.08,60.40 M133.28,60.40 L134.28,60.40 L134.28,59.40" fill="none" class="sc-rule-hi" stroke-width="0.18"/>
+<text x="84.28" y="42.12" class="pat-c" font-size="1.95" font-weight="700">F2 // TRACKS [HOLD BANK]</text>
+<line x1="83.08" y1="42.95" x2="134.28" y2="42.95" class="sc-rule" stroke-width="0.12"/>
+<text x="84.23" y="45.52" class="f-cond step-c" font-size="1.76" font-weight="700">TAP BANK:</text>
+<text x="96.98" y="45.52" class="f-cond ink" font-size="1.80" font-weight="700">Step View ↔ Play View</text>
+<text x="84.23" y="48.77" class="f-cond step-c" font-size="1.76" font-weight="700">HOLD+PAD:</text>
+<text x="96.98" y="48.77" class="f-cond ink" font-size="1.80" font-weight="700">Select active Track 1–16</text>
+<text x="84.23" y="52.02" class="f-cond step-c" font-size="1.76" font-weight="700">SRC+DST:</text>
+<text x="96.98" y="52.02" class="f-cond ink" font-size="1.80" font-weight="700">Hold Src+Tap Dst = Copy Notes</text>
+<text x="84.23" y="55.27" class="f-cond step-c" font-size="1.76" font-weight="700">+⇧ COPY:</text>
+<text x="96.98" y="55.27" class="f-cond ink" font-size="1.80" font-weight="700">Full Copy (+Ch / Note / Vol)</text>
+<text x="84.23" y="58.52" class="f-cond step-c" font-size="1.76" font-weight="700">+STOP+PAD:</text>
+<text x="96.98" y="58.52" class="f-cond ink" font-size="1.80" font-weight="700">Mute Trk · +⇧+STOP = Clear</text>
+<rect x="135.08" y="39.40" width="50.80" height="21.00" rx="0.65" class="box-bg"/>
+<path d="M135.08,40.40 L135.08,39.40 L136.08,39.40 M184.88,39.40 L185.88,39.40 L185.88,40.40 M135.08,59.40 L135.08,60.40 L136.08,60.40 M184.88,60.40 L185.88,60.40 L185.88,59.40" fill="none" class="sc-rule-hi" stroke-width="0.18"/>
+<text x="136.28" y="42.12" class="warn-c" font-size="1.95" font-weight="700">F3 // LIVE REC &amp; TIMING</text>
+<line x1="135.08" y1="42.95" x2="185.88" y2="42.95" class="sc-rule" stroke-width="0.12"/>
+<text x="136.23" y="45.52" class="f-cond step-c" font-size="1.76" font-weight="700">REC+PLAY:</text>
+<text x="148.98" y="45.52" class="f-cond ink" font-size="1.80" font-weight="700">Live Rec (hold = gate len)</text>
+<text x="136.23" y="48.77" class="f-cond step-c" font-size="1.76" font-weight="700">CHORDS:</text>
+<text x="148.98" y="48.77" class="f-cond ink" font-size="1.80" font-weight="700">Hit active step (up to 4 notes)</text>
+<text x="136.23" y="52.02" class="f-cond step-c" font-size="1.76" font-weight="700">QUANTIZE:</text>
+<text x="148.98" y="52.02" class="f-cond ink" font-size="1.80" font-weight="700">K4 (0–100%) non-destructive!</text>
+<text x="136.23" y="55.27" class="f-cond step-c" font-size="1.76" font-weight="700">HOLD RPT:</text>
+<text x="148.98" y="55.27" class="f-cond ink" font-size="1.80" font-weight="700">P1-8 Rate · P9-13 Swg · P14 Fill</text>
+<text x="136.23" y="58.52" class="f-cond step-c" font-size="1.76" font-weight="700">SYNC/TAP:</text>
+<text x="148.98" y="58.52" class="f-cond ink" font-size="1.80" font-weight="700">P15 Ext Clock · P16 Tap Tempo</text>
+<rect x="186.68" y="39.40" width="48.00" height="21.00" rx="0.65" class="box-bg"/>
+<path d="M186.68,40.40 L186.68,39.40 L187.68,39.40 M233.68,39.40 L234.68,39.40 L234.68,40.40 M186.68,59.40 L186.68,60.40 L187.68,60.40 M233.68,60.40 L234.68,60.40 L234.68,59.40" fill="none" class="sc-rule-hi" stroke-width="0.18"/>
+<text x="187.88" y="42.12" class="ok-c" font-size="1.95" font-weight="700">F4 // 16 PATTERNS &amp; CUE</text>
+<line x1="186.68" y1="42.95" x2="234.68" y2="42.95" class="sc-rule" stroke-width="0.12"/>
+<text x="187.83" y="45.52" class="f-cond step-c" font-size="1.76" font-weight="700">⇧+REC+PAD:</text>
+<text x="200.58" y="45.52" class="f-cond ink" font-size="1.80" font-weight="700">Save Slot 1–16 (no pad=cur)</text>
+<text x="187.83" y="48.77" class="f-cond step-c" font-size="1.76" font-weight="700">⇧+PLAY+PAD:</text>
+<text x="200.58" y="48.77" class="f-cond ink" font-size="1.80" font-weight="700">Load Slot (cues next bar!)</text>
+<text x="187.83" y="52.02" class="f-cond step-c" font-size="1.76" font-weight="700">SLOT LEDS:</text>
+<text x="200.58" y="52.02" class="f-cond ink" font-size="1.80" font-weight="700">Off=Empty · Dim=Used · Lit=Cur</text>
+<text x="187.83" y="55.27" class="f-cond step-c" font-size="1.76" font-weight="700">FEEDBACK:</text>
+<text x="200.58" y="55.27" class="f-cond ink" font-size="1.80" font-weight="700">Blinks 3× GRN=OK / RED=ERR</text>
+<text x="187.83" y="58.52" class="f-cond step-c" font-size="1.76" font-weight="700">AUTO-SAVE:</text>
+<text x="200.58" y="58.52" class="f-cond ink" font-size="1.80" font-weight="700">STOP saves edits to flash</text>
+</g>
+</g>
+<g id="s2front-cut"><path id="s2front-cut-outer" d="M14.788,38.000 L235.212,38.000 A1.000,1.000 0 0 1 236.212,39.000 L236.212,60.800 A1.000,1.000 0 0 1 235.212,61.800 L14.788,61.800 A1.000,1.000 0 0 1 13.788,60.800 L13.788,39.000 A1.000,1.000 0 0 1 14.788,38.000 Z" class="cut-line"/></g>
+<defs><clipPath id="s2left-clip"><path d="M5.500,66.500 L145.925,66.500 A2.500,2.500 0 0 1 148.425,69.000 L148.425,90.800 A2.500,2.500 0 0 1 145.925,93.300 L5.500,93.300 A2.500,2.500 0 0 1 3.000,90.800 L3.000,69.000 A2.500,2.500 0 0 1 5.500,66.500 Z"/></clipPath></defs>
+<g id="s2left-print" class="f-cond">
+<g class="piece-bg-layer" clip-path="url(#s2left-clip)" data-sheet="s2" data-piece="side" data-rx="3.00" data-ry="6.50" data-rw="244.00" data-rh="116.80">
+<rect x="3.00" y="66.50" width="145.42" height="26.80" class="bg-base"/>
+<g class="bg-image-slot"></g>
+<rect x="3.00" y="66.50" width="145.42" height="26.80" class="bg-veil"/>
+<g class="cad-grid-lines">
+<path d="M5,66.5V93.3 M10,66.5V93.3 M15,66.5V93.3 M20,66.5V93.3 M30,66.5V93.3 M35,66.5V93.3 M40,66.5V93.3 M45,66.5V93.3 M55,66.5V93.3 M60,66.5V93.3 M65,66.5V93.3 M70,66.5V93.3 M80,66.5V93.3 M85,66.5V93.3 M90,66.5V93.3 M95,66.5V93.3 M105,66.5V93.3 M110,66.5V93.3 M115,66.5V93.3 M120,66.5V93.3 M130,66.5V93.3 M135,66.5V93.3 M140,66.5V93.3 M145,66.5V93.3 M3.0,65H148.4 M3.0,70H148.4 M3.0,80H148.4 M3.0,85H148.4 M3.0,90H148.4 M3.0,95H148.4" class="grid-min"/>
+<path d="M0,66.5V93.3 M25,66.5V93.3 M50,66.5V93.3 M75,66.5V93.3 M100,66.5V93.3 M125,66.5V93.3 M150,66.5V93.3 M3.0,75H148.4" class="grid-maj"/>
+</g></g>
+<g id="s2left-fg" class="piece-fg-layer">
+<rect x="5.20" y="68.70" width="141.02" height="22.40" rx="0.6" class="sc-rule" stroke-width="0.16"/>
+<g class="tro-only" id="s2left-tro-band"><rect x="5.20" y="68.70" width="141.02" height="22.40" rx="0.55" class="tro-ink" stroke-width="0.28"/></g>
+<rect x="5.40" y="69.40" width="15.04" height="21.00" rx="0.6" class="box-alt"/><text x="12.92" y="73.60" class="f-cond warn-c" font-size="1.95" font-weight="700" text-anchor="middle">CNR-BL</text><text x="12.92" y="78.30" class="f-cond ink" font-size="1.90" font-weight="700" text-anchor="middle">REAR SEAM</text><text x="12.92" y="83.00" class="f-cond pat-c" font-size="1.78" font-weight="700" text-anchor="middle">SEAM ──►</text><text x="12.92" y="87.60" class="f-cond muted" font-size="1.65" font-weight="700" text-anchor="middle">R10.7 · 90°</text><line x1="21.24" y1="68.70" x2="21.24" y2="91.10" class="seam-tick"/>
+<rect x="22.39" y="69.40" width="59.00" height="21.00" rx="0.65" class="box-bg"/>
+<text x="23.59" y="72.05" class="step-c" font-size="1.92" font-weight="700">LEFT-01 // K1–K8 KNOB MATRIX</text>
+<line x1="22.39" y1="72.85" x2="81.39" y2="72.85" class="sc-rule" stroke-width="0.12"/>
+<text x="23.49" y="74.78" class="f-cond warn-c" font-size="1.66" font-weight="700">K1</text>
+<text x="28.19" y="74.78" class="f-cond ink" font-size="1.68" font-weight="700">Vol 0–127</text>
+<text x="45.79" y="74.78" class="f-cond step-c" font-size="1.68" font-weight="700">Velocity</text>
+<text x="63.39" y="74.78" class="f-cond pat-c" font-size="1.68" font-weight="700">BPM 40–200</text>
+<text x="23.49" y="76.86" class="f-cond warn-c" font-size="1.66" font-weight="700">K2</text>
+<text x="28.19" y="76.86" class="f-cond ink" font-size="1.68" font-weight="700">Gate 1/8–4</text>
+<text x="45.79" y="76.86" class="f-cond step-c" font-size="1.68" font-weight="700">Len 1/8–32</text>
+<text x="63.39" y="76.86" class="f-cond pat-c" font-size="1.68" font-weight="700">Swing 50–75</text>
+<text x="23.49" y="78.94" class="f-cond warn-c" font-size="1.66" font-weight="700">K3</text>
+<text x="28.19" y="78.94" class="f-cond ink" font-size="1.68" font-weight="700">Base Note</text>
+<text x="45.79" y="78.94" class="f-cond step-c" font-size="1.68" font-weight="700">Note/Chord</text>
+<text x="63.39" y="78.94" class="f-cond pat-c" font-size="1.68" font-weight="700">Trk Root</text>
+<text x="23.49" y="81.02" class="f-cond warn-c" font-size="1.66" font-weight="700">K4</text>
+<text x="28.19" y="81.02" class="f-cond ink" font-size="1.68" font-weight="700">Quantize</text>
+<text x="45.79" y="81.02" class="f-cond step-c" font-size="1.68" font-weight="700">Micro ±48</text>
+<text x="63.39" y="81.02" class="f-cond pat-c" font-size="1.68" font-weight="700">Trk Scale</text>
+<text x="23.49" y="83.10" class="f-cond warn-c" font-size="1.66" font-weight="700">K5</text>
+<text x="28.19" y="83.10" class="f-cond ink" font-size="1.68" font-weight="700">Prob %</text>
+<text x="45.79" y="83.10" class="f-cond step-c" font-size="1.68" font-weight="700">Step Prob</text>
+<text x="63.39" y="83.10" class="f-cond pat-c" font-size="1.68" font-weight="700">—</text>
+<text x="23.49" y="85.18" class="f-cond warn-c" font-size="1.66" font-weight="700">K6</text>
+<text x="28.19" y="85.18" class="f-cond ink" font-size="1.68" font-weight="700">Ratch Rate</text>
+<text x="45.79" y="85.18" class="f-cond step-c" font-size="1.68" font-weight="700">Stp Ratch</text>
+<text x="63.39" y="85.18" class="f-cond pat-c" font-size="1.68" font-weight="700">Trk Colour</text>
+<text x="23.49" y="87.26" class="f-cond warn-c" font-size="1.66" font-weight="700">K7</text>
+<text x="28.19" y="87.26" class="f-cond ink" font-size="1.68" font-weight="700">Steps 1–64</text>
+<text x="45.79" y="87.26" class="f-cond step-c" font-size="1.68" font-weight="700">Trig Cond</text>
+<text x="63.39" y="87.26" class="f-cond pat-c" font-size="1.68" font-weight="700">MIDI Ch</text>
+<text x="23.49" y="89.34" class="f-cond warn-c" font-size="1.66" font-weight="700">K8</text>
+<text x="28.19" y="89.34" class="f-cond ink" font-size="1.68" font-weight="700">Grid Rate</text>
+<text x="45.79" y="89.34" class="f-cond step-c" font-size="1.68" font-weight="700">Step Tie</text>
+<text x="63.39" y="89.34" class="f-cond pat-c" font-size="1.68" font-weight="700">Sync ±120ms</text>
+<rect x="82.54" y="69.40" width="62.98" height="21.00" rx="0.65" class="box-bg"/>
+<text x="83.74" y="72.05" class="pat-c" font-size="1.92" font-weight="700">LEFT-02 // TRIG, GATE &amp; RATCHET</text>
+<line x1="82.54" y1="72.85" x2="145.52" y2="72.85" class="sc-rule" stroke-width="0.12"/>
+<text x="83.64" y="75.52" class="f-cond step-c" font-size="1.76" font-weight="700">TRIG 1–6:</text>
+<text x="97.54" y="75.52" class="f-cond ink" font-size="1.80" font-weight="700">P1:ALW · P2-3: 1:2, 2:2 · P4-6: 1..3:3</text>
+<text x="83.64" y="78.77" class="f-cond step-c" font-size="1.76" font-weight="700">TRIG 7–13:</text>
+<text x="97.54" y="78.77" class="f-cond ink" font-size="1.80" font-weight="700">P7-10: 1..4:4 · P11:1ST · P12:FILL · 13:!F</text>
+<text x="83.64" y="82.02" class="f-cond step-c" font-size="1.76" font-weight="700">GATE [K2]:</text>
+<text x="97.54" y="82.02" class="f-cond ink" font-size="1.80" font-weight="700">1/8..7/8, 1..4S  ·  Step Len: 1..32S</text>
+<text x="83.64" y="85.27" class="f-cond step-c" font-size="1.76" font-weight="700">RATCH [K6]:</text>
+<text x="97.54" y="85.27" class="f-cond ink" font-size="1.80" font-weight="700">AUTO(split) · 1/8 · 1/16 · 16T · 32 · 64</text>
+<text x="83.64" y="88.52" class="f-cond step-c" font-size="1.76" font-weight="700">GRID [K8]:</text>
+<text x="97.54" y="88.52" class="f-cond ink" font-size="1.80" font-weight="700">Keeps timing (dim=off-grid) · ⇧+K8 Speed</text>
+</g>
+</g>
+<g id="s2left-cut"><path id="s2left-cut-outer" d="M5.500,68.000 L145.925,68.000 A1.000,1.000 0 0 1 146.925,69.000 L146.925,90.800 A1.000,1.000 0 0 1 145.925,91.800 L5.500,91.800 A1.000,1.000 0 0 1 4.500,90.800 L4.500,69.000 A1.000,1.000 0 0 1 5.500,68.000 Z" class="cut-line"/></g>
+<defs><clipPath id="s2io1-clip"><path d="M156.200,72.300 L193.800,72.300 A5.400,5.400 0 0 1 199.200,77.700 L199.200,82.100 A5.400,5.400 0 0 1 193.800,87.500 L156.200,87.500 A5.400,5.400 0 0 1 150.800,82.100 L150.800,77.700 A5.400,5.400 0 0 1 156.200,72.300 Z"/></clipPath></defs>
+<g id="s2io1-print" class="f-cond">
+<g class="piece-bg-layer" clip-path="url(#s2io1-clip)" data-sheet="s2" data-piece="side" data-rx="3.00" data-ry="6.50" data-rw="244.00" data-rh="116.80">
+<rect x="150.80" y="72.30" width="48.40" height="15.20" class="bg-base"/>
+<g class="bg-image-slot"></g>
+<rect x="150.80" y="72.30" width="48.40" height="15.20" class="bg-veil"/>
+<g class="cad-grid-lines">
+<path d="M155,72.3V87.5 M160,72.3V87.5 M165,72.3V87.5 M170,72.3V87.5 M180,72.3V87.5 M185,72.3V87.5 M190,72.3V87.5 M195,72.3V87.5 M150.8,70H199.2 M150.8,80H199.2 M150.8,85H199.2 M150.8,90H199.2" class="grid-min"/>
+<path d="M150,72.3V87.5 M175,72.3V87.5 M200,72.3V87.5 M150.8,75H199.2" class="grid-maj"/>
+</g></g>
+<g id="s2io1-fg" class="piece-fg-layer">
+<rect x="152.45" y="73.95" width="45.10" height="11.90" rx="3.80" class="sc-rule" stroke-width="0.14"/>
+<rect x="152.45" y="73.95" width="45.10" height="11.90" rx="3.80" class="tro-only tro-ink" stroke-width="0.28"/>
+<text x="159.09" y="77.45" class="f-cond ink" font-size="2.10" font-weight="700" text-anchor="middle">POWER</text>
+<text x="169.55" y="76.95" class="f-cond warn-c" font-size="1.85" font-weight="700" text-anchor="middle">CHG</text>
+<text x="177.83" y="76.68" class="f-cond pat-c" font-size="1.95" font-weight="700" text-anchor="middle">USB-C</text>
+<text x="191.76" y="76.68" class="f-cond step-c" font-size="1.95" font-weight="700" text-anchor="middle">MIDI</text>
+</g>
+<g id="s2io1-hole-mask" class="cutout-preview-mask no-print"><path d="M155.690,79.280 L162.490,79.280 A1.500,1.500 0 0 1 163.990,80.780 L163.990,83.480 A1.500,1.500 0 0 1 162.490,84.980 L155.690,84.980 A1.500,1.500 0 0 1 154.190,83.480 L154.190,80.780 A1.500,1.500 0 0 1 155.690,79.280 Z"/><circle cx="169.550" cy="79.430" r="1.150"/><path d="M174.430,77.740 L181.230,77.740 A1.650,1.650 0 0 1 182.880,79.390 L182.880,80.490 A1.650,1.650 0 0 1 181.230,82.140 L174.430,82.140 A1.650,1.650 0 0 1 172.780,80.490 L172.780,79.390 A1.650,1.650 0 0 1 174.430,77.740 Z"/><circle cx="192.310" cy="80.830" r="3.150"/></g>
+</g>
+<g id="s2io1-cut">
+<path id="s2io1-cut-outer" d="M156.200,73.500 L193.800,73.500 A4.200,4.200 0 0 1 198.000,77.700 L198.000,82.100 A4.200,4.200 0 0 1 193.800,86.300 L156.200,86.300 A4.200,4.200 0 0 1 152.000,82.100 L152.000,77.700 A4.200,4.200 0 0 1 156.200,73.500 Z" class="cut-line"/>
+<path id="s2io1-cut-pwr" d="M155.690,79.280 L162.490,79.280 A1.500,1.500 0 0 1 163.990,80.780 L163.990,83.480 A1.500,1.500 0 0 1 162.490,84.980 L155.690,84.980 A1.500,1.500 0 0 1 154.190,83.480 L154.190,80.780 A1.500,1.500 0 0 1 155.690,79.280 Z" class="cut-line"/>
+<circle id="s2io1-cut-led" cx="169.550" cy="79.430" r="1.150" class="cut-line"/>
+<path id="s2io1-cut-usb" d="M174.430,77.740 L181.230,77.740 A1.650,1.650 0 0 1 182.880,79.390 L182.880,80.490 A1.650,1.650 0 0 1 181.230,82.140 L174.430,82.140 A1.650,1.650 0 0 1 172.780,80.490 L172.780,79.390 A1.650,1.650 0 0 1 174.430,77.740 Z" class="cut-line"/>
+<circle id="s2io1-cut-midi" cx="192.310" cy="80.830" r="3.150" class="cut-line"/>
+</g>
+<defs><clipPath id="s2io2-clip"><path d="M205.700,72.300 L243.300,72.300 A5.400,5.400 0 0 1 248.700,77.700 L248.700,82.100 A5.400,5.400 0 0 1 243.300,87.500 L205.700,87.500 A5.400,5.400 0 0 1 200.300,82.100 L200.300,77.700 A5.400,5.400 0 0 1 205.700,72.300 Z"/></clipPath></defs>
+<g id="s2io2-print" class="f-cond">
+<g class="piece-bg-layer" clip-path="url(#s2io2-clip)" data-sheet="s2" data-piece="side" data-rx="3.00" data-ry="6.50" data-rw="244.00" data-rh="116.80">
+<rect x="200.30" y="72.30" width="48.40" height="15.20" class="bg-base"/>
+<g class="bg-image-slot"></g>
+<rect x="200.30" y="72.30" width="48.40" height="15.20" class="bg-veil"/>
+<g class="cad-grid-lines">
+<path d="M205,72.3V87.5 M210,72.3V87.5 M215,72.3V87.5 M220,72.3V87.5 M230,72.3V87.5 M235,72.3V87.5 M240,72.3V87.5 M245,72.3V87.5 M200.3,70H248.7 M200.3,80H248.7 M200.3,85H248.7 M200.3,90H248.7" class="grid-min"/>
+<path d="M200,72.3V87.5 M225,72.3V87.5 M250,72.3V87.5 M200.3,75H248.7" class="grid-maj"/>
+</g></g>
+<g id="s2io2-fg" class="piece-fg-layer">
+<rect x="201.95" y="73.95" width="45.10" height="11.90" rx="3.80" class="sc-rule" stroke-width="0.14"/>
+<rect x="201.95" y="73.95" width="45.10" height="11.90" rx="3.80" class="tro-only tro-ink" stroke-width="0.28"/>
+<text x="208.59" y="77.45" class="f-cond ink" font-size="2.10" font-weight="700" text-anchor="middle">POWER</text>
+<text x="219.05" y="76.95" class="f-cond warn-c" font-size="1.85" font-weight="700" text-anchor="middle">CHG</text>
+<text x="227.33" y="76.68" class="f-cond pat-c" font-size="1.95" font-weight="700" text-anchor="middle">USB-C</text>
+<text x="241.26" y="76.68" class="f-cond step-c" font-size="1.95" font-weight="700" text-anchor="middle">MIDI</text>
+</g>
+<g id="s2io2-hole-mask" class="cutout-preview-mask no-print"><path d="M205.190,79.280 L211.990,79.280 A1.500,1.500 0 0 1 213.490,80.780 L213.490,83.480 A1.500,1.500 0 0 1 211.990,84.980 L205.190,84.980 A1.500,1.500 0 0 1 203.690,83.480 L203.690,80.780 A1.500,1.500 0 0 1 205.190,79.280 Z"/><circle cx="219.050" cy="79.430" r="1.150"/><path d="M223.930,77.740 L230.730,77.740 A1.650,1.650 0 0 1 232.380,79.390 L232.380,80.490 A1.650,1.650 0 0 1 230.730,82.140 L223.930,82.140 A1.650,1.650 0 0 1 222.280,80.490 L222.280,79.390 A1.650,1.650 0 0 1 223.930,77.740 Z"/><circle cx="241.810" cy="80.830" r="3.150"/></g>
+</g>
+<g id="s2io2-cut">
+<path id="s2io2-cut-outer" d="M205.700,73.500 L243.300,73.500 A4.200,4.200 0 0 1 247.500,77.700 L247.500,82.100 A4.200,4.200 0 0 1 243.300,86.300 L205.700,86.300 A4.200,4.200 0 0 1 201.500,82.100 L201.500,77.700 A4.200,4.200 0 0 1 205.700,73.500 Z" class="cut-line"/>
+<path id="s2io2-cut-pwr" d="M205.190,79.280 L211.990,79.280 A1.500,1.500 0 0 1 213.490,80.780 L213.490,83.480 A1.500,1.500 0 0 1 211.990,84.980 L205.190,84.980 A1.500,1.500 0 0 1 203.690,83.480 L203.690,80.780 A1.500,1.500 0 0 1 205.190,79.280 Z" class="cut-line"/>
+<circle id="s2io2-cut-led" cx="219.050" cy="79.430" r="1.150" class="cut-line"/>
+<path id="s2io2-cut-usb" d="M223.930,77.740 L230.730,77.740 A1.650,1.650 0 0 1 232.380,79.390 L232.380,80.490 A1.650,1.650 0 0 1 230.730,82.140 L223.930,82.140 A1.650,1.650 0 0 1 222.280,80.490 L222.280,79.390 A1.650,1.650 0 0 1 223.930,77.740 Z" class="cut-line"/>
+<circle id="s2io2-cut-midi" cx="241.810" cy="80.830" r="3.150" class="cut-line"/>
+</g>
+<defs><clipPath id="s2right-clip"><path d="M5.500,96.500 L145.925,96.500 A2.500,2.500 0 0 1 148.425,99.000 L148.425,120.800 A2.500,2.500 0 0 1 145.925,123.300 L5.500,123.300 A2.500,2.500 0 0 1 3.000,120.800 L3.000,99.000 A2.500,2.500 0 0 1 5.500,96.500 Z"/></clipPath></defs>
+<g id="s2right-print" class="f-cond">
+<g class="piece-bg-layer" clip-path="url(#s2right-clip)" data-sheet="s2" data-piece="side" data-rx="3.00" data-ry="6.50" data-rw="244.00" data-rh="116.80">
+<rect x="3.00" y="96.50" width="145.42" height="26.80" class="bg-base"/>
+<g class="bg-image-slot"></g>
+<rect x="3.00" y="96.50" width="145.42" height="26.80" class="bg-veil"/>
+<g class="cad-grid-lines">
+<path d="M5,96.5V123.3 M10,96.5V123.3 M15,96.5V123.3 M20,96.5V123.3 M30,96.5V123.3 M35,96.5V123.3 M40,96.5V123.3 M45,96.5V123.3 M55,96.5V123.3 M60,96.5V123.3 M65,96.5V123.3 M70,96.5V123.3 M80,96.5V123.3 M85,96.5V123.3 M90,96.5V123.3 M95,96.5V123.3 M105,96.5V123.3 M110,96.5V123.3 M115,96.5V123.3 M120,96.5V123.3 M130,96.5V123.3 M135,96.5V123.3 M140,96.5V123.3 M145,96.5V123.3 M3.0,95H148.4 M3.0,105H148.4 M3.0,110H148.4 M3.0,115H148.4 M3.0,120H148.4" class="grid-min"/>
+<path d="M0,96.5V123.3 M25,96.5V123.3 M50,96.5V123.3 M75,96.5V123.3 M100,96.5V123.3 M125,96.5V123.3 M150,96.5V123.3 M3.0,100H148.4 M3.0,125H148.4" class="grid-maj"/>
+</g></g>
+<g id="s2right-fg" class="piece-fg-layer">
+<rect x="5.20" y="98.70" width="141.02" height="22.40" rx="0.6" class="sc-rule" stroke-width="0.16"/>
+<g class="tro-only" id="s2right-tro-band"><rect x="5.20" y="98.70" width="141.02" height="22.40" rx="0.55" class="tro-ink" stroke-width="0.28"/></g>
+<rect x="5.40" y="99.40" width="15.04" height="21.00" rx="0.6" class="box-alt"/><text x="12.92" y="103.60" class="f-cond warn-c" font-size="1.95" font-weight="700" text-anchor="middle">CNR-FR</text><text x="12.92" y="108.30" class="f-cond ink" font-size="1.90" font-weight="700" text-anchor="middle">FRONT SEAM</text><text x="12.92" y="113.00" class="f-cond step-c" font-size="1.78" font-weight="700" text-anchor="middle">STOP×2=0</text><text x="12.92" y="117.60" class="f-cond muted" font-size="1.65" font-weight="700" text-anchor="middle">R10.7 · 90°</text><line x1="21.24" y1="98.70" x2="21.24" y2="121.10" class="seam-tick"/>
+<rect x="22.39" y="99.40" width="59.50" height="21.00" rx="0.65" class="box-bg"/>
+<text x="23.59" y="102.05" class="pat-c" font-size="1.92" font-weight="700">RIGHT-01 // ROOTS &amp; SCALES [P1–12]</text>
+<line x1="22.39" y1="102.85" x2="81.89" y2="102.85" class="sc-rule" stroke-width="0.12"/>
+<text x="23.59" y="105.15" class="f-cond ink" font-size="1.75" font-weight="700">P01: C · Chromatic</text>
+<text x="52.59" y="105.15" class="f-cond ink" font-size="1.75" font-weight="700">P07: F# · Mixolydian</text>
+<text x="23.59" y="107.53" class="f-cond ink" font-size="1.75" font-weight="700">P02: C# · Major</text>
+<text x="52.59" y="107.53" class="f-cond ink" font-size="1.75" font-weight="700">P08: G · Locrian</text>
+<text x="23.59" y="109.91" class="f-cond ink" font-size="1.75" font-weight="700">P03: D · Nat Minor</text>
+<text x="52.59" y="109.91" class="f-cond ink" font-size="1.75" font-weight="700">P09: G# · Harm Minor</text>
+<text x="23.59" y="112.29" class="f-cond ink" font-size="1.75" font-weight="700">P04: D# · Dorian</text>
+<text x="52.59" y="112.29" class="f-cond ink" font-size="1.75" font-weight="700">P10: A · Pent Major</text>
+<text x="23.59" y="114.67" class="f-cond ink" font-size="1.75" font-weight="700">P05: E · Phrygian</text>
+<text x="52.59" y="114.67" class="f-cond ink" font-size="1.75" font-weight="700">P11: A# · Pent Minor</text>
+<text x="23.59" y="117.05" class="f-cond ink" font-size="1.75" font-weight="700">P06: F · Lydian</text>
+<text x="52.59" y="117.05" class="f-cond ink" font-size="1.75" font-weight="700">P12: B · Blues</text>
+<text x="52.14" y="119.38" class="f-cond warn-c" font-size="1.58" font-weight="700" text-anchor="middle">0 LIT = FOLLOW  ·  BANK K3/4 = TRK  ·  ⇧+K3/4 = GLOBAL</text>
+<rect x="83.04" y="99.40" width="62.48" height="21.00" rx="0.65" class="box-bg"/>
+<text x="84.24" y="102.05" class="step-c" font-size="1.92" font-weight="700">RIGHT-02 // LED READOUTS &amp; CLOCK</text>
+<line x1="83.04" y1="102.85" x2="145.52" y2="102.85" class="sc-rule" stroke-width="0.12"/>
+<text x="84.14" y="105.52" class="f-cond pat-c" font-size="1.76" font-weight="700">BAR LEDS:</text>
+<text x="97.84" y="105.52" class="f-cond ink" font-size="1.80" font-weight="700">Vol / Vel / Prob / Qnt / BPM: P1→16</text>
+<text x="84.14" y="108.77" class="f-cond pat-c" font-size="1.76" font-weight="700">SIGNED:</text>
+<text x="97.84" y="108.77" class="f-cond ink" font-size="1.80" font-weight="700">Micro &amp; Sync: P8..1 (−) · P9..16 (+)</text>
+<text x="84.14" y="112.02" class="f-cond pat-c" font-size="1.76" font-weight="700">NOTE KEY:</text>
+<text x="97.84" y="112.02" class="f-cond ink" font-size="1.80" font-weight="700">P1–12 = C..B Root  ·  P13–16 = Octave</text>
+<text x="84.14" y="115.27" class="f-cond pat-c" font-size="1.76" font-weight="700">EXT SYNC:</text>
+<text x="97.84" y="115.27" class="f-cond ink" font-size="1.80" font-weight="700">P15 On = 24 PPQN  ·  STOP×2 = SPP 0</text>
+<text x="84.14" y="118.52" class="f-cond pat-c" font-size="1.76" font-weight="700">SYNC MS:</text>
+<text x="97.84" y="118.52" class="f-cond ink" font-size="1.80" font-weight="700">BANK K8: −120..+120ms (Master/Slave)</text>
+</g>
+</g>
+<g id="s2right-cut"><path id="s2right-cut-outer" d="M5.500,98.000 L145.925,98.000 A1.000,1.000 0 0 1 146.925,99.000 L146.925,120.800 A1.000,1.000 0 0 1 145.925,121.800 L5.500,121.800 A1.000,1.000 0 0 1 4.500,120.800 L4.500,99.000 A1.000,1.000 0 0 1 5.500,98.000 Z" class="cut-line"/></g>
+<g class="f-cond sheet-ruler" transform="translate(4.50,128.00)">
+<rect x="0" y="0" width="104" height="23.8" rx="0.8" class="box-bg"/>
+<text x="2.0" y="3.35" class="step-c non-tro" font-size="1.92" font-weight="700">SCALE CHECK: 100.00 MM VERNIER</text>
+<g class="tro-only"><defs><mask id="s2vr-vr-slit" maskUnits="userSpaceOnUse" x="0.00" y="0.38" width="68.00" height="4.30"><rect x="0.00" y="0.38" width="68.00" height="4.30" fill="#ffffff"/><line x1="2.00" y1="2.63" x2="66.00" y2="2.63" stroke="#000000" stroke-width="0.30"/></mask></defs><text x="2.00" y="3.35" mask="url(#s2vr-vr-slit)" class="tro-fill f-cond" font-size="2.05" font-weight="900" letter-spacing="0.28" text-anchor="start">TECH READOUT: WHM-925 // 100 MM</text><text x="102.0" y="3.20" class="tro-fill f-cond" font-size="1.58" font-weight="700" text-anchor="end">CLASSIFIED</text></g>
+<line x1="2" y1="5.0" x2="102" y2="5.0" class="sc-rule-hi" stroke-width="0.22"/>
+<g class="tro-only">
+<rect x="2" y="4.25" width="100" height="0.75" class="tro-ink" stroke-width="0.14"/>
+<rect x="2" y="4.25" width="10" height="0.75" class="tro-fill"/>
+<rect x="22" y="4.25" width="10" height="0.75" class="tro-fill"/>
+<rect x="42" y="4.25" width="10" height="0.75" class="tro-fill"/>
+<rect x="62" y="4.25" width="10" height="0.75" class="tro-fill"/>
+<rect x="82" y="4.25" width="10" height="0.75" class="tro-fill"/>
+</g>
+<text x="2" y="10.65" class="ink" font-size="1.65" font-weight="700" text-anchor="middle">0</text>
+<text x="12" y="10.65" class="ink" font-size="1.65" font-weight="700" text-anchor="middle">10</text>
+<text x="22" y="10.65" class="ink" font-size="1.65" font-weight="700" text-anchor="middle">20</text>
+<text x="32" y="10.65" class="ink" font-size="1.65" font-weight="700" text-anchor="middle">30</text>
+<text x="42" y="10.65" class="ink" font-size="1.65" font-weight="700" text-anchor="middle">40</text>
+<text x="52" y="10.65" class="ink" font-size="1.65" font-weight="700" text-anchor="middle">50</text>
+<text x="62" y="10.65" class="ink" font-size="1.65" font-weight="700" text-anchor="middle">60</text>
+<text x="72" y="10.65" class="ink" font-size="1.65" font-weight="700" text-anchor="middle">70</text>
+<text x="82" y="10.65" class="ink" font-size="1.65" font-weight="700" text-anchor="middle">80</text>
+<text x="92" y="10.65" class="ink" font-size="1.65" font-weight="700" text-anchor="middle">90</text>
+<text x="102" y="10.65" class="ink" font-size="1.65" font-weight="700" text-anchor="middle">100</text>
+<path d="M2,5.0V8.2 M3,5.0V6.2 M4,5.0V6.2 M5,5.0V6.2 M6,5.0V6.2 M7,5.0V7.1 M8,5.0V6.2 M9,5.0V6.2 M10,5.0V6.2 M11,5.0V6.2 M12,5.0V8.2 M13,5.0V6.2 M14,5.0V6.2 M15,5.0V6.2 M16,5.0V6.2 M17,5.0V7.1 M18,5.0V6.2 M19,5.0V6.2 M20,5.0V6.2 M21,5.0V6.2 M22,5.0V8.2 M23,5.0V6.2 M24,5.0V6.2 M25,5.0V6.2 M26,5.0V6.2 M27,5.0V7.1 M28,5.0V6.2 M29,5.0V6.2 M30,5.0V6.2 M31,5.0V6.2 M32,5.0V8.2 M33,5.0V6.2 M34,5.0V6.2 M35,5.0V6.2 M36,5.0V6.2 M37,5.0V7.1 M38,5.0V6.2 M39,5.0V6.2 M40,5.0V6.2 M41,5.0V6.2 M42,5.0V8.2 M43,5.0V6.2 M44,5.0V6.2 M45,5.0V6.2 M46,5.0V6.2 M47,5.0V7.1 M48,5.0V6.2 M49,5.0V6.2 M50,5.0V6.2 M51,5.0V6.2 M52,5.0V8.2 M53,5.0V6.2 M54,5.0V6.2 M55,5.0V6.2 M56,5.0V6.2 M57,5.0V7.1 M58,5.0V6.2 M59,5.0V6.2 M60,5.0V6.2 M61,5.0V6.2 M62,5.0V8.2 M63,5.0V6.2 M64,5.0V6.2 M65,5.0V6.2 M66,5.0V6.2 M67,5.0V7.1 M68,5.0V6.2 M69,5.0V6.2 M70,5.0V6.2 M71,5.0V6.2 M72,5.0V8.2 M73,5.0V6.2 M74,5.0V6.2 M75,5.0V6.2 M76,5.0V6.2 M77,5.0V7.1 M78,5.0V6.2 M79,5.0V6.2 M80,5.0V6.2 M81,5.0V6.2 M82,5.0V8.2 M83,5.0V6.2 M84,5.0V6.2 M85,5.0V6.2 M86,5.0V6.2 M87,5.0V7.1 M88,5.0V6.2 M89,5.0V6.2 M90,5.0V6.2 M91,5.0V6.2 M92,5.0V8.2 M93,5.0V6.2 M94,5.0V6.2 M95,5.0V6.2 M96,5.0V6.2 M97,5.0V7.1 M98,5.0V6.2 M99,5.0V6.2 M100,5.0V6.2 M101,5.0V6.2 M102,5.0V8.2" class="sc-rule-hi" stroke-width="0.16"/>
+<g class="non-tro">
+<line x1="0" y1="11.8" x2="104" y2="11.8" class="sc-rule" stroke-width="0.14"/>
+<line x1="52.0" y1="11.8" x2="52.0" y2="23.8" class="sc-rule" stroke-width="0.14"/>
+<text x="2.0" y="15.0" class="pat-c" font-size="1.78" font-weight="700">360° PINWHEEL WRAP:</text>
+<text x="2.0" y="18.6" class="ink" font-size="1.72" font-weight="700">1. Top Deck (flush inside rim)</text>
+<text x="2.0" y="22.1" class="ink" font-size="1.72" font-weight="700">2. Rear → Left (butt at SEAM)</text>
+<text x="53.8" y="15.0" class="ink" font-size="1.72" font-weight="700">3. Front → Right (butt at SEAM)</text>
+<text x="53.8" y="18.6" class="ink" font-size="1.72" font-weight="700">4. I/O Insert (inside rear well)</text>
+<text x="53.8" y="22.1" class="warn-c" font-size="1.66" font-weight="700">1:1 SCALE · US LETTER 8.5×11</text>
+</g>
+<g class="tro-only f-cond">
+<line x1="0" y1="11.8" x2="104" y2="11.8" class="tro-ink" stroke-width="0.20"/>
+<line x1="54.0" y1="11.8" x2="54.0" y2="23.8" class="tro-ink" stroke-width="0.20"/>
+<text x="2.0" y="15.0" class="tro-fill" font-size="1.70" font-weight="700">Engine: Jieli AC636N (960 PPQN)</text>
+<text x="2.0" y="18.6" class="tro-fill" font-size="1.70" font-weight="700">Chassis: Star Corp SMC-100 · 16T/64S</text>
+<text x="2.0" y="22.1" class="tro-fill" font-size="1.70" font-weight="700">Mfg: M-VAVE / Custom FW ≥925</text>
+<text x="55.8" y="15.0" class="tro-fill" font-size="1.75" font-weight="900">STAR CORP WHM-925 PROTOTYPE</text>
+<text x="55.8" y="18.6" class="tro-fill" font-size="1.68" font-weight="700">1:1 MM GENERAL ARRANGEMENT</text>
+<text x="55.8" y="22.1" class="tro-fill" font-size="1.68" font-weight="700">WRAP: 1.Top · 2.R→L→F→R · 3.I/O</text>
+</g>
+</g>
+<g class="align-layer"><rect x="0" y="0" width="250.000" height="165.000" class="align-frame"/></g>
+</svg>

@@ -1,0 +1,94 @@
+Copyright (c) 2026 alenauta
+
+This software and hardware documentation are released under the MIT License;
+see LICENSE for full terms.
+
+Disclaimer of Warranty & Assumption of Risk
+-------------------------------------------
+THIS SOFTWARE, FIRMWARE, HARDWARE DESIGN, AND DOCUMENTATION ARE PROVIDED
+"AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+
+Flashing custom or modified firmware, sending SysEx/BLE configuration commands,
+or connecting custom recovery hardware to your device is done ENTIRELY AT YOUR
+OWN RISK. Doing so may:
+  - Void your manufacturer warranty;
+  - Render your device temporarily or permanently unbootable ("bricked");
+  - Erase per-device factory pad calibration data (USRTRIM at 0x7E000), user
+    presets (USRFLASH at 0x77000), or Bluetooth/MAC configuration (BTIF /
+    key_mac);
+  - Cause irreversible hardware changes if eFuse commands in third-party
+    mask-ROM utilities are ever executed.
+
+Never flash any firmware without first taking and verifying a complete 512 KB
+flash backup of your own unit and verifying a working recovery path. In no
+event shall the author(s) or copyright holders be liable for any claim,
+damages, hardware failure, data loss, or other liability arising from the use
+of this repository.
+
+Independent Project & Non-Affiliation
+-------------------------------------
+This is an independent, non-commercial personal hobby and interoperability
+project. It is not affiliated with, endorsed by, sponsored by, or supported by:
+  - M-VAVE / Sinco Audio / Cuvave (Guangzhou Sinco Precision Electric Co.,
+    Ltd.);
+  - JieLi (Zhuhai Jieli Technology Co., Ltd. / 珠海市杰理科技股份有限公司); or
+  - Any employer of the author(s).
+
+All clean-room C drivers, MIDI/SysEx protocol descriptions, and hardware pin
+maps in this repository were produced independently for hardware
+interoperability, educational, and personal customization purposes.
+
+What Is Not in This Repository
+------------------------------
+1. No M-VAVE / Sinco firmware, keys, or software binaries:
+   Official firmware update packages (`SMC-PAD_005.fwsc`),
+   device/image keys, vendor configuration and OTA applications (`Midi Suite`,
+   `CubeSuite`, `SincoOTA`), vendor manuals (`SMC-PAD_ZE.pdf`), and per-device
+   flash dumps are NOT included or distributed in this repository. Users
+   building custom firmware supply their own downloaded stock `.fwsc` locally.
+
+2. No JieLi SDK source code or compiler toolchain binaries:
+   This repository does not redistribute Zhuhai Jieli Technology's SDK
+   (`fw-AC63_BT_SDK`), precompiled SDK libraries, or x86-64 compiler/post-build
+   binaries. `firmware/builder/setup_toolchain.py` fetches the publicly
+   published JieLi SDK and toolchain directly from upstream at build time, and
+   `firmware/sdk_overlay/apply.py` applies our clean-room C drivers, USB/BLE
+   MIDI stack, and sequencer code on top of a local working copy.
+
+3. Note on redistributing compiled `.ufw` / `.fwsc` firmware images:
+   A compiled firmware image links against libraries from JieLi's
+   `fw-AC63_BT_SDK` and, when packaged for stock SincoOTA compatibility via
+   `repack_oldchain.sh`, incorporates the user's stock second-stage bootloader
+   (`uboot.boot`) and RCSP OTA loader (`ota.bin`). Check the applicable
+   upstream license terms before redistributing prebuilt binary images.
+
+4. Note on USB VID:PID (`1209:0001`):
+   `firmware/sdk_overlay/apply.py` configures the USB device descriptor with
+   VID:PID `1209:0001` (the pid.codes open-source USB VID `0x1209` and its
+   reserved local-testing PID `0x0001`) so that vendor updater and editor
+   utilities do not mistake custom test builds for stock firmware. Per
+   https://pid.codes/1209/0001/, PID `0x0001` is reserved for local testing
+   only; if you distribute prebuilt firmware binaries publicly, allocate a
+   dedicated pid.codes PID or configure your own VID:PID.
+
+Community References & Acknowledgements
+---------------------------------------
+Upstream open-source projects and hardware documentation referenced by this
+project (none vendored in this repository):
+  - `Jieli-Tech/fw-AC63_BT_SDK` (https://github.com/Jieli-Tech/fw-AC63_BT_SDK)
+  - `kagaimiq/jielie` (https://github.com/kagaimiq/jielie)
+  - `kagaimiq/jl-misctools` (https://github.com/kagaimiq/jl-misctools)
+  - `kagaimiq/jl-uboot-tool` (https://github.com/kagaimiq/jl-uboot-tool)
+  - `ElectronicCats/jieli-ble-badge-research`
+    (https://github.com/ElectronicCats/jieli-ble-badge-research)
+
+Trademarks
+----------
+M-VAVE, Sinco, Cuvave, SMC-PAD, Midi Suite, CubeSuite, and SincoOTA are
+trademarks or product names of Guangzhou Sinco Precision Electric Co., Ltd.
+JieLi, AC636N, and BR25 are trademarks or product names of Zhuhai Jieli
+Technology Co., Ltd. Bluetooth is a registered trademark of Bluetooth SIG, Inc.
+MIDI is a trademark of the MIDI Association. BattleTech is a registered
+trademark of The Topps Company, Inc. All other trademarks and product names
+are the property of their respective owners and are used here solely for
+identification and interoperability description.

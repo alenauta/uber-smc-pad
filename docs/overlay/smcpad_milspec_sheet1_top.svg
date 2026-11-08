@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="250.00mm" height="165.00mm" viewBox="0 0 250.00 165.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<style class="theme-style">
+    .cut-line { fill: none; stroke: #ff0000; stroke-width: 0.12; stroke-linecap: round; stroke-linejoin: round; }
+    .align-frame { fill: none; stroke: #0066ff; stroke-width: 0.10; stroke-dasharray: 2.0 1.2; }
+    .sheet-paper-bg { fill: #ffffff; stroke: #cbd5e1; stroke-width: 0.16; }
+    .sheet-annotations text { fill: #334155 !important; }
+    .sheet-ruler .box-bg { fill: #ffffff !important; fill-opacity: 1 !important; stroke: #0f172a !important; }
+    .sheet-ruler .ink, .sheet-ruler .tro-fill, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c { fill: #0f172a !important; }
+    .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi, .sheet-ruler .tro-ink { stroke: #0f172a !important; }
+    .cutout-preview-mask { display: none; fill: #0b0e14; fill-opacity: 0.76; stroke: #64748b; stroke-width: 0.14; pointer-events: none; }
+    .seam-tick { fill: none; stroke: #FACC15; stroke-width: 0.20; stroke-dasharray: 0.9 0.7; }
+    .bg-base { fill: #13171D; }
+    .bg-veil { fill: #13171D; fill-opacity: 0; pointer-events: none; }
+    .panel-sub { fill: #171C24; }
+    .box-bg { fill: #1B222C; stroke: #4A5B73; stroke-width: 0.16; }
+    .box-alt { fill: #10141A; stroke: #4A5B73; stroke-width: 0.15; }
+    .grid-min { stroke: #1C232E; stroke-width: 0.07; fill: none; }
+    .grid-maj { stroke: #252F3D; stroke-width: 0.12; fill: none; }
+    .sc-trace { stroke: #2E3B4E; stroke-width: 0.18; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .sc-rule { stroke: #4A5B73; fill: none; }
+    .sc-rule-hi { stroke: #7C91AD; fill: none; }
+    .tro-ink { stroke: #ECF0F5; fill: none; stroke-linecap: square; stroke-linejoin: miter; }
+    .tro-fill { fill: #ECF0F5; }
+    .tro-paper { fill: #1B222C; stroke: #ECF0F5; }
+    .ink { fill: #ECF0F5; }
+    .muted { fill: #8C9BAE; }
+    .step-c { fill: #FF7A1A; }
+    .step-bg { fill: #FF7A1A; }
+    .step-fg { fill: #111317; }
+    .pat-c { fill: #38BDF8; }
+    .warn-c { fill: #FACC15; }
+    .warn-stroke { stroke: #FACC15; fill: none; }
+    .ok-c { fill: #34D399; }
+    .f-cond { font-family: "Roboto Condensed", "Avenir Next Condensed", "Bahnschrift", "Liberation Sans Narrow", "Arial Narrow", sans-serif; }
+    .f-mono { font-family: "Noto Sans Mono", "JetBrains Mono", "SF Mono", "DejaVu Sans Mono", "Liberation Mono", monospace; }
+    
+    .tro-only { display: none; }
+    .non-tro { display: inline; }
+    
+    </style>
+<rect x="0.08" y="0.08" width="249.84" height="164.84" class="sheet-paper-bg"/>
+<g class="sheet-annotations f-cond"><text x="3.0" y="4.4" class="muted" font-size="1.95" font-weight="700">AN/SMC-925 // SHEET 1 OF 2: MAIN CONTROL DECK (222.0 × 142.0 MM) — ALIGN FRAME: 250.00 × 165.00 MM</text><text x="247.0" y="4.4" class="muted" font-size="1.80" font-weight="700" text-anchor="end">1:1 MM SCALE · FW≥925</text></g>
+<defs><clipPath id="s1tp-bleed-clip"><path d="M23.000,10.000 L227.000,10.000 A10.500,10.500 0 0 1 237.500,20.500 L237.500,144.500 A10.500,10.500 0 0 1 227.000,155.000 L23.000,155.000 A10.500,10.500 0 0 1 12.500,144.500 L12.500,20.500 A10.500,10.500 0 0 1 23.000,10.000 Z"/></clipPath><pattern id="s1tp-haz-pat" width="2.4" height="2.4" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="1.1" height="2.4" class="warn-c" opacity="0.22"/></pattern></defs>
+<g id="s1tp-print" class="f-cond">
+<g class="piece-bg-layer" clip-path="url(#s1tp-bleed-clip)" data-sheet="s1" data-piece="top" data-rx="12.50" data-ry="10.00" data-rw="225.00" data-rh="145.00">
+<rect x="12.50" y="10.00" width="225.00" height="145.00" class="bg-base"/>
+<g class="bg-image-slot"></g>
+<rect x="12.50" y="10.00" width="225.00" height="145.00" class="bg-veil"/>
+<g class="cad-grid-lines">
+<path d="M10,10.0V155.0 M15,10.0V155.0 M20,10.0V155.0 M30,10.0V155.0 M35,10.0V155.0 M40,10.0V155.0 M45,10.0V155.0 M55,10.0V155.0 M60,10.0V155.0 M65,10.0V155.0 M70,10.0V155.0 M80,10.0V155.0 M85,10.0V155.0 M90,10.0V155.0 M95,10.0V155.0 M105,10.0V155.0 M110,10.0V155.0 M115,10.0V155.0 M120,10.0V155.0 M130,10.0V155.0 M135,10.0V155.0 M140,10.0V155.0 M145,10.0V155.0 M155,10.0V155.0 M160,10.0V155.0 M165,10.0V155.0 M170,10.0V155.0 M180,10.0V155.0 M185,10.0V155.0 M190,10.0V155.0 M195,10.0V155.0 M205,10.0V155.0 M210,10.0V155.0 M215,10.0V155.0 M220,10.0V155.0 M230,10.0V155.0 M235,10.0V155.0 M240,10.0V155.0 M12.5,10H237.5 M12.5,15H237.5 M12.5,20H237.5 M12.5,30H237.5 M12.5,35H237.5 M12.5,40H237.5 M12.5,45H237.5 M12.5,55H237.5 M12.5,60H237.5 M12.5,65H237.5 M12.5,70H237.5 M12.5,80H237.5 M12.5,85H237.5 M12.5,90H237.5 M12.5,95H237.5 M12.5,105H237.5 M12.5,110H237.5 M12.5,115H237.5 M12.5,120H237.5 M12.5,130H237.5 M12.5,135H237.5 M12.5,140H237.5 M12.5,145H237.5 M12.5,155H237.5" class="grid-min"/>
+<path d="M25,10.0V155.0 M50,10.0V155.0 M75,10.0V155.0 M100,10.0V155.0 M125,10.0V155.0 M150,10.0V155.0 M175,10.0V155.0 M200,10.0V155.0 M225,10.0V155.0 M12.5,25H237.5 M12.5,50H237.5 M12.5,75H237.5 M12.5,100H237.5 M12.5,125H237.5 M12.5,150H237.5" class="grid-maj"/>
+</g></g>
+<g id="s1tp-fg" class="piece-fg-layer">
+<path d="M23.000,12.550 L27.050,12.550 M31.950,12.550 L54.250,12.550 M59.150,12.550 L81.450,12.550 M86.350,12.550 L108.650,12.550 M113.550,12.550 L135.850,12.550 M140.750,12.550 L163.050,12.550 M167.950,12.550 L190.250,12.550 M195.150,12.550 L217.450,12.550 M222.350,12.550 L227.000,12.550 A7.950,7.950 0 0 1 234.950,20.500 L234.950,144.500 A7.950,7.950 0 0 1 227.000,152.450 L58.700,152.450 M31.600,152.450 L23.000,152.450 A7.950,7.950 0 0 1 15.050,144.500 L15.050,20.500 A7.950,7.950 0 0 1 23.000,12.550" class="sc-rule" stroke-width="0.18"/>
+<line x1="76.05" y1="13.15" x2="76.05" y2="151.85" class="sc-rule" stroke-width="0.22"/>
+<line x1="76.60" y1="15.05" x2="76.60" y2="149.95" class="sc-trace non-tro" stroke-dasharray="1.8 1.0"/>
+<line x1="207.35" y1="13.15" x2="207.35" y2="151.85" class="sc-rule" stroke-width="0.22"/>
+<g class="tro-only f-cond" id="s1tp-tro-border"><path d="M23.000,12.550 L27.050,12.550 M31.950,12.550 L54.250,12.550 M59.150,12.550 L81.450,12.550 M86.350,12.550 L108.650,12.550 M113.550,12.550 L135.850,12.550 M140.750,12.550 L163.050,12.550 M167.950,12.550 L190.250,12.550 M195.150,12.550 L217.450,12.550 M222.350,12.550 L227.000,12.550 A7.950,7.950 0 0 1 234.950,20.500 L234.950,144.500 A7.950,7.950 0 0 1 227.000,152.450 L58.700,152.450 M31.600,152.450 L23.000,152.450 A7.950,7.950 0 0 1 15.050,144.500 L15.050,20.500 A7.950,7.950 0 0 1 23.000,12.550" class="tro-ink" stroke-width="0.34"/><path d="M23.000,13.100 L27.050,13.100 M31.950,13.100 L54.250,13.100 M59.150,13.100 L81.450,13.100 M86.350,13.100 L108.650,13.100 M113.550,13.100 L135.850,13.100 M140.750,13.100 L163.050,13.100 M167.950,13.100 L190.250,13.100 M195.150,13.100 L217.450,13.100 M222.350,13.100 L227.000,13.100 A7.400,7.400 0 0 1 234.400,20.500 L234.400,144.500 A7.400,7.400 0 0 1 227.000,151.900 L58.700,151.900 M31.600,151.900 L23.000,151.900 A7.400,7.400 0 0 1 15.600,144.500 L15.600,20.500 A7.400,7.400 0 0 1 23.000,13.100" class="tro-ink" stroke-width="0.11"/></g>
+<text x="29.50" y="13.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z8]</text>
+<text x="56.70" y="13.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z7]</text>
+<text x="83.90" y="13.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z6]</text>
+<text x="111.10" y="13.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z5]</text>
+<text x="138.30" y="13.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z4]</text>
+<text x="165.50" y="13.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z3]</text>
+<text x="192.70" y="13.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z2]</text>
+<text x="219.90" y="13.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z1]</text>
+<path d="M45.15,24.50 V52.70 M45.15,55.30 V85.60 M45.15,88.20 V118.60 M45.15,121.20 V148.50" class="sc-trace non-tro"/>
+<path d="M44.25,29.00 V52.70 M44.25,55.30 V85.60 M44.25,88.20 V118.60 M44.25,121.20 V144.00" class="sc-trace non-tro" stroke-dasharray="1.2 0.9"/>
+<path d="M40.95,33.50 H49.35" class="sc-trace non-tro"/>
+<circle cx="45.15" cy="33.50" r="0.55" class="pat-c non-tro"/>
+<path d="M40.95,66.40 H49.35" class="sc-trace non-tro"/>
+<circle cx="45.15" cy="66.40" r="0.55" class="pat-c non-tro"/>
+<path d="M40.95,99.40 H49.35" class="sc-trace non-tro"/>
+<circle cx="45.15" cy="99.40" r="0.55" class="pat-c non-tro"/>
+<path d="M40.95,132.30 H49.35" class="sc-trace non-tro"/>
+<circle cx="45.15" cy="132.30" r="0.55" class="pat-c non-tro"/>
+<text x="46.35" y="54.65" class="f-cond muted" font-size="1.45" font-weight="700" text-anchor="middle">SPI2 · 595 MUX</text>
+<text x="46.35" y="87.55" class="f-cond muted" font-size="1.45" font-weight="700" text-anchor="middle">QUAD DEC · ISR</text>
+<text x="46.35" y="120.55" class="f-cond warn-c" font-size="1.45" font-weight="700" text-anchor="middle">RPT + K1–4 LIVE</text>
+<path d="M23.000,13.850 L73.500,13.850 A0.800,0.800 0 0 1 74.300,14.650 L74.300,21.300 A0.800,0.800 0 0 1 73.500,22.100 L17.150,22.100 A0.800,0.800 0 0 1 16.350,21.300 L16.350,20.500 A6.650,6.650 0 0 1 23.000,13.850 Z" class="box-bg"/>
+<path d="M73.10,13.85 L74.30,13.85 L74.30,15.05 M16.35,20.90 L16.35,22.10 L17.55,22.10 M73.10,22.10 L74.30,22.10 L74.30,20.90" fill="none" class="sc-rule-hi" stroke-width="0.18"/>
+<line x1="16.90" y1="18.05" x2="74.30" y2="18.05" class="sc-rule" stroke-width="0.13"/>
+<g class="non-tro"><text x="20.30" y="16.87" class="ink" font-size="2.22" font-weight="700" letter-spacing="0.14">SEC-01 // ENCODER ARRAY</text><text x="73.10" y="16.83" class="f-cond pat-c" font-size="1.78" font-weight="700" text-anchor="end">AN/SMC-925</text></g>
+<g class="tro-only"><defs><mask id="s1tp-sec1-slit" maskUnits="userSpaceOnUse" x="18.20" y="13.27" width="44.50" height="5.50"><rect x="18.20" y="13.27" width="44.50" height="5.50" fill="#ffffff"/><line x1="20.20" y1="16.15" x2="60.70" y2="16.15" stroke="#000000" stroke-width="0.30"/></mask></defs><text x="20.20" y="17.07" mask="url(#s1tp-sec1-slit)" class="tro-fill f-cond" font-size="2.62" font-weight="900" letter-spacing="0.28" text-anchor="start">TECH READOUT: SMC-925</text><text x="73.20" y="16.87" class="f-cond tro-fill" font-size="1.65" font-weight="700" text-anchor="end">WHM-925</text></g>
+<circle cx="18.85" cy="20.15" r="0.88" class="ink"/>
+<text x="20.35" y="20.87" class="ink" font-size="1.92" font-weight="700">TRACK</text>
+<rect x="33.25" y="19.27" width="1.75" height="1.75" rx="0.25" class="step-bg"/>
+<text x="35.65" y="20.87" class="step-c" font-size="1.92" font-weight="700">HOLD STEP</text>
+<polygon points="54.95,19.23 56.00,21.07 53.90,21.07" class="pat-c"/>
+<text x="56.65" y="20.87" class="pat-c" font-size="1.92" font-weight="700">KNOB BANK</text>
+<path d="M22.97,40.63L22.27,41.33 M21.51,38.77L21.04,39.05 M20.51,36.61L20.00,36.78 M20.05,34.29L19.51,34.33 M20.14,31.92L19.61,31.84 M20.79,29.64L19.86,29.26 M25.52,24.52L25.28,24.04 M27.75,23.70L27.62,23.17 M30.10,23.42L30.10,22.42 M32.45,23.70L32.58,23.17 M38.25,27.58L38.69,27.26 M39.41,29.64L40.34,29.26 M40.06,31.92L40.59,31.84 M40.15,34.29L40.69,34.33 M39.69,36.61L40.20,36.78 M38.69,38.77L39.16,39.05 M37.23,40.63L37.93,41.33" class="sc-rule" stroke-width="0.16"/>
+<rect x="17.40" y="22.15" width="5.7" height="3.7" rx="0.6" class="step-bg"/>
+<text x="20.25" y="24.77" class="f-cond step-fg" font-size="2.45" font-weight="700" text-anchor="middle">K7</text>
+<text x="43.25" y="24.55" class="f-cond muted" font-size="1.70" font-weight="700" text-anchor="end">LEN 1–64</text>
+<path d="M17.150,43.550 L43.050,43.550 A0.800,0.800 0 0 1 43.850,44.350 L43.850,51.550 A0.800,0.800 0 0 1 43.050,52.350 L17.150,52.350 A0.800,0.800 0 0 1 16.350,51.550 L16.350,44.350 A0.800,0.800 0 0 1 17.150,43.550 Z" class="box-bg"/>
+<path d="M16.35,44.55 L16.35,43.55 L17.35,43.55 M42.85,43.55 L43.85,43.55 L43.85,44.55 M16.35,24.15 L16.35,25.15 L17.35,25.15 M42.85,25.15 L43.85,25.15 L43.85,24.15" fill="none" class="sc-rule-hi" stroke-width="0.15"/>
+<line x1="16.95" y1="46.49" x2="43.25" y2="46.49" class="grid-maj"/>
+<line x1="16.95" y1="49.41" x2="43.25" y2="49.41" class="grid-maj"/>
+<text x="17.50" y="45.77" class="f-cond muted" font-size="1.78" font-weight="700">T:</text>
+<text x="31.45" y="45.77" class="ink" font-size="2.14" font-weight="700" text-anchor="middle">STEPS [1-64]</text>
+<text x="17.50" y="48.69" class="f-cond muted" font-size="1.78" font-weight="700">S:</text>
+<text x="31.45" y="48.69" class="step-c" font-size="2.14" font-weight="700" text-anchor="middle">TRIG COND</text>
+<text x="17.50" y="51.61" class="f-cond muted" font-size="1.78" font-weight="700">B:</text>
+<text x="31.45" y="51.61" class="pat-c" font-size="2.14" font-weight="700" text-anchor="middle">MIDI CH [1-16]</text>
+<path d="M53.07,40.63L52.37,41.33 M51.61,38.77L51.14,39.05 M50.61,36.61L50.10,36.78 M50.15,34.29L49.61,34.33 M50.24,31.92L49.71,31.84 M50.89,29.64L49.96,29.26 M55.62,24.52L55.38,24.04 M57.85,23.70L57.72,23.17 M60.20,23.42L60.20,22.42 M62.55,23.70L62.68,23.17 M68.35,27.58L68.79,27.26 M69.51,29.64L70.44,29.26 M70.16,31.92L70.69,31.84 M70.25,34.29L70.79,34.33 M69.79,36.61L70.30,36.78 M68.79,38.77L69.26,39.05 M67.33,40.63L68.03,41.33" class="sc-rule" stroke-width="0.16"/>
+<rect x="47.50" y="22.15" width="5.7" height="3.7" rx="0.6" class="step-bg"/>
+<text x="50.35" y="24.77" class="f-cond step-fg" font-size="2.45" font-weight="700" text-anchor="middle">K8</text>
+<text x="73.35" y="24.55" class="f-cond warn-c" font-size="1.70" font-weight="700" text-anchor="end">⇧+K8 SPEED</text>
+<path d="M47.250,43.550 L73.150,43.550 A0.800,0.800 0 0 1 73.950,44.350 L73.950,51.550 A0.800,0.800 0 0 1 73.150,52.350 L47.250,52.350 A0.800,0.800 0 0 1 46.450,51.550 L46.450,44.350 A0.800,0.800 0 0 1 47.250,43.550 Z" class="box-bg"/>
+<path d="M46.45,44.55 L46.45,43.55 L47.45,43.55 M72.95,43.55 L73.95,43.55 L73.95,44.55 M46.45,54.25 L46.45,55.25 L47.45,55.25 M72.95,55.25 L73.95,55.25 L73.95,54.25" fill="none" class="sc-rule-hi" stroke-width="0.15"/>
+<line x1="47.05" y1="46.49" x2="73.35" y2="46.49" class="grid-maj"/>
+<line x1="47.05" y1="49.41" x2="73.35" y2="49.41" class="grid-maj"/>
+<text x="47.60" y="45.77" class="f-cond muted" font-size="1.78" font-weight="700">T:</text>
+<text x="61.55" y="45.77" class="ink" font-size="2.14" font-weight="700" text-anchor="middle">RATE [⇧SPEED]</text>
+<text x="47.60" y="48.69" class="f-cond muted" font-size="1.78" font-weight="700">S:</text>
+<text x="61.55" y="48.69" class="step-c" font-size="2.14" font-weight="700" text-anchor="middle">STEP TIE</text>
+<text x="47.60" y="51.61" class="f-cond muted" font-size="1.78" font-weight="700">B:</text>
+<text x="61.55" y="51.61" class="pat-c" font-size="2.14" font-weight="700" text-anchor="middle">SYNC [±120ms]</text>
+<path d="M22.97,73.53L22.27,74.23 M21.51,71.67L21.04,71.95 M20.51,69.51L20.00,69.68 M20.05,67.19L19.51,67.23 M20.14,64.82L19.61,64.74 M20.79,62.54L19.86,62.16 M25.52,57.42L25.28,56.94 M27.75,56.60L27.62,56.07 M30.10,56.32L30.10,55.32 M32.45,56.60L32.58,56.07 M38.25,60.48L38.69,60.16 M39.41,62.54L40.34,62.16 M40.06,64.82L40.59,64.74 M40.15,67.19L40.69,67.23 M39.69,69.51L40.20,69.68 M38.69,71.67L39.16,71.95 M37.23,73.53L37.93,74.23" class="sc-rule" stroke-width="0.16"/>
+<rect x="17.40" y="55.05" width="5.7" height="3.7" rx="0.6" class="step-bg"/>
+<text x="20.25" y="57.67" class="f-cond step-fg" font-size="2.45" font-weight="700" text-anchor="middle">K5</text>
+<text x="43.25" y="57.45" class="f-cond muted" font-size="1.70" font-weight="700" text-anchor="end">PROB %</text>
+<path d="M17.150,76.450 L43.050,76.450 A0.800,0.800 0 0 1 43.850,77.250 L43.850,84.450 A0.800,0.800 0 0 1 43.050,85.250 L17.150,85.250 A0.800,0.800 0 0 1 16.350,84.450 L16.350,77.250 A0.800,0.800 0 0 1 17.150,76.450 Z" class="box-bg"/>
+<path d="M16.35,77.45 L16.35,76.45 L17.35,76.45 M42.85,76.45 L43.85,76.45 L43.85,77.45 M16.35,24.15 L16.35,25.15 L17.35,25.15 M42.85,25.15 L43.85,25.15 L43.85,24.15" fill="none" class="sc-rule-hi" stroke-width="0.15"/>
+<line x1="16.95" y1="79.39" x2="43.25" y2="79.39" class="grid-maj"/>
+<line x1="16.95" y1="82.31" x2="43.25" y2="82.31" class="grid-maj"/>
+<text x="17.50" y="78.67" class="f-cond muted" font-size="1.78" font-weight="700">T:</text>
+<text x="31.45" y="78.67" class="ink" font-size="2.14" font-weight="700" text-anchor="middle">PROB [0-100%]</text>
+<text x="17.50" y="81.59" class="f-cond muted" font-size="1.78" font-weight="700">S:</text>
+<text x="31.45" y="81.59" class="step-c" font-size="2.14" font-weight="700" text-anchor="middle">STEP PROB</text>
+<text x="17.50" y="84.51" class="f-cond muted" font-size="1.78" font-weight="700">B:</text>
+<text x="31.45" y="84.51" class="muted" font-size="2.14" font-weight="600" text-anchor="middle">— [UNASSIGNED]</text>
+<path d="M53.07,73.53L52.37,74.23 M51.61,71.67L51.14,71.95 M50.61,69.51L50.10,69.68 M50.15,67.19L49.61,67.23 M50.24,64.82L49.71,64.74 M50.89,62.54L49.96,62.16 M55.62,57.42L55.38,56.94 M57.85,56.60L57.72,56.07 M60.20,56.32L60.20,55.32 M62.55,56.60L62.68,56.07 M68.35,60.48L68.79,60.16 M69.51,62.54L70.44,62.16 M70.16,64.82L70.69,64.74 M70.25,67.19L70.79,67.23 M69.79,69.51L70.30,69.68 M68.79,71.67L69.26,71.95 M67.33,73.53L68.03,74.23" class="sc-rule" stroke-width="0.16"/>
+<rect x="47.50" y="55.05" width="5.7" height="3.7" rx="0.6" class="step-bg"/>
+<text x="50.35" y="57.67" class="f-cond step-fg" font-size="2.45" font-weight="700" text-anchor="middle">K6</text>
+<text x="73.35" y="57.45" class="f-cond muted" font-size="1.70" font-weight="700" text-anchor="end">RATCH DIV</text>
+<path d="M47.250,76.450 L73.150,76.450 A0.800,0.800 0 0 1 73.950,77.250 L73.950,84.450 A0.800,0.800 0 0 1 73.150,85.250 L47.250,85.250 A0.800,0.800 0 0 1 46.450,84.450 L46.450,77.250 A0.800,0.800 0 0 1 47.250,76.450 Z" class="box-bg"/>
+<path d="M46.45,77.45 L46.45,76.45 L47.45,76.45 M72.95,76.45 L73.95,76.45 L73.95,77.45 M46.45,54.25 L46.45,55.25 L47.45,55.25 M72.95,55.25 L73.95,55.25 L73.95,54.25" fill="none" class="sc-rule-hi" stroke-width="0.15"/>
+<line x1="47.05" y1="79.39" x2="73.35" y2="79.39" class="grid-maj"/>
+<line x1="47.05" y1="82.31" x2="73.35" y2="82.31" class="grid-maj"/>
+<text x="47.60" y="78.67" class="f-cond muted" font-size="1.78" font-weight="700">T:</text>
+<text x="61.55" y="78.67" class="ink" font-size="2.14" font-weight="700" text-anchor="middle">RATCHET RATE</text>
+<text x="47.60" y="81.59" class="f-cond muted" font-size="1.78" font-weight="700">S:</text>
+<text x="61.55" y="81.59" class="step-c" font-size="2.14" font-weight="700" text-anchor="middle">STEP RATCHET</text>
+<text x="47.60" y="84.51" class="f-cond muted" font-size="1.78" font-weight="700">B:</text>
+<text x="61.55" y="84.51" class="pat-c" font-size="2.14" font-weight="700" text-anchor="middle">TRACK COLOUR</text>
+<path d="M22.97,106.53L22.27,107.23 M21.51,104.67L21.04,104.95 M20.51,102.51L20.00,102.68 M20.05,100.19L19.51,100.23 M20.14,97.82L19.61,97.74 M20.79,95.54L19.86,95.16 M25.52,90.42L25.28,89.94 M27.75,89.60L27.62,89.07 M30.10,89.32L30.10,88.32 M32.45,89.60L32.58,89.07 M38.25,93.48L38.69,93.16 M39.41,95.54L40.34,95.16 M40.06,97.82L40.59,97.74 M40.15,100.19L40.69,100.23 M39.69,102.51L40.20,102.68 M38.69,104.67L39.16,104.95 M37.23,106.53L37.93,107.23" class="sc-rule" stroke-width="0.16"/>
+<rect x="17.40" y="88.05" width="5.7" height="3.7" rx="0.6" class="step-bg"/>
+<text x="20.25" y="90.67" class="f-cond step-fg" font-size="2.45" font-weight="700" text-anchor="middle">K3</text>
+<text x="43.25" y="90.45" class="f-cond warn-c" font-size="1.70" font-weight="700" text-anchor="end">NR:BPM ⇧RT</text>
+<path d="M17.150,109.450 L43.050,109.450 A0.800,0.800 0 0 1 43.850,110.250 L43.850,117.450 A0.800,0.800 0 0 1 43.050,118.250 L17.150,118.250 A0.800,0.800 0 0 1 16.350,117.450 L16.350,110.250 A0.800,0.800 0 0 1 17.150,109.450 Z" class="box-bg"/>
+<path d="M16.35,110.45 L16.35,109.45 L17.35,109.45 M42.85,109.45 L43.85,109.45 L43.85,110.45 M16.35,24.15 L16.35,25.15 L17.35,25.15 M42.85,25.15 L43.85,25.15 L43.85,24.15" fill="none" class="sc-rule-hi" stroke-width="0.15"/>
+<line x1="16.95" y1="112.39" x2="43.25" y2="112.39" class="grid-maj"/>
+<line x1="16.95" y1="115.31" x2="43.25" y2="115.31" class="grid-maj"/>
+<text x="17.50" y="111.67" class="f-cond muted" font-size="1.78" font-weight="700">T:</text>
+<text x="31.45" y="111.67" class="ink" font-size="2.14" font-weight="700" text-anchor="middle">BASE NOTE</text>
+<text x="17.50" y="114.59" class="f-cond muted" font-size="1.78" font-weight="700">S:</text>
+<text x="31.45" y="114.59" class="step-c" font-size="2.14" font-weight="700" text-anchor="middle">NOTE / CHORD</text>
+<text x="17.50" y="117.51" class="f-cond muted" font-size="1.78" font-weight="700">B:</text>
+<text x="31.45" y="117.51" class="pat-c" font-size="2.14" font-weight="700" text-anchor="middle">TRACK ROOT</text>
+<path d="M53.07,106.53L52.37,107.23 M51.61,104.67L51.14,104.95 M50.61,102.51L50.10,102.68 M50.15,100.19L49.61,100.23 M50.24,97.82L49.71,97.74 M50.89,95.54L49.96,95.16 M55.62,90.42L55.38,89.94 M57.85,89.60L57.72,89.07 M60.20,89.32L60.20,88.32 M62.55,89.60L62.68,89.07 M68.35,93.48L68.79,93.16 M69.51,95.54L70.44,95.16 M70.16,97.82L70.69,97.74 M70.25,100.19L70.79,100.23 M69.79,102.51L70.30,102.68 M68.79,104.67L69.26,104.95 M67.33,106.53L68.03,107.23" class="sc-rule" stroke-width="0.16"/>
+<rect x="47.50" y="88.05" width="5.7" height="3.7" rx="0.6" class="step-bg"/>
+<text x="50.35" y="90.67" class="f-cond step-fg" font-size="2.45" font-weight="700" text-anchor="middle">K4</text>
+<text x="73.35" y="90.45" class="f-cond warn-c" font-size="1.70" font-weight="700" text-anchor="end">NR:LTC ⇧SC</text>
+<path d="M47.250,109.450 L73.150,109.450 A0.800,0.800 0 0 1 73.950,110.250 L73.950,117.450 A0.800,0.800 0 0 1 73.150,118.250 L47.250,118.250 A0.800,0.800 0 0 1 46.450,117.450 L46.450,110.250 A0.800,0.800 0 0 1 47.250,109.450 Z" class="box-bg"/>
+<path d="M46.45,110.45 L46.45,109.45 L47.45,109.45 M72.95,109.45 L73.95,109.45 L73.95,110.45 M46.45,54.25 L46.45,55.25 L47.45,55.25 M72.95,55.25 L73.95,55.25 L73.95,54.25" fill="none" class="sc-rule-hi" stroke-width="0.15"/>
+<line x1="47.05" y1="112.39" x2="73.35" y2="112.39" class="grid-maj"/>
+<line x1="47.05" y1="115.31" x2="73.35" y2="115.31" class="grid-maj"/>
+<text x="47.60" y="111.67" class="f-cond muted" font-size="1.78" font-weight="700">T:</text>
+<text x="61.55" y="111.67" class="ink" font-size="2.14" font-weight="700" text-anchor="middle">QUANT [0-100%]</text>
+<text x="47.60" y="114.59" class="f-cond muted" font-size="1.78" font-weight="700">S:</text>
+<text x="61.55" y="114.59" class="step-c" font-size="2.14" font-weight="700" text-anchor="middle">MICRO [±48]</text>
+<text x="47.60" y="117.51" class="f-cond muted" font-size="1.78" font-weight="700">B:</text>
+<text x="61.55" y="117.51" class="pat-c" font-size="2.14" font-weight="700" text-anchor="middle">TRACK SCALE</text>
+<path d="M22.97,139.43L22.27,140.13 M21.51,137.57L21.04,137.85 M20.51,135.41L20.00,135.58 M20.05,133.09L19.51,133.13 M20.14,130.72L19.61,130.64 M20.79,128.44L19.86,128.06 M25.52,123.32L25.28,122.84 M27.75,122.50L27.62,121.97 M30.10,122.22L30.10,121.22 M32.45,122.50L32.58,121.97 M38.25,126.38L38.69,126.06 M39.41,128.44L40.34,128.06 M40.06,130.72L40.59,130.64 M40.15,133.09L40.69,133.13 M39.69,135.41L40.20,135.58 M38.69,137.57L39.16,137.85 M37.23,139.43L37.93,140.13" class="sc-rule" stroke-width="0.16"/>
+<rect x="17.40" y="120.95" width="5.7" height="3.7" rx="0.6" class="step-bg"/>
+<text x="20.25" y="123.57" class="f-cond step-fg" font-size="2.45" font-weight="700" text-anchor="middle">K1</text>
+<text x="43.25" y="123.35" class="f-cond warn-c" font-size="1.70" font-weight="700" text-anchor="end">NR: RATE</text>
+<path d="M17.150,142.350 L43.050,142.350 A0.800,0.800 0 0 1 43.850,143.150 L43.850,150.350 A0.800,0.800 0 0 1 43.050,151.150 L23.000,151.150 A6.650,6.650 0 0 1 16.350,144.500 L16.350,143.150 A0.800,0.800 0 0 1 17.150,142.350 Z" class="box-bg"/>
+<path d="M16.35,143.35 L16.35,142.35 L17.35,142.35 M42.85,142.35 L43.85,142.35 L43.85,143.35 M42.85,25.15 L43.85,25.15 L43.85,24.15" fill="none" class="sc-rule-hi" stroke-width="0.15"/>
+<line x1="16.95" y1="145.29" x2="43.25" y2="145.29" class="grid-maj"/>
+<line x1="17.95" y1="148.21" x2="43.25" y2="148.21" class="grid-maj"/>
+<text x="17.50" y="144.57" class="f-cond muted" font-size="1.78" font-weight="700">T:</text>
+<text x="31.45" y="144.57" class="ink" font-size="2.14" font-weight="700" text-anchor="middle">VOLUME [0-127]</text>
+<text x="17.50" y="147.49" class="f-cond muted" font-size="1.78" font-weight="700">S:</text>
+<text x="31.45" y="147.49" class="step-c" font-size="2.14" font-weight="700" text-anchor="middle">VELOCITY</text>
+<text x="20.70" y="150.41" class="f-cond muted" font-size="1.78" font-weight="700">B:</text>
+<text x="32.75" y="150.41" class="pat-c" font-size="2.14" font-weight="700" text-anchor="middle">TEMPO [40-200]</text>
+<path d="M53.07,139.43L52.37,140.13 M51.61,137.57L51.14,137.85 M50.61,135.41L50.10,135.58 M50.15,133.09L49.61,133.13 M50.24,130.72L49.71,130.64 M50.89,128.44L49.96,128.06 M55.62,123.32L55.38,122.84 M57.85,122.50L57.72,121.97 M60.20,122.22L60.20,121.22 M62.55,122.50L62.68,121.97 M68.35,126.38L68.79,126.06 M69.51,128.44L70.44,128.06 M70.16,130.72L70.69,130.64 M70.25,133.09L70.79,133.13 M69.79,135.41L70.30,135.58 M68.79,137.57L69.26,137.85 M67.33,139.43L68.03,140.13" class="sc-rule" stroke-width="0.16"/>
+<rect x="47.50" y="120.95" width="5.7" height="3.7" rx="0.6" class="step-bg"/>
+<text x="50.35" y="123.57" class="f-cond step-fg" font-size="2.45" font-weight="700" text-anchor="middle">K2</text>
+<text x="73.35" y="123.35" class="f-cond warn-c" font-size="1.70" font-weight="700" text-anchor="end">NR: SWING</text>
+<path d="M47.250,142.350 L73.150,142.350 A0.800,0.800 0 0 1 73.950,143.150 L73.950,150.350 A0.800,0.800 0 0 1 73.150,151.150 L47.250,151.150 A0.800,0.800 0 0 1 46.450,150.350 L46.450,143.150 A0.800,0.800 0 0 1 47.250,142.350 Z" class="box-bg"/>
+<path d="M46.45,143.35 L46.45,142.35 L47.45,142.35 M72.95,142.35 L73.95,142.35 L73.95,143.35 M46.45,54.25 L46.45,55.25 L47.45,55.25 M72.95,55.25 L73.95,55.25 L73.95,54.25" fill="none" class="sc-rule-hi" stroke-width="0.15"/>
+<line x1="47.05" y1="145.29" x2="73.35" y2="145.29" class="grid-maj"/>
+<line x1="47.05" y1="148.21" x2="73.35" y2="148.21" class="grid-maj"/>
+<text x="47.60" y="144.57" class="f-cond muted" font-size="1.78" font-weight="700">T:</text>
+<text x="61.55" y="144.57" class="ink" font-size="2.14" font-weight="700" text-anchor="middle">GATE [1/8-4S]</text>
+<text x="47.60" y="147.49" class="f-cond muted" font-size="1.78" font-weight="700">S:</text>
+<text x="61.55" y="147.49" class="step-c" font-size="2.14" font-weight="700" text-anchor="middle">LEN [1/8-32S]</text>
+<text x="47.60" y="150.41" class="f-cond muted" font-size="1.78" font-weight="700">B:</text>
+<text x="61.55" y="150.41" class="pat-c" font-size="2.14" font-weight="700" text-anchor="middle">SWING [50-75%]</text>
+<text x="45.15" y="152.95" class="f-cond muted" font-size="1.48" font-weight="700" text-anchor="middle">360° ENDLESS · ×4 ACCEL</text>
+<rect x="78.02" y="13.25" width="127.88" height="5.30" rx="0.85" class="box-bg"/>
+<path d="M78.02,14.45 L78.02,13.25 L79.22,13.25 M204.70,13.25 L205.90,13.25 L205.90,14.45 M78.02,17.35 L78.02,18.55 L79.22,18.55 M204.70,18.55 L205.90,18.55 L205.90,17.35" fill="none" class="sc-rule-hi" stroke-width="0.18"/>
+<line x1="78.02" y1="15.90" x2="205.90" y2="15.90" class="sc-rule" stroke-width="0.12"/>
+<text x="141.96" y="15.23" class="ink" font-size="1.95" font-weight="700" text-anchor="middle"><tspan class="step-c">HOLD STEP + LATER PAD = NOTE LEN [1–32S]</tspan>  ·  HOLD STEP + RPT = RATCHET  ·  <tspan class="pat-c">REC + STEP = CHORD</tspan></text>
+<text x="141.96" y="17.89" class="ink" font-size="1.90" font-weight="700" text-anchor="middle"><tspan class="warn-c">HOLD RPT = TIMING</tspan>  ·  HOLD BANK = TRACKS [<tspan class="pat-c">SRC+DST = COPY</tspan> · +STOP = MUTE]  ·  <tspan class="step-c">⇧+REC SAVE</tspan> / <tspan class="ok-c">⇧+PLAY LOAD</tspan></text>
+<g class="non-tro">
+<g class="sc-rule-hi" fill="none" stroke-width="0.13"><circle cx="141.97" cy="82.56" r="1.43"/><line x1="139.66" y1="82.56" x2="144.27" y2="82.56"/><line x1="141.97" y1="80.27" x2="141.97" y2="84.86"/></g>
+<circle cx="141.97" cy="82.56" r="2.75" class="sc-trace" stroke-dasharray="0.8 0.6"/>
+<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="108.94" cy="49.70" r="0.71"/><line x1="107.78" y1="49.70" x2="110.09" y2="49.70"/><line x1="108.94" y1="48.55" x2="108.94" y2="50.84"/></g>
+<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="141.97" cy="49.70" r="0.71"/><line x1="140.81" y1="49.70" x2="143.12" y2="49.70"/><line x1="141.97" y1="48.55" x2="141.97" y2="50.84"/></g>
+<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="174.99" cy="49.70" r="0.71"/><line x1="173.84" y1="49.70" x2="176.14" y2="49.70"/><line x1="174.99" y1="48.55" x2="174.99" y2="50.84"/></g>
+<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="108.94" cy="82.56" r="0.71"/><line x1="107.78" y1="82.56" x2="110.09" y2="82.56"/><line x1="108.94" y1="81.41" x2="108.94" y2="83.72"/></g>
+<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="174.99" cy="82.56" r="0.71"/><line x1="173.84" y1="82.56" x2="176.14" y2="82.56"/><line x1="174.99" y1="81.41" x2="174.99" y2="83.72"/></g>
+<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="108.94" cy="115.44" r="0.71"/><line x1="107.78" y1="115.44" x2="110.09" y2="115.44"/><line x1="108.94" y1="114.29" x2="108.94" y2="116.59"/></g>
+<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="141.97" cy="115.44" r="0.71"/><line x1="140.81" y1="115.44" x2="143.12" y2="115.44"/><line x1="141.97" y1="114.29" x2="141.97" y2="116.59"/></g>
+<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="174.99" cy="115.44" r="0.71"/><line x1="173.84" y1="115.44" x2="176.14" y2="115.44"/><line x1="174.99" y1="114.29" x2="174.99" y2="116.59"/></g>
+</g>
+<rect x="78.22" y="47.83" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="78.44" y="48.05" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="81.79" y="50.47" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S01</text>
+<text x="85.87" y="50.45" class="ink" font-size="2.30" font-weight="700">SW 75%</text>
+<text x="106.07" y="49.41" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ TRANS −1</text>
+<text x="106.07" y="51.11" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">PAD 13 · C3</text>
+<rect x="111.25" y="47.83" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="111.25" y="47.83" width="28.40" height="3.68" rx="0.65" fill="url(#s1tp-haz-pat)"/>
+<rect x="111.47" y="48.05" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="114.82" y="50.47" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S02</text>
+<text x="118.90" y="50.45" class="warn-c" font-size="2.30" font-weight="700">FILL</text>
+<text x="139.10" y="49.41" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ TRANS +1</text>
+<text x="139.10" y="51.11" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">PAD 14 · C#3</text>
+<rect x="144.28" y="47.83" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="144.50" y="48.05" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="147.85" y="50.47" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S03</text>
+<text x="151.93" y="50.45" class="warn-c" font-size="2.30" font-weight="700">SYNC</text>
+<text x="172.13" y="49.41" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ OCTAVE −1</text>
+<text x="172.13" y="51.11" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">PAD 15 · D3</text>
+<rect x="177.30" y="47.83" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="177.52" y="48.05" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="180.87" y="50.47" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S04</text>
+<text x="184.95" y="50.45" class="warn-c" font-size="2.30" font-weight="700">TAP</text>
+<text x="205.15" y="49.41" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ OCTAVE +1</text>
+<text x="205.15" y="51.11" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">⇧15+16 = RST</text>
+<rect x="78.22" y="80.70" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="78.44" y="80.92" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="81.79" y="83.34" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S05</text>
+<text x="85.87" y="83.32" class="ink" font-size="2.30" font-weight="700">SW 50%</text>
+<text x="106.07" y="82.28" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ VEL 1·SFT</text>
+<text x="106.07" y="83.98" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">G# · H.MIN</text>
+<rect x="111.25" y="80.70" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="111.47" y="80.92" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="114.82" y="83.34" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S06</text>
+<text x="118.90" y="83.32" class="ink" font-size="2.30" font-weight="700">SW 56%</text>
+<text x="139.10" y="82.28" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ VEL 2·MED</text>
+<text x="139.10" y="83.98" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">A · P.MAJ</text>
+<rect x="144.28" y="80.70" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="144.50" y="80.92" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="147.85" y="83.34" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S07</text>
+<text x="151.93" y="83.32" class="ink" font-size="2.30" font-weight="700">SW 62%</text>
+<text x="172.13" y="82.28" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ VEL 3·HRD</text>
+<text x="172.13" y="83.98" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">A# · P.MIN</text>
+<rect x="177.30" y="80.70" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="177.52" y="80.92" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="180.87" y="83.34" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S08</text>
+<text x="184.95" y="83.32" class="ink" font-size="2.30" font-weight="700">SW 68%</text>
+<text x="205.15" y="82.28" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ VEL 4·MAX</text>
+<text x="205.15" y="83.98" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">B · BLUES</text>
+<rect x="78.22" y="113.57" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="78.44" y="113.79" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="81.79" y="116.21" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S09</text>
+<text x="85.87" y="116.19" class="ink" font-size="2.30" font-weight="700">1/16</text>
+<text x="106.07" y="115.15" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ PRESET 5</text>
+<text x="106.07" y="116.85" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">E · PHRYG</text>
+<rect x="111.25" y="113.57" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="111.47" y="113.79" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="114.82" y="116.21" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S10</text>
+<text x="118.90" y="116.19" class="ink" font-size="2.30" font-weight="700">1/16T</text>
+<text x="139.10" y="115.15" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ PRESET 6</text>
+<text x="139.10" y="116.85" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">F · LYDIAN</text>
+<rect x="144.28" y="113.57" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="144.50" y="113.79" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="147.85" y="116.21" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S11</text>
+<text x="151.93" y="116.19" class="ink" font-size="2.30" font-weight="700">1/32</text>
+<text x="172.13" y="115.15" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ PRESET 7</text>
+<text x="172.13" y="116.85" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">F# · MIXOL</text>
+<rect x="177.30" y="113.57" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="177.52" y="113.79" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="180.87" y="116.21" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S12</text>
+<text x="184.95" y="116.19" class="ink" font-size="2.30" font-weight="700">1/32T</text>
+<text x="205.15" y="115.15" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ PRESET 8</text>
+<text x="205.15" y="116.85" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">G · LOCRIAN</text>
+<rect x="78.22" y="146.45" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="78.44" y="146.67" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="81.79" y="149.09" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S13</text>
+<text x="85.87" y="149.07" class="ink" font-size="2.30" font-weight="700">1/4</text>
+<text x="106.07" y="148.03" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ PST 1·PRF</text>
+<text x="106.07" y="149.73" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">C · CHROM</text>
+<rect x="111.25" y="146.45" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="111.47" y="146.67" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="114.82" y="149.09" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S14</text>
+<text x="118.90" y="149.07" class="ink" font-size="2.30" font-weight="700">1/4T</text>
+<text x="139.10" y="148.03" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ PST 2·DAW</text>
+<text x="139.10" y="149.73" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">C# · MAJOR</text>
+<rect x="144.28" y="146.45" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="144.50" y="146.67" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="147.85" y="149.09" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S15</text>
+<text x="151.93" y="149.07" class="ink" font-size="2.30" font-weight="700">1/8</text>
+<text x="172.13" y="148.03" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ PRESET 3</text>
+<text x="172.13" y="149.73" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">D · MINOR</text>
+<rect x="177.30" y="146.45" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
+<rect x="177.52" y="146.67" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
+<text x="180.87" y="149.09" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S16</text>
+<text x="184.95" y="149.07" class="ink" font-size="2.30" font-weight="700">1/8T</text>
+<text x="205.15" y="148.03" class="f-cond pat-c" font-size="1.70" font-weight="700" text-anchor="end">⇧ PRESET 4</text>
+<text x="205.15" y="149.73" class="f-cond muted" font-size="1.62" font-weight="700" text-anchor="end">D# · DORIAN</text>
+<rect x="78.02" y="150.32" width="127.88" height="2.55" rx="0.55" class="box-alt"/>
+<text x="141.96" y="152.20" class="f-cond muted" font-size="1.75" font-weight="700" text-anchor="middle">960 PPQN ENGINE  ·  16 TRACKS × 64 STEPS  ·  USB-C + BLE + 3.5MM TRS MIDI OUT  ·  AUTO-SAVE ON STOP  ·  FW ≥ 925</text>
+<path d="M208.850,13.850 L227.000,13.850 A6.650,6.650 0 0 1 233.360,18.550 L208.850,18.550 A0.700,0.700 0 0 1 208.150,17.850 L208.150,14.550 A0.700,0.700 0 0 1 208.850,13.850 Z" class="box-bg"/>
+<text x="219.60" y="15.92" class="ink" font-size="1.85" font-weight="700" text-anchor="middle">SEC-03 // TRANSPORT</text><text x="220.50" y="17.88" class="f-cond muted" font-size="1.52" font-weight="700" text-anchor="middle">MODE &amp; SEQ CONTROLS</text>
+<line x1="213.05" y1="24.55" x2="213.78" y2="24.55" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="212.85" y="25.33" class="f-cond ink" font-size="2.22" font-weight="700" text-anchor="end">BT</text>
+<rect x="227.15" y="21.80" width="6.60" height="5.50" rx="0.55" class="box-alt"/>
+<text x="230.45" y="24.00" class="f-cond pat-c" font-size="1.74" font-weight="700" text-anchor="middle">BLE</text>
+<text x="230.45" y="26.43" class="f-cond ink" font-size="1.74" font-weight="700" text-anchor="middle">OTA</text>
+<path d="M208.400,29.900 L233.300,29.900 A0.450,0.450 0 0 1 233.750,30.350 L233.750,31.750 A0.450,0.450 0 0 1 233.300,32.200 L208.400,32.200 A0.450,0.450 0 0 1 207.950,31.750 L207.950,30.350 A0.450,0.450 0 0 1 208.400,29.900 Z" class="box-bg"/>
+<text x="220.85" y="31.64" class="f-cond ink" font-size="1.86" font-weight="700" text-anchor="middle">HOLD: BLE MIDI + OTA</text>
+<line x1="213.05" y1="37.55" x2="213.78" y2="37.55" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="212.85" y="38.33" class="f-cond ink" font-size="2.22" font-weight="700" text-anchor="end">BANK</text>
+<rect x="227.15" y="34.80" width="6.60" height="5.50" rx="0.55" class="box-alt"/>
+<text x="230.45" y="37.00" class="f-cond pat-c" font-size="1.74" font-weight="700" text-anchor="middle">TRKS</text>
+<text x="230.45" y="39.43" class="f-cond ink" font-size="1.74" font-weight="700" text-anchor="middle">COPY</text>
+<path d="M208.400,42.900 L233.300,42.900 A0.450,0.450 0 0 1 233.750,43.350 L233.750,44.750 A0.450,0.450 0 0 1 233.300,45.200 L208.400,45.200 A0.450,0.450 0 0 1 207.950,44.750 L207.950,43.350 A0.450,0.450 0 0 1 208.400,42.900 Z" class="box-bg"/>
+<text x="220.85" y="44.64" class="f-cond ink" font-size="1.86" font-weight="700" text-anchor="middle">TAP: VIEW · HLD: TRACKS</text>
+<line x1="213.05" y1="50.55" x2="213.78" y2="50.55" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="212.85" y="51.33" class="f-cond ink" font-size="2.22" font-weight="700" text-anchor="end">KNOB</text>
+<rect x="227.15" y="47.80" width="6.60" height="5.50" rx="0.55" class="box-alt"/>
+<text x="230.45" y="50.00" class="f-cond pat-c" font-size="1.74" font-weight="700" text-anchor="middle">PAT</text>
+<text x="230.45" y="52.43" class="f-cond ink" font-size="1.74" font-weight="700" text-anchor="middle">BANK</text>
+<path d="M208.400,55.900 L233.300,55.900 A0.450,0.450 0 0 1 233.750,56.350 L233.750,57.750 A0.450,0.450 0 0 1 233.300,58.200 L208.400,58.200 A0.450,0.450 0 0 1 207.950,57.750 L207.950,56.350 A0.450,0.450 0 0 1 208.400,55.900 Z" class="box-bg"/>
+<text x="220.85" y="57.64" class="f-cond pat-c" font-size="1.86" font-weight="700" text-anchor="middle">KNOB BANK (LED = PAT)</text>
+<line x1="213.05" y1="63.55" x2="213.78" y2="63.55" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="212.85" y="64.33" class="f-cond ink" font-size="2.22" font-weight="700" text-anchor="end">PG &lt;</text>
+<rect x="227.15" y="60.80" width="6.60" height="5.50" rx="0.55" class="box-alt"/>
+<text x="230.45" y="63.00" class="f-cond step-c" font-size="1.74" font-weight="700" text-anchor="middle">⇧ + &lt;</text>
+<text x="230.45" y="65.43" class="f-cond ink" font-size="1.74" font-weight="700" text-anchor="middle">UNDO</text>
+<path d="M208.400,68.900 L233.300,68.900 A0.450,0.450 0 0 1 233.750,69.350 L233.750,70.750 A0.450,0.450 0 0 1 233.300,71.200 L208.400,71.200 A0.450,0.450 0 0 1 207.950,70.750 L207.950,69.350 A0.450,0.450 0 0 1 208.400,68.900 Z" class="box-bg"/>
+<text x="220.85" y="70.64" class="f-cond ink" font-size="1.86" font-weight="700" text-anchor="middle">STEP PAGE &lt;  ·  ⇧ UNDO</text>
+<line x1="213.05" y1="76.55" x2="213.78" y2="76.55" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="212.85" y="77.33" class="f-cond ink" font-size="2.22" font-weight="700" text-anchor="end">PG &gt;</text>
+<rect x="227.15" y="73.80" width="6.60" height="5.50" rx="0.55" class="box-alt"/>
+<text x="230.45" y="76.00" class="f-cond step-c" font-size="1.74" font-weight="700" text-anchor="middle">⇧ + &gt;</text>
+<text x="230.45" y="78.43" class="f-cond ink" font-size="1.74" font-weight="700" text-anchor="middle">REDO</text>
+<path d="M208.400,81.900 L233.300,81.900 A0.450,0.450 0 0 1 233.750,82.350 L233.750,83.750 A0.450,0.450 0 0 1 233.300,84.200 L208.400,84.200 A0.450,0.450 0 0 1 207.950,83.750 L207.950,82.350 A0.450,0.450 0 0 1 208.400,81.900 Z" class="box-bg"/>
+<text x="220.85" y="83.64" class="f-cond ink" font-size="1.86" font-weight="700" text-anchor="middle">STEP PAGE &gt;  ·  ⇧ REDO</text>
+<line x1="213.05" y1="89.55" x2="213.78" y2="89.55" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="212.85" y="90.33" class="f-cond ok-c" font-size="2.22" font-weight="700" text-anchor="end">PLAY</text>
+<rect x="227.15" y="86.80" width="6.60" height="5.50" rx="0.55" class="box-alt"/>
+<text x="230.45" y="89.00" class="f-cond step-c" font-size="1.74" font-weight="700" text-anchor="middle">⇧+PAD</text>
+<text x="230.45" y="91.43" class="f-cond ink" font-size="1.74" font-weight="700" text-anchor="middle">LOAD</text>
+<path d="M208.400,94.900 L233.300,94.900 A0.450,0.450 0 0 1 233.750,95.350 L233.750,96.750 A0.450,0.450 0 0 1 233.300,97.200 L208.400,97.200 A0.450,0.450 0 0 1 207.950,96.750 L207.950,95.350 A0.450,0.450 0 0 1 208.400,94.900 Z" class="box-bg"/>
+<text x="220.85" y="96.64" class="f-cond ink" font-size="1.86" font-weight="700" text-anchor="middle">PLAY / CONT · ⇧+PAD LOAD</text>
+<line x1="213.05" y1="102.55" x2="213.78" y2="102.55" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="212.85" y="103.33" class="f-cond ink" font-size="2.22" font-weight="700" text-anchor="end">STOP</text>
+<rect x="227.15" y="99.80" width="6.60" height="5.50" rx="0.55" class="box-alt"/>
+<text x="230.45" y="102.00" class="f-cond step-c" font-size="1.74" font-weight="700" text-anchor="middle">×2</text>
+<text x="230.45" y="104.43" class="f-cond ink" font-size="1.74" font-weight="700" text-anchor="middle">SPP 0</text>
+<path d="M208.400,107.900 L233.300,107.900 A0.450,0.450 0 0 1 233.750,108.350 L233.750,109.750 A0.450,0.450 0 0 1 233.300,110.200 L208.400,110.200 A0.450,0.450 0 0 1 207.950,109.750 L207.950,108.350 A0.450,0.450 0 0 1 208.400,107.900 Z" class="box-bg"/>
+<text x="220.85" y="109.64" class="f-cond ink" font-size="1.86" font-weight="700" text-anchor="middle">STOP+SAVE · ×2 REW SPP0</text>
+<line x1="213.05" y1="115.55" x2="213.78" y2="115.55" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="212.85" y="116.33" class="f-cond step-c" font-size="2.22" font-weight="700" text-anchor="end">REC</text>
+<rect x="227.15" y="112.80" width="6.60" height="5.50" rx="0.55" class="box-alt"/>
+<text x="230.45" y="115.00" class="f-cond step-c" font-size="1.74" font-weight="700" text-anchor="middle">⇧+PAD</text>
+<text x="230.45" y="117.43" class="f-cond ink" font-size="1.74" font-weight="700" text-anchor="middle">SAVE</text>
+<path d="M208.400,120.900 L233.300,120.900 A0.450,0.450 0 0 1 233.750,121.350 L233.750,122.750 A0.450,0.450 0 0 1 233.300,123.200 L208.400,123.200 A0.450,0.450 0 0 1 207.950,122.750 L207.950,121.350 A0.450,0.450 0 0 1 208.400,120.900 Z" class="box-bg"/>
+<text x="220.85" y="122.64" class="f-cond step-c" font-size="1.86" font-weight="700" text-anchor="middle">LIVE REC  ·  ⇧+PAD SAVE</text>
+<line x1="213.05" y1="128.55" x2="213.78" y2="128.55" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="212.85" y="129.33" class="f-cond step-c" font-size="2.22" font-weight="700" text-anchor="end">SHFT</text>
+<rect x="227.15" y="125.80" width="6.60" height="5.50" rx="0.55" class="box-alt"/>
+<text x="230.45" y="128.00" class="f-cond pat-c" font-size="1.74" font-weight="700" text-anchor="middle">+PAD</text>
+<text x="230.45" y="130.43" class="f-cond ink" font-size="1.74" font-weight="700" text-anchor="middle">MENU</text>
+<path d="M208.400,133.900 L233.300,133.900 A0.450,0.450 0 0 1 233.750,134.350 L233.750,135.750 A0.450,0.450 0 0 1 233.300,136.200 L208.400,136.200 A0.450,0.450 0 0 1 207.950,135.750 L207.950,134.350 A0.450,0.450 0 0 1 208.400,133.900 Z" class="box-bg"/>
+<text x="220.85" y="135.64" class="f-cond ink" font-size="1.86" font-weight="700" text-anchor="middle">⇧+PAD MENU · +K3/4 SCL</text>
+<line x1="213.05" y1="141.55" x2="213.78" y2="141.55" class="sc-rule-hi" stroke-width="0.20"/>
+<text x="212.85" y="142.33" class="f-cond ink" font-size="2.22" font-weight="700" text-anchor="end">RPT</text>
+<rect x="227.15" y="138.80" width="6.60" height="5.50" rx="0.55" class="box-alt"/>
+<text x="230.45" y="141.00" class="f-cond step-c" font-size="1.74" font-weight="700" text-anchor="middle">⇧+RPT</text>
+<text x="230.45" y="143.43" class="f-cond ink" font-size="1.74" font-weight="700" text-anchor="middle">SEQ</text>
+<path d="M208.400,146.900 L231.900,146.900 A0.450,0.450 0 0 1 232.350,147.350 L232.350,147.100 A2.100,2.100 0 0 1 230.250,149.200 L208.400,149.200 A0.450,0.450 0 0 1 207.950,148.750 L207.950,147.350 A0.450,0.450 0 0 1 208.400,146.900 Z" class="box-bg"/>
+<text x="220.15" y="148.64" class="f-cond ink" font-size="1.86" font-weight="700" text-anchor="middle">HLD: TIMING · ⇧ SEQ MODE</text>
+</g>
+<g id="s1tp-hole-mask" class="cutout-preview-mask no-print">
+<circle cx="30.100" cy="132.300" r="9.750"/>
+<circle cx="60.200" cy="132.300" r="9.750"/>
+<circle cx="30.100" cy="99.400" r="9.750"/>
+<circle cx="60.200" cy="99.400" r="9.750"/>
+<circle cx="30.100" cy="66.400" r="9.750"/>
+<circle cx="60.200" cy="66.400" r="9.750"/>
+<circle cx="30.100" cy="33.500" r="9.750"/>
+<circle cx="60.200" cy="33.500" r="9.750"/>
+<path d="M79.220,18.910 L105.620,18.910 A1.200,1.200 0 0 1 106.820,20.110 L106.820,46.410 A1.200,1.200 0 0 1 105.620,47.610 L79.220,47.610 A1.200,1.200 0 0 1 78.020,46.410 L78.020,20.110 A1.200,1.200 0 0 1 79.220,18.910 Z"/>
+<path d="M112.250,18.910 L138.650,18.910 A1.200,1.200 0 0 1 139.850,20.110 L139.850,46.410 A1.200,1.200 0 0 1 138.650,47.610 L112.250,47.610 A1.200,1.200 0 0 1 111.050,46.410 L111.050,20.110 A1.200,1.200 0 0 1 112.250,18.910 Z"/>
+<path d="M145.280,18.910 L171.680,18.910 A1.200,1.200 0 0 1 172.880,20.110 L172.880,46.410 A1.200,1.200 0 0 1 171.680,47.610 L145.280,47.610 A1.200,1.200 0 0 1 144.080,46.410 L144.080,20.110 A1.200,1.200 0 0 1 145.280,18.910 Z"/>
+<path d="M178.300,18.910 L204.700,18.910 A1.200,1.200 0 0 1 205.900,20.110 L205.900,46.410 A1.200,1.200 0 0 1 204.700,47.610 L178.300,47.610 A1.200,1.200 0 0 1 177.100,46.410 L177.100,20.110 A1.200,1.200 0 0 1 178.300,18.910 Z"/>
+<path d="M79.220,51.780 L105.620,51.780 A1.200,1.200 0 0 1 106.820,52.980 L106.820,79.280 A1.200,1.200 0 0 1 105.620,80.480 L79.220,80.480 A1.200,1.200 0 0 1 78.020,79.280 L78.020,52.980 A1.200,1.200 0 0 1 79.220,51.780 Z"/>
+<path d="M112.250,51.780 L138.650,51.780 A1.200,1.200 0 0 1 139.850,52.980 L139.850,77.280 A3.200,3.200 0 0 1 136.650,80.480 L112.250,80.480 A1.200,1.200 0 0 1 111.050,79.280 L111.050,52.980 A1.200,1.200 0 0 1 112.250,51.780 Z"/>
+<path d="M145.280,51.780 L171.680,51.780 A1.200,1.200 0 0 1 172.880,52.980 L172.880,79.280 A1.200,1.200 0 0 1 171.680,80.480 L147.280,80.480 A3.200,3.200 0 0 1 144.080,77.280 L144.080,52.980 A1.200,1.200 0 0 1 145.280,51.780 Z"/>
+<path d="M178.300,51.780 L204.700,51.780 A1.200,1.200 0 0 1 205.900,52.980 L205.900,79.280 A1.200,1.200 0 0 1 204.700,80.480 L178.300,80.480 A1.200,1.200 0 0 1 177.100,79.280 L177.100,52.980 A1.200,1.200 0 0 1 178.300,51.780 Z"/>
+<path d="M79.220,84.650 L105.620,84.650 A1.200,1.200 0 0 1 106.820,85.850 L106.820,112.150 A1.200,1.200 0 0 1 105.620,113.350 L79.220,113.350 A1.200,1.200 0 0 1 78.020,112.150 L78.020,85.850 A1.200,1.200 0 0 1 79.220,84.650 Z"/>
+<path d="M112.250,84.650 L136.650,84.650 A3.200,3.200 0 0 1 139.850,87.850 L139.850,112.150 A1.200,1.200 0 0 1 138.650,113.350 L112.250,113.350 A1.200,1.200 0 0 1 111.050,112.150 L111.050,85.850 A1.200,1.200 0 0 1 112.250,84.650 Z"/>
+<path d="M147.280,84.650 L171.680,84.650 A1.200,1.200 0 0 1 172.880,85.850 L172.880,112.150 A1.200,1.200 0 0 1 171.680,113.350 L145.280,113.350 A1.200,1.200 0 0 1 144.080,112.150 L144.080,87.850 A3.200,3.200 0 0 1 147.280,84.650 Z"/>
+<path d="M178.300,84.650 L204.700,84.650 A1.200,1.200 0 0 1 205.900,85.850 L205.900,112.150 A1.200,1.200 0 0 1 204.700,113.350 L178.300,113.350 A1.200,1.200 0 0 1 177.100,112.150 L177.100,85.850 A1.200,1.200 0 0 1 178.300,84.650 Z"/>
+<path d="M79.220,117.530 L105.620,117.530 A1.200,1.200 0 0 1 106.820,118.730 L106.820,145.030 A1.200,1.200 0 0 1 105.620,146.230 L79.220,146.230 A1.200,1.200 0 0 1 78.020,145.030 L78.020,118.730 A1.200,1.200 0 0 1 79.220,117.530 Z"/>
+<path d="M112.250,117.530 L138.650,117.530 A1.200,1.200 0 0 1 139.850,118.730 L139.850,145.030 A1.200,1.200 0 0 1 138.650,146.230 L112.250,146.230 A1.200,1.200 0 0 1 111.050,145.030 L111.050,118.730 A1.200,1.200 0 0 1 112.250,117.530 Z"/>
+<path d="M145.280,117.530 L171.680,117.530 A1.200,1.200 0 0 1 172.880,118.730 L172.880,145.030 A1.200,1.200 0 0 1 171.680,146.230 L145.280,146.230 A1.200,1.200 0 0 1 144.080,145.030 L144.080,118.730 A1.200,1.200 0 0 1 145.280,117.530 Z"/>
+<path d="M178.300,117.530 L204.700,117.530 A1.200,1.200 0 0 1 205.900,118.730 L205.900,145.030 A1.200,1.200 0 0 1 204.700,146.230 L178.300,146.230 A1.200,1.200 0 0 1 177.100,145.030 L177.100,118.730 A1.200,1.200 0 0 1 178.300,117.530 Z"/>
+<path d="M215.200,19.400 L225.700,19.400 A1.200,1.200 0 0 1 226.900,20.600 L226.900,28.500 A1.200,1.200 0 0 1 225.700,29.700 L215.200,29.700 A1.200,1.200 0 0 1 214.000,28.500 L214.000,20.600 A1.200,1.200 0 0 1 215.200,19.400 Z"/>
+<path d="M215.200,32.400 L225.700,32.400 A1.200,1.200 0 0 1 226.900,33.600 L226.900,41.500 A1.200,1.200 0 0 1 225.700,42.700 L215.200,42.700 A1.200,1.200 0 0 1 214.000,41.500 L214.000,33.600 A1.200,1.200 0 0 1 215.200,32.400 Z"/>
+<path d="M215.200,45.400 L225.700,45.400 A1.200,1.200 0 0 1 226.900,46.600 L226.900,54.500 A1.200,1.200 0 0 1 225.700,55.700 L215.200,55.700 A1.200,1.200 0 0 1 214.000,54.500 L214.000,46.600 A1.200,1.200 0 0 1 215.200,45.400 Z"/>
+<path d="M215.200,58.400 L225.700,58.400 A1.200,1.200 0 0 1 226.900,59.600 L226.900,67.500 A1.200,1.200 0 0 1 225.700,68.700 L215.200,68.700 A1.200,1.200 0 0 1 214.000,67.500 L214.000,59.600 A1.200,1.200 0 0 1 215.200,58.400 Z"/>
+<path d="M215.200,71.400 L225.700,71.400 A1.200,1.200 0 0 1 226.900,72.600 L226.900,80.500 A1.200,1.200 0 0 1 225.700,81.700 L215.200,81.700 A1.200,1.200 0 0 1 214.000,80.500 L214.000,72.600 A1.200,1.200 0 0 1 215.200,71.400 Z"/>
+<path d="M215.200,84.400 L225.700,84.400 A1.200,1.200 0 0 1 226.900,85.600 L226.900,93.500 A1.200,1.200 0 0 1 225.700,94.700 L215.200,94.700 A1.200,1.200 0 0 1 214.000,93.500 L214.000,85.600 A1.200,1.200 0 0 1 215.200,84.400 Z"/>
+<path d="M215.200,97.400 L225.700,97.400 A1.200,1.200 0 0 1 226.900,98.600 L226.900,106.500 A1.200,1.200 0 0 1 225.700,107.700 L215.200,107.700 A1.200,1.200 0 0 1 214.000,106.500 L214.000,98.600 A1.200,1.200 0 0 1 215.200,97.400 Z"/>
+<path d="M215.200,110.400 L225.700,110.400 A1.200,1.200 0 0 1 226.900,111.600 L226.900,119.500 A1.200,1.200 0 0 1 225.700,120.700 L215.200,120.700 A1.200,1.200 0 0 1 214.000,119.500 L214.000,111.600 A1.200,1.200 0 0 1 215.200,110.400 Z"/>
+<path d="M215.200,123.400 L225.700,123.400 A1.200,1.200 0 0 1 226.900,124.600 L226.900,132.500 A1.200,1.200 0 0 1 225.700,133.700 L215.200,133.700 A1.200,1.200 0 0 1 214.000,132.500 L214.000,124.600 A1.200,1.200 0 0 1 215.200,123.400 Z"/>
+<path d="M215.200,136.400 L225.700,136.400 A1.200,1.200 0 0 1 226.900,137.600 L226.900,145.500 A1.200,1.200 0 0 1 225.700,146.700 L215.200,146.700 A1.200,1.200 0 0 1 214.000,145.500 L214.000,137.600 A1.200,1.200 0 0 1 215.200,136.400 Z"/>
+</g>
+</g>
+<g id="s1tp-cut">
+<path id="s1tp-cut-outer" d="M23.000,11.500 L227.000,11.500 A9.000,9.000 0 0 1 236.000,20.500 L236.000,144.500 A9.000,9.000 0 0 1 227.000,153.500 L23.000,153.500 A9.000,9.000 0 0 1 14.000,144.500 L14.000,20.500 A9.000,9.000 0 0 1 23.000,11.500 Z" class="cut-line"/>
+<circle id="s1tp-cut-knob-1" cx="30.100" cy="132.300" r="9.750" class="cut-line"/>
+<circle id="s1tp-cut-knob-2" cx="60.200" cy="132.300" r="9.750" class="cut-line"/>
+<circle id="s1tp-cut-knob-3" cx="30.100" cy="99.400" r="9.750" class="cut-line"/>
+<circle id="s1tp-cut-knob-4" cx="60.200" cy="99.400" r="9.750" class="cut-line"/>
+<circle id="s1tp-cut-knob-5" cx="30.100" cy="66.400" r="9.750" class="cut-line"/>
+<circle id="s1tp-cut-knob-6" cx="60.200" cy="66.400" r="9.750" class="cut-line"/>
+<circle id="s1tp-cut-knob-7" cx="30.100" cy="33.500" r="9.750" class="cut-line"/>
+<circle id="s1tp-cut-knob-8" cx="60.200" cy="33.500" r="9.750" class="cut-line"/>
+<path id="s1tp-cut-pad-13" d="M79.220,18.910 L105.620,18.910 A1.200,1.200 0 0 1 106.820,20.110 L106.820,46.410 A1.200,1.200 0 0 1 105.620,47.610 L79.220,47.610 A1.200,1.200 0 0 1 78.020,46.410 L78.020,20.110 A1.200,1.200 0 0 1 79.220,18.910 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-14" d="M112.250,18.910 L138.650,18.910 A1.200,1.200 0 0 1 139.850,20.110 L139.850,46.410 A1.200,1.200 0 0 1 138.650,47.610 L112.250,47.610 A1.200,1.200 0 0 1 111.050,46.410 L111.050,20.110 A1.200,1.200 0 0 1 112.250,18.910 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-15" d="M145.280,18.910 L171.680,18.910 A1.200,1.200 0 0 1 172.880,20.110 L172.880,46.410 A1.200,1.200 0 0 1 171.680,47.610 L145.280,47.610 A1.200,1.200 0 0 1 144.080,46.410 L144.080,20.110 A1.200,1.200 0 0 1 145.280,18.910 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-16" d="M178.300,18.910 L204.700,18.910 A1.200,1.200 0 0 1 205.900,20.110 L205.900,46.410 A1.200,1.200 0 0 1 204.700,47.610 L178.300,47.610 A1.200,1.200 0 0 1 177.100,46.410 L177.100,20.110 A1.200,1.200 0 0 1 178.300,18.910 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-9" d="M79.220,51.780 L105.620,51.780 A1.200,1.200 0 0 1 106.820,52.980 L106.820,79.280 A1.200,1.200 0 0 1 105.620,80.480 L79.220,80.480 A1.200,1.200 0 0 1 78.020,79.280 L78.020,52.980 A1.200,1.200 0 0 1 79.220,51.780 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-10" d="M112.250,51.780 L138.650,51.780 A1.200,1.200 0 0 1 139.850,52.980 L139.850,77.280 A3.200,3.200 0 0 1 136.650,80.480 L112.250,80.480 A1.200,1.200 0 0 1 111.050,79.280 L111.050,52.980 A1.200,1.200 0 0 1 112.250,51.780 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-11" d="M145.280,51.780 L171.680,51.780 A1.200,1.200 0 0 1 172.880,52.980 L172.880,79.280 A1.200,1.200 0 0 1 171.680,80.480 L147.280,80.480 A3.200,3.200 0 0 1 144.080,77.280 L144.080,52.980 A1.200,1.200 0 0 1 145.280,51.780 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-12" d="M178.300,51.780 L204.700,51.780 A1.200,1.200 0 0 1 205.900,52.980 L205.900,79.280 A1.200,1.200 0 0 1 204.700,80.480 L178.300,80.480 A1.200,1.200 0 0 1 177.100,79.280 L177.100,52.980 A1.200,1.200 0 0 1 178.300,51.780 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-5" d="M79.220,84.650 L105.620,84.650 A1.200,1.200 0 0 1 106.820,85.850 L106.820,112.150 A1.200,1.200 0 0 1 105.620,113.350 L79.220,113.350 A1.200,1.200 0 0 1 78.020,112.150 L78.020,85.850 A1.200,1.200 0 0 1 79.220,84.650 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-6" d="M112.250,84.650 L136.650,84.650 A3.200,3.200 0 0 1 139.850,87.850 L139.850,112.150 A1.200,1.200 0 0 1 138.650,113.350 L112.250,113.350 A1.200,1.200 0 0 1 111.050,112.150 L111.050,85.850 A1.200,1.200 0 0 1 112.250,84.650 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-7" d="M147.280,84.650 L171.680,84.650 A1.200,1.200 0 0 1 172.880,85.850 L172.880,112.150 A1.200,1.200 0 0 1 171.680,113.350 L145.280,113.350 A1.200,1.200 0 0 1 144.080,112.150 L144.080,87.850 A3.200,3.200 0 0 1 147.280,84.650 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-8" d="M178.300,84.650 L204.700,84.650 A1.200,1.200 0 0 1 205.900,85.850 L205.900,112.150 A1.200,1.200 0 0 1 204.700,113.350 L178.300,113.350 A1.200,1.200 0 0 1 177.100,112.150 L177.100,85.850 A1.200,1.200 0 0 1 178.300,84.650 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-1" d="M79.220,117.530 L105.620,117.530 A1.200,1.200 0 0 1 106.820,118.730 L106.820,145.030 A1.200,1.200 0 0 1 105.620,146.230 L79.220,146.230 A1.200,1.200 0 0 1 78.020,145.030 L78.020,118.730 A1.200,1.200 0 0 1 79.220,117.530 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-2" d="M112.250,117.530 L138.650,117.530 A1.200,1.200 0 0 1 139.850,118.730 L139.850,145.030 A1.200,1.200 0 0 1 138.650,146.230 L112.250,146.230 A1.200,1.200 0 0 1 111.050,145.030 L111.050,118.730 A1.200,1.200 0 0 1 112.250,117.530 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-3" d="M145.280,117.530 L171.680,117.530 A1.200,1.200 0 0 1 172.880,118.730 L172.880,145.030 A1.200,1.200 0 0 1 171.680,146.230 L145.280,146.230 A1.200,1.200 0 0 1 144.080,145.030 L144.080,118.730 A1.200,1.200 0 0 1 145.280,117.530 Z" class="cut-line"/>
+<path id="s1tp-cut-pad-4" d="M178.300,117.530 L204.700,117.530 A1.200,1.200 0 0 1 205.900,118.730 L205.900,145.030 A1.200,1.200 0 0 1 204.700,146.230 L178.300,146.230 A1.200,1.200 0 0 1 177.100,145.030 L177.100,118.730 A1.200,1.200 0 0 1 178.300,117.530 Z" class="cut-line"/>
+<path id="s1tp-cut-btn-1" d="M215.200,19.400 L225.700,19.400 A1.200,1.200 0 0 1 226.900,20.600 L226.900,28.500 A1.200,1.200 0 0 1 225.700,29.700 L215.200,29.700 A1.200,1.200 0 0 1 214.000,28.500 L214.000,20.600 A1.200,1.200 0 0 1 215.200,19.400 Z" class="cut-line"/>
+<path id="s1tp-cut-btn-2" d="M215.200,32.400 L225.700,32.400 A1.200,1.200 0 0 1 226.900,33.600 L226.900,41.500 A1.200,1.200 0 0 1 225.700,42.700 L215.200,42.700 A1.200,1.200 0 0 1 214.000,41.500 L214.000,33.600 A1.200,1.200 0 0 1 215.200,32.400 Z" class="cut-line"/>
+<path id="s1tp-cut-btn-3" d="M215.200,45.400 L225.700,45.400 A1.200,1.200 0 0 1 226.900,46.600 L226.900,54.500 A1.200,1.200 0 0 1 225.700,55.700 L215.200,55.700 A1.200,1.200 0 0 1 214.000,54.500 L214.000,46.600 A1.200,1.200 0 0 1 215.200,45.400 Z" class="cut-line"/>
+<path id="s1tp-cut-btn-4" d="M215.200,58.400 L225.700,58.400 A1.200,1.200 0 0 1 226.900,59.600 L226.900,67.500 A1.200,1.200 0 0 1 225.700,68.700 L215.200,68.700 A1.200,1.200 0 0 1 214.000,67.500 L214.000,59.600 A1.200,1.200 0 0 1 215.200,58.400 Z" class="cut-line"/>
+<path id="s1tp-cut-btn-5" d="M215.200,71.400 L225.700,71.400 A1.200,1.200 0 0 1 226.900,72.600 L226.900,80.500 A1.200,1.200 0 0 1 225.700,81.700 L215.200,81.700 A1.200,1.200 0 0 1 214.000,80.500 L214.000,72.600 A1.200,1.200 0 0 1 215.200,71.400 Z" class="cut-line"/>
+<path id="s1tp-cut-btn-6" d="M215.200,84.400 L225.700,84.400 A1.200,1.200 0 0 1 226.900,85.600 L226.900,93.500 A1.200,1.200 0 0 1 225.700,94.700 L215.200,94.700 A1.200,1.200 0 0 1 214.000,93.500 L214.000,85.600 A1.200,1.200 0 0 1 215.200,84.400 Z" class="cut-line"/>
+<path id="s1tp-cut-btn-7" d="M215.200,97.400 L225.700,97.400 A1.200,1.200 0 0 1 226.900,98.600 L226.900,106.500 A1.200,1.200 0 0 1 225.700,107.700 L215.200,107.700 A1.200,1.200 0 0 1 214.000,106.500 L214.000,98.600 A1.200,1.200 0 0 1 215.200,97.400 Z" class="cut-line"/>
+<path id="s1tp-cut-btn-8" d="M215.200,110.400 L225.700,110.400 A1.200,1.200 0 0 1 226.900,111.600 L226.900,119.500 A1.200,1.200 0 0 1 225.700,120.700 L215.200,120.700 A1.200,1.200 0 0 1 214.000,119.500 L214.000,111.600 A1.200,1.200 0 0 1 215.200,110.400 Z" class="cut-line"/>
+<path id="s1tp-cut-btn-9" d="M215.200,123.400 L225.700,123.400 A1.200,1.200 0 0 1 226.900,124.600 L226.900,132.500 A1.200,1.200 0 0 1 225.700,133.700 L215.200,133.700 A1.200,1.200 0 0 1 214.000,132.500 L214.000,124.600 A1.200,1.200 0 0 1 215.200,123.400 Z" class="cut-line"/>
+<path id="s1tp-cut-btn-10" d="M215.200,136.400 L225.700,136.400 A1.200,1.200 0 0 1 226.900,137.600 L226.900,145.500 A1.200,1.200 0 0 1 225.700,146.700 L215.200,146.700 A1.200,1.200 0 0 1 214.000,145.500 L214.000,137.600 A1.200,1.200 0 0 1 215.200,136.400 Z" class="cut-line"/>
+</g>
+<g class="align-layer"><rect x="0" y="0" width="250.000" height="165.000" class="align-frame"/></g>
+</svg>

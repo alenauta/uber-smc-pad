@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="250.00mm" height="165.00mm" viewBox="0 0 250.00 165.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<style class="theme-style">
+    .cut-line { fill: none; stroke: #ff0000; stroke-width: 0.12; stroke-linecap: round; stroke-linejoin: round; }
+    .align-frame { fill: none; stroke: #0066ff; stroke-width: 0.10; stroke-dasharray: 2.0 1.2; }
+    .sheet-paper-bg { fill: #ffffff; stroke: #cbd5e1; stroke-width: 0.16; }
+    .sheet-annotations text { fill: #334155 !important; }
+    .sheet-ruler .box-bg { fill: #ffffff !important; fill-opacity: 1 !important; stroke: #0f172a !important; }
+    .sheet-ruler .ink, .sheet-ruler .tro-fill, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c { fill: #0f172a !important; }
+    .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi, .sheet-ruler .tro-ink { stroke: #0f172a !important; }
+    .cutout-preview-mask { display: none; fill: #0b0e14; fill-opacity: 0.76; stroke: #64748b; stroke-width: 0.14; pointer-events: none; }
+    .seam-tick { fill: none; stroke: #FACC15; stroke-width: 0.20; stroke-dasharray: 0.9 0.7; }
+    .bg-base { fill: #13171D; }
+    .bg-veil { fill: #13171D; fill-opacity: 0; pointer-events: none; }
+    .panel-sub { fill: #171C24; }
+    .box-bg { fill: #1B222C; stroke: #4A5B73; stroke-width: 0.16; }
+    .box-alt { fill: #10141A; stroke: #4A5B73; stroke-width: 0.15; }
+    .grid-min { stroke: #1C232E; stroke-width: 0.07; fill: none; }
+    .grid-maj { stroke: #252F3D; stroke-width: 0.12; fill: none; }
+    .sc-trace { stroke: #2E3B4E; stroke-width: 0.18; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .sc-rule { stroke: #4A5B73; fill: none; }
+    .sc-rule-hi { stroke: #7C91AD; fill: none; }
+    .tro-ink { stroke: #ECF0F5; fill: none; stroke-linecap: square; stroke-linejoin: miter; }
+    .tro-fill { fill: #ECF0F5; }
+    .tro-paper { fill: #1B222C; stroke: #ECF0F5; }
+    .ink { fill: #ECF0F5; }
+    .muted { fill: #8C9BAE; }
+    .step-c { fill: #FF7A1A; }
+    .step-bg { fill: #FF7A1A; }
+    .step-fg { fill: #111317; }
+    .pat-c { fill: #38BDF8; }
+    .warn-c { fill: #FACC15; }
+    .warn-stroke { stroke: #FACC15; fill: none; }
+    .ok-c { fill: #34D399; }
+    .f-cond { font-family: "Roboto Condensed", "Avenir Next Condensed", "Bahnschrift", "Liberation Sans Narrow", "Arial Narrow", sans-serif; }
+    .f-mono { font-family: "Noto Sans Mono", "JetBrains Mono", "SF Mono", "DejaVu Sans Mono", "Liberation Mono", monospace; }
+    
+    .tro-only { display: none; }
+    .non-tro { display: inline; }
+    
+    </style>
+<g id="s2rear-cut">
+<path id="s2rear-cut-outer" d="M14.788,8.000 L235.212,8.000 A1.000,1.000 0 0 1 236.212,9.000 L236.212,30.800 A1.000,1.000 0 0 1 235.212,31.800 L14.788,31.800 A1.000,1.000 0 0 1 13.788,30.800 L13.788,9.000 A1.000,1.000 0 0 1 14.788,8.000 Z" class="cut-line"/>
+<path id="s2rear-cut-io-well" d="M190.612,12.185 L228.312,12.185 A5.700,5.700 0 0 1 234.012,17.885 L234.012,22.185 A5.700,5.700 0 0 1 228.312,27.885 L190.612,27.885 A5.700,5.700 0 0 1 184.912,22.185 L184.912,17.885 A5.700,5.700 0 0 1 190.612,12.185 Z" class="cut-line"/>
+</g>
+<g id="s2front-cut"><path id="s2front-cut-outer" d="M14.788,38.000 L235.212,38.000 A1.000,1.000 0 0 1 236.212,39.000 L236.212,60.800 A1.000,1.000 0 0 1 235.212,61.800 L14.788,61.800 A1.000,1.000 0 0 1 13.788,60.800 L13.788,39.000 A1.000,1.000 0 0 1 14.788,38.000 Z" class="cut-line"/></g>
+<g id="s2left-cut"><path id="s2left-cut-outer" d="M5.500,68.000 L145.925,68.000 A1.000,1.000 0 0 1 146.925,69.000 L146.925,90.800 A1.000,1.000 0 0 1 145.925,91.800 L5.500,91.800 A1.000,1.000 0 0 1 4.500,90.800 L4.500,69.000 A1.000,1.000 0 0 1 5.500,68.000 Z" class="cut-line"/></g>
+<g id="s2io1-cut">
+<path id="s2io1-cut-outer" d="M156.200,73.500 L193.800,73.500 A4.200,4.200 0 0 1 198.000,77.700 L198.000,82.100 A4.200,4.200 0 0 1 193.800,86.300 L156.200,86.300 A4.200,4.200 0 0 1 152.000,82.100 L152.000,77.700 A4.200,4.200 0 0 1 156.200,73.500 Z" class="cut-line"/>
+<path id="s2io1-cut-pwr" d="M155.690,79.280 L162.490,79.280 A1.500,1.500 0 0 1 163.990,80.780 L163.990,83.480 A1.500,1.500 0 0 1 162.490,84.980 L155.690,84.980 A1.500,1.500 0 0 1 154.190,83.480 L154.190,80.780 A1.500,1.500 0 0 1 155.690,79.280 Z" class="cut-line"/>
+<circle id="s2io1-cut-led" cx="169.550" cy="79.430" r="1.150" class="cut-line"/>
+<path id="s2io1-cut-usb" d="M174.430,77.740 L181.230,77.740 A1.650,1.650 0 0 1 182.880,79.390 L182.880,80.490 A1.650,1.650 0 0 1 181.230,82.140 L174.430,82.140 A1.650,1.650 0 0 1 172.780,80.490 L172.780,79.390 A1.650,1.650 0 0 1 174.430,77.740 Z" class="cut-line"/>
+<circle id="s2io1-cut-midi" cx="192.310" cy="80.830" r="3.150" class="cut-line"/>
+</g>
+<g id="s2io2-cut">
+<path id="s2io2-cut-outer" d="M205.700,73.500 L243.300,73.500 A4.200,4.200 0 0 1 247.500,77.700 L247.500,82.100 A4.200,4.200 0 0 1 243.300,86.300 L205.700,86.300 A4.200,4.200 0 0 1 201.500,82.100 L201.500,77.700 A4.200,4.200 0 0 1 205.700,73.500 Z" class="cut-line"/>
+<path id="s2io2-cut-pwr" d="M205.190,79.280 L211.990,79.280 A1.500,1.500 0 0 1 213.490,80.780 L213.490,83.480 A1.500,1.500 0 0 1 211.990,84.980 L205.190,84.980 A1.500,1.500 0 0 1 203.690,83.480 L203.690,80.780 A1.500,1.500 0 0 1 205.190,79.280 Z" class="cut-line"/>
+<circle id="s2io2-cut-led" cx="219.050" cy="79.430" r="1.150" class="cut-line"/>
+<path id="s2io2-cut-usb" d="M223.930,77.740 L230.730,77.740 A1.650,1.650 0 0 1 232.380,79.390 L232.380,80.490 A1.650,1.650 0 0 1 230.730,82.140 L223.930,82.140 A1.650,1.650 0 0 1 222.280,80.490 L222.280,79.390 A1.650,1.650 0 0 1 223.930,77.740 Z" class="cut-line"/>
+<circle id="s2io2-cut-midi" cx="241.810" cy="80.830" r="3.150" class="cut-line"/>
+</g>
+<g id="s2right-cut"><path id="s2right-cut-outer" d="M5.500,98.000 L145.925,98.000 A1.000,1.000 0 0 1 146.925,99.000 L146.925,120.800 A1.000,1.000 0 0 1 145.925,121.800 L5.500,121.800 A1.000,1.000 0 0 1 4.500,120.800 L4.500,99.000 A1.000,1.000 0 0 1 5.500,98.000 Z" class="cut-line"/></g>
+<g class="align-layer"><rect x="0" y="0" width="250.000" height="165.000" class="align-frame"/></g>
+</svg>

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SMC-PAD Full-Panel Overlay (Silhouette Cameo 5)</title>
+<meta name="description" content="1:1 full-panel printable and cuttable overlay for SMC-PAD and Silhouette Cameo 5">
+<style>
+@page { size: 297mm 210mm; margin: 0; }
+* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+html, body { margin: 0; padding: 0; background: #f3f4f6; color: #111;
+  font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif; }
+.toolbar { background: #181a20; color: #f3f4f6; padding: 10px 18px; display: flex; flex-wrap: wrap;
+  gap: 14px; align-items: center; font-size: 13px; border-bottom: 1px solid #2d3139; }
+.toolbar h1 { font-size: 15px; margin: 0 8px 0 0; font-weight: 700; color: #fff; }
+.toolbar label { display: inline-flex; align-items: center; gap: 6px; color: #d1d5db; font-weight: 500; }
+.toolbar input[type="range"] { width: 85px; }
+.toolbar select, .toolbar button, .toolbar .btn-file {
+  background: #2b303c; color: #fff; border: 1px solid #454c5c; border-radius: 5px;
+  padding: 5px 10px; font-size: 12.5px; cursor: pointer; font-weight: 600; }
+.toolbar button:hover, .toolbar .btn-file:hover { background: #3b4252; }
+.toolbar button.primary { background: #e0600b; border-color: #f97316; }
+.toolbar button.primary:hover { background: #f97316; }
+.page { position: relative; width: 297mm; height: 210mm; margin: 8mm auto; background: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12); overflow: hidden; }
+.skin-wrap { position: absolute; left: 35mm; top: 20mm; width: 227mm; height: 147mm; }
+.cameo-svg { width: 227mm; height: 147mm; display: block; }
+.meta-bar { position: absolute; left: 35mm; top: 8mm; width: 227mm; display: flex;
+  justify-content: space-between; align-items: baseline; font-size: 2.5mm; color: #333; }
+.meta-bar b { font-size: 3.4mm; color: #111; }
+.foot-bar { position: absolute; left: 35mm; top: 171mm; width: 227mm; display: flex;
+  justify-content: space-between; align-items: flex-start; gap: 8mm; font-size: 2.35mm; color: #444; line-height: 1.35; }
+.reg-mark { position: absolute; pointer-events: none; display: none; }
+.show-reg .reg-mark { display: block; }
+@media print {
+  html, body { background: #fff; }
+  .no-print { display: none !important; }
+  .page { margin: 0; box-shadow: none; page-break-after: always; }
+}
+</style>
+</head>
+<body>
+<div class="toolbar no-print">
+  <h1>SMC-PAD Cameo 5 Overlay</h1>
+  <label class="btn-file">
+    <span>Background Image&hellip;</span>
+    <input type="file" id="bg-file" accept="image/*" style="display:none">
+  </label>
+  <button type="button" id="bg-clear">Clear Image</button>
+  <label>Fit
+    <select id="bg-fit">
+      <option value="cover" selected>Cover</option>
+      <option value="contain" >Contain</option>
+      <option value="stretch" >Stretch</option>
+    </select>
+  </label>
+  <label>Opacity <input type="range" id="bg-opacity" min="0.1" max="1" step="0.05" value="1.00"></label>
+  <label>Zoom <input type="range" id="bg-zoom" min="0.5" max="2.5" step="0.05" value="1.00"></label>
+  <label>Pan X <input type="range" id="bg-panx" min="-60" max="60" step="1" value="0"></label>
+  <label>Pan Y <input type="range" id="bg-pany" min="-60" max="60" step="1" value="0"></label>
+  <label>Labels
+    <select id="pill-mode">
+      <option value="light" selected>Frosted Light</option>
+      <option value="dark" >Frosted Dark</option>
+      <option value="solid" >Solid White</option>
+      <option value="none" >No Backing</option>
+    </select>
+  </label>
+  <label><input type="checkbox" id="toggle-cut" checked> Cut lines</label>
+  <label><input type="checkbox" id="toggle-holes" > Mask holes</label>
+  <label><input type="checkbox" id="toggle-reg"> Print&amp;Cut marks</label>
+  <button type="button" id="dl-svg" class="primary">Download SVG (Print+Cut)</button>
+  <button type="button" id="dl-cut-svg">Download Cut-Only SVG</button>
+  <button type="button" onclick="window.print()">Print / Save PDF</button>
+</div>
+
+<div class="page" id="sheet">
+  <!-- Optional Silhouette-style registration marks preview around the 227x147mm area -->
+  <svg class="reg-mark" style="left:25mm;top:12mm;width:247mm;height:163mm" viewBox="0 0 247 163" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="5" height="5" fill="#000"/>
+    <path d="M247,0 L237,0 L237,1.2 L245.8,1.2 L245.8,10 L247,10 Z" fill="#000"/>
+    <path d="M0,163 L10,163 L10,161.8 L1.2,161.8 L1.2,153 L0,153 Z" fill="#000"/>
+  </svg>
+
+  <div class="meta-bar no-print-hide">
+    <div><b>SMC-PAD Sequencer Full-Panel Overlay</b> &mdash; 1:1 scale (222.0 &times; 142.0 mm panel inside 227 &times; 147 mm body)</div>
+    <div>Silhouette Cameo 5: cut red paths (<code>#ff0000</code>)</div>
+  </div>
+
+  <div class="skin-wrap">
+    <svg id="cameo-svg" class="cameo-svg" viewBox="0 0 227.0 147.0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<style>
+    .cut-line { fill: none; stroke: #ff0000; stroke-width: 0.12; stroke-linecap: round; stroke-linejoin: round; }
+    .hole-mask { fill: #ffffff; stroke: none; }
+    .svg-text { font-family: "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif; }
+    .title { font-size: 2.5px; font-weight: 700; letter-spacing: 0.25px; }
+    .legend { font-size: 1.8px; font-weight: 700; }
+    .badge { font-size: 2.55px; font-weight: 700; fill: #ffffff; }
+    .klabel { font-size: 2.5px; font-weight: 700; }
+    .blabel { font-size: 1.50px; font-weight: 700; letter-spacing: -0.03px; }
+    .pstep { font-size: 2.15px; font-weight: 800; fill: #ffffff; }
+    .ptiming { font-size: 2.15px; font-weight: 700; }
+    .pshift { font-size: 1.55px; font-weight: 700; }
+    .phead { font-size: 2.1px; font-weight: 700; letter-spacing: 0.15px; }
+    </style>
+<defs><clipPath id="overlay-bleed-clip"><path id="bleed-clip-path" d="M11.500,1.000 L215.500,1.000 A10.500,10.500 0 0 1 226.000,11.500 L226.000,135.500 A10.500,10.500 0 0 1 215.500,146.000 L11.500,146.000 A10.500,10.500 0 0 1 1.000,135.500 L1.000,11.500 A10.500,10.500 0 0 1 11.500,1.000 Z"/></clipPath></defs>
+<g id="background" clip-path="url(#overlay-bleed-clip)">
+<path id="bg-base" d="M11.500,1.000 L215.500,1.000 A10.500,10.500 0 0 1 226.000,11.500 L226.000,135.500 A10.500,10.500 0 0 1 215.500,146.000 L11.500,146.000 A10.500,10.500 0 0 1 1.000,135.500 L1.000,11.500 A10.500,10.500 0 0 1 11.500,1.000 Z" fill="#ffffff"/>
+<image id="bg-image" href="" x="1.00" y="1.00" width="225.00" height="145.00" preserveAspectRatio="xMidYMid slice" opacity="1.00" style="display:none;"/>
+<g id="hole-masks" style="display:none;">
+<circle cx="18.600" cy="24.500" r="9.750" class="hole-mask"/>
+<circle cx="18.600" cy="57.400" r="9.750" class="hole-mask"/>
+<circle cx="18.600" cy="90.400" r="9.750" class="hole-mask"/>
+<circle cx="18.600" cy="123.300" r="9.750" class="hole-mask"/>
+<circle cx="48.700" cy="24.500" r="9.750" class="hole-mask"/>
+<circle cx="48.700" cy="57.400" r="9.750" class="hole-mask"/>
+<circle cx="48.700" cy="90.400" r="9.750" class="hole-mask"/>
+<circle cx="48.700" cy="123.300" r="9.750" class="hole-mask"/>
+<path d="M67.720,9.910 L94.120,9.910 A1.200,1.200 0 0 1 95.320,11.110 L95.320,37.410 A1.200,1.200 0 0 1 94.120,38.610 L67.720,38.610 A1.200,1.200 0 0 1 66.520,37.410 L66.520,11.110 A1.200,1.200 0 0 1 67.720,9.910 Z" class="hole-mask"/>
+<path d="M100.750,9.910 L127.150,9.910 A1.200,1.200 0 0 1 128.350,11.110 L128.350,37.410 A1.200,1.200 0 0 1 127.150,38.610 L100.750,38.610 A1.200,1.200 0 0 1 99.550,37.410 L99.550,11.110 A1.200,1.200 0 0 1 100.750,9.910 Z" class="hole-mask"/>
+<path d="M133.780,9.910 L160.180,9.910 A1.200,1.200 0 0 1 161.380,11.110 L161.380,37.410 A1.200,1.200 0 0 1 160.180,38.610 L133.780,38.610 A1.200,1.200 0 0 1 132.580,37.410 L132.580,11.110 A1.200,1.200 0 0 1 133.780,9.910 Z" class="hole-mask"/>
+<path d="M166.800,9.910 L193.200,9.910 A1.200,1.200 0 0 1 194.400,11.110 L194.400,37.410 A1.200,1.200 0 0 1 193.200,38.610 L166.800,38.610 A1.200,1.200 0 0 1 165.600,37.410 L165.600,11.110 A1.200,1.200 0 0 1 166.800,9.910 Z" class="hole-mask"/>
+<path d="M67.720,42.780 L94.120,42.780 A1.200,1.200 0 0 1 95.320,43.980 L95.320,70.280 A1.200,1.200 0 0 1 94.120,71.480 L67.720,71.480 A1.200,1.200 0 0 1 66.520,70.280 L66.520,43.980 A1.200,1.200 0 0 1 67.720,42.780 Z" class="hole-mask"/>
+<path d="M100.750,42.780 L127.150,42.780 A1.200,1.200 0 0 1 128.350,43.980 L128.350,68.280 A3.200,3.200 0 0 1 125.150,71.480 L100.750,71.480 A1.200,1.200 0 0 1 99.550,70.280 L99.550,43.980 A1.200,1.200 0 0 1 100.750,42.780 Z" class="hole-mask"/>
+<path d="M133.780,42.780 L160.180,42.780 A1.200,1.200 0 0 1 161.380,43.980 L161.380,70.280 A1.200,1.200 0 0 1 160.180,71.480 L135.780,71.480 A3.200,3.200 0 0 1 132.580,68.280 L132.580,43.980 A1.200,1.200 0 0 1 133.780,42.780 Z" class="hole-mask"/>
+<path d="M166.800,42.780 L193.200,42.780 A1.200,1.200 0 0 1 194.400,43.980 L194.400,70.280 A1.200,1.200 0 0 1 193.200,71.480 L166.800,71.480 A1.200,1.200 0 0 1 165.600,70.280 L165.600,43.980 A1.200,1.200 0 0 1 166.800,42.780 Z" class="hole-mask"/>
+<path d="M67.720,75.650 L94.120,75.650 A1.200,1.200 0 0 1 95.320,76.850 L95.320,103.150 A1.200,1.200 0 0 1 94.120,104.350 L67.720,104.350 A1.200,1.200 0 0 1 66.520,103.150 L66.520,76.850 A1.200,1.200 0 0 1 67.720,75.650 Z" class="hole-mask"/>
+<path d="M100.750,75.650 L125.150,75.650 A3.200,3.200 0 0 1 128.350,78.850 L128.350,103.150 A1.200,1.200 0 0 1 127.150,104.350 L100.750,104.350 A1.200,1.200 0 0 1 99.550,103.150 L99.550,76.850 A1.200,1.200 0 0 1 100.750,75.650 Z" class="hole-mask"/>
+<path d="M135.780,75.650 L160.180,75.650 A1.200,1.200 0 0 1 161.380,76.850 L161.380,103.150 A1.200,1.200 0 0 1 160.180,104.350 L133.780,104.350 A1.200,1.200 0 0 1 132.580,103.150 L132.580,78.850 A3.200,3.200 0 0 1 135.780,75.650 Z" class="hole-mask"/>
+<path d="M166.800,75.650 L193.200,75.650 A1.200,1.200 0 0 1 194.400,76.850 L194.400,103.150 A1.200,1.200 0 0 1 193.200,104.350 L166.800,104.350 A1.200,1.200 0 0 1 165.600,103.150 L165.600,76.850 A1.200,1.200 0 0 1 166.800,75.650 Z" class="hole-mask"/>
+<path d="M67.720,108.530 L94.120,108.530 A1.200,1.200 0 0 1 95.320,109.730 L95.320,136.030 A1.200,1.200 0 0 1 94.120,137.230 L67.720,137.230 A1.200,1.200 0 0 1 66.520,136.030 L66.520,109.730 A1.200,1.200 0 0 1 67.720,108.530 Z" class="hole-mask"/>
+<path d="M100.750,108.530 L127.150,108.530 A1.200,1.200 0 0 1 128.350,109.730 L128.350,136.030 A1.200,1.200 0 0 1 127.150,137.230 L100.750,137.230 A1.200,1.200 0 0 1 99.550,136.030 L99.550,109.730 A1.200,1.200 0 0 1 100.750,108.530 Z" class="hole-mask"/>
+<path d="M133.780,108.530 L160.180,108.530 A1.200,1.200 0 0 1 161.380,109.730 L161.380,136.030 A1.200,1.200 0 0 1 160.180,137.230 L133.780,137.230 A1.200,1.200 0 0 1 132.580,136.030 L132.580,109.730 A1.200,1.200 0 0 1 133.780,108.530 Z" class="hole-mask"/>
+<path d="M166.800,108.530 L193.200,108.530 A1.200,1.200 0 0 1 194.400,109.730 L194.400,136.030 A1.200,1.200 0 0 1 193.200,137.230 L166.800,137.230 A1.200,1.200 0 0 1 165.600,136.030 L165.600,109.730 A1.200,1.200 0 0 1 166.800,108.530 Z" class="hole-mask"/>
+<path d="M203.700,10.400 L214.200,10.400 A1.200,1.200 0 0 1 215.400,11.600 L215.400,19.500 A1.200,1.200 0 0 1 214.200,20.700 L203.700,20.700 A1.200,1.200 0 0 1 202.500,19.500 L202.500,11.600 A1.200,1.200 0 0 1 203.700,10.400 Z" class="hole-mask"/>
+<path d="M203.700,23.400 L214.200,23.400 A1.200,1.200 0 0 1 215.400,24.600 L215.400,32.500 A1.200,1.200 0 0 1 214.200,33.700 L203.700,33.700 A1.200,1.200 0 0 1 202.500,32.500 L202.500,24.600 A1.200,1.200 0 0 1 203.700,23.400 Z" class="hole-mask"/>
+<path d="M203.700,36.400 L214.200,36.400 A1.200,1.200 0 0 1 215.400,37.600 L215.400,45.500 A1.200,1.200 0 0 1 214.200,46.700 L203.700,46.700 A1.200,1.200 0 0 1 202.500,45.500 L202.500,37.600 A1.200,1.200 0 0 1 203.700,36.400 Z" class="hole-mask"/>
+<path d="M203.700,49.400 L214.200,49.400 A1.200,1.200 0 0 1 215.400,50.600 L215.400,58.500 A1.200,1.200 0 0 1 214.200,59.700 L203.700,59.700 A1.200,1.200 0 0 1 202.500,58.500 L202.500,50.600 A1.200,1.200 0 0 1 203.700,49.400 Z" class="hole-mask"/>
+<path d="M203.700,62.400 L214.200,62.400 A1.200,1.200 0 0 1 215.400,63.600 L215.400,71.500 A1.200,1.200 0 0 1 214.200,72.700 L203.700,72.700 A1.200,1.200 0 0 1 202.500,71.500 L202.500,63.600 A1.200,1.200 0 0 1 203.700,62.400 Z" class="hole-mask"/>
+<path d="M203.700,75.400 L214.200,75.400 A1.200,1.200 0 0 1 215.400,76.600 L215.400,84.500 A1.200,1.200 0 0 1 214.200,85.700 L203.700,85.700 A1.200,1.200 0 0 1 202.500,84.500 L202.500,76.600 A1.200,1.200 0 0 1 203.700,75.400 Z" class="hole-mask"/>
+<path d="M203.700,88.400 L214.200,88.400 A1.200,1.200 0 0 1 215.400,89.600 L215.400,97.500 A1.200,1.200 0 0 1 214.200,98.700 L203.700,98.700 A1.200,1.200 0 0 1 202.500,97.500 L202.500,89.600 A1.200,1.200 0 0 1 203.700,88.400 Z" class="hole-mask"/>
+<path d="M203.700,101.400 L214.200,101.400 A1.200,1.200 0 0 1 215.400,102.600 L215.400,110.500 A1.200,1.200 0 0 1 214.200,111.700 L203.700,111.700 A1.200,1.200 0 0 1 202.500,110.500 L202.500,102.600 A1.200,1.200 0 0 1 203.700,101.400 Z" class="hole-mask"/>
+<path d="M203.700,114.400 L214.200,114.400 A1.200,1.200 0 0 1 215.400,115.600 L215.400,123.500 A1.200,1.200 0 0 1 214.200,124.700 L203.700,124.700 A1.200,1.200 0 0 1 202.500,123.500 L202.500,115.600 A1.200,1.200 0 0 1 203.700,114.400 Z" class="hole-mask"/>
+<path d="M203.700,127.400 L214.200,127.400 A1.200,1.200 0 0 1 215.400,128.600 L215.400,136.500 A1.200,1.200 0 0 1 214.200,137.700 L203.700,137.700 A1.200,1.200 0 0 1 202.500,136.500 L202.500,128.600 A1.200,1.200 0 0 1 203.700,127.400 Z" class="hole-mask"/>
+</g>
+</g>
+<g id="print-graphics" class="svg-text">
+<rect class="label-pill" x="5.2" y="4.8" width="55.6" height="8.4" rx="1.6" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.15"/>
+<text x="33.00" y="7.8" class="title track-txt" fill="#111111" text-anchor="middle">SEQUENCER KNOBS</text>
+<circle cx="7.20" cy="11.1" r="0.9" fill="#111111" class="track-txt-dot"/>
+<text x="8.80" y="11.85" class="legend track-txt" fill="#111111">TRACK</text>
+<circle cx="18.45" cy="11.1" r="0.9" fill="#e0600b" class="step-txt-dot"/>
+<text x="20.05" y="11.85" class="legend step-txt" fill="#e0600b">HOLD STEP</text>
+<circle cx="35.50" cy="11.1" r="0.9" fill="#1f6fd1" class="pat-txt-dot"/>
+<text x="37.10" y="11.85" class="legend pat-txt" fill="#1f6fd1">KNOB BANK</text>
+<rect class="label-pill" x="4.80" y="34.80" width="27.60" height="10.20" rx="1.4" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.15"/>
+<circle cx="8.45" cy="15.75" r="2.15" fill="#111111" stroke="#ffffff" stroke-width="0.25"/>
+<text x="8.45" y="16.67" class="badge" text-anchor="middle">7</text>
+<text x="18.60" y="37.20" class="klabel track-txt" fill="#111111" text-anchor="middle">Steps (length)</text>
+<text x="18.60" y="40.20" class="klabel step-txt" fill="#e0600b" text-anchor="middle">Trig condition</text>
+<text x="18.60" y="43.20" class="klabel pat-txt" fill="#1f6fd1" text-anchor="middle">MIDI channel</text>
+<rect class="label-pill" x="34.90" y="34.80" width="27.60" height="10.20" rx="1.4" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.15"/>
+<circle cx="38.55" cy="15.75" r="2.15" fill="#111111" stroke="#ffffff" stroke-width="0.25"/>
+<text x="38.55" y="16.67" class="badge" text-anchor="middle">8</text>
+<text x="48.70" y="37.20" class="klabel track-txt" fill="#111111" text-anchor="middle">Rate (⇧ speed)</text>
+<text x="48.70" y="40.20" class="klabel step-txt" fill="#e0600b" text-anchor="middle">Tie</text>
+<text x="48.70" y="43.20" class="klabel pat-txt" fill="#1f6fd1" text-anchor="middle">Sync offset</text>
+<rect class="label-pill" x="4.80" y="67.70" width="27.60" height="10.20" rx="1.4" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.15"/>
+<circle cx="8.45" cy="48.65" r="2.15" fill="#111111" stroke="#ffffff" stroke-width="0.25"/>
+<text x="8.45" y="49.57" class="badge" text-anchor="middle">5</text>
+<text x="18.60" y="70.10" class="klabel track-txt" fill="#111111" text-anchor="middle">Probability</text>
+<text x="18.60" y="73.10" class="klabel step-txt" fill="#e0600b" text-anchor="middle">Probability</text>
+<text x="18.60" y="76.10" class="klabel muted-txt" fill="#555555" text-anchor="middle">–</text>
+<rect class="label-pill" x="34.90" y="67.70" width="27.60" height="10.20" rx="1.4" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.15"/>
+<circle cx="38.55" cy="48.65" r="2.15" fill="#111111" stroke="#ffffff" stroke-width="0.25"/>
+<text x="38.55" y="49.57" class="badge" text-anchor="middle">6</text>
+<text x="48.70" y="70.10" class="klabel track-txt" fill="#111111" text-anchor="middle">Ratchet rate</text>
+<text x="48.70" y="73.10" class="klabel step-txt" fill="#e0600b" text-anchor="middle">Ratchet rate</text>
+<text x="48.70" y="76.10" class="klabel pat-txt" fill="#1f6fd1" text-anchor="middle">Track colour</text>
+<rect class="label-pill" x="4.80" y="100.70" width="27.60" height="10.20" rx="1.4" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.15"/>
+<circle cx="8.45" cy="81.65" r="2.15" fill="#111111" stroke="#ffffff" stroke-width="0.25"/>
+<text x="8.45" y="82.57" class="badge" text-anchor="middle">3</text>
+<text x="18.60" y="103.10" class="klabel track-txt" fill="#111111" text-anchor="middle">Base note</text>
+<text x="18.60" y="106.10" class="klabel step-txt" fill="#e0600b" text-anchor="middle">Note (chord)</text>
+<text x="18.60" y="109.10" class="klabel pat-txt" fill="#1f6fd1" text-anchor="middle">Track root</text>
+<rect class="label-pill" x="34.90" y="100.70" width="27.60" height="10.20" rx="1.4" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.15"/>
+<circle cx="38.55" cy="81.65" r="2.15" fill="#111111" stroke="#ffffff" stroke-width="0.25"/>
+<text x="38.55" y="82.57" class="badge" text-anchor="middle">4</text>
+<text x="48.70" y="103.10" class="klabel track-txt" fill="#111111" text-anchor="middle">Quantize</text>
+<text x="48.70" y="106.10" class="klabel step-txt" fill="#e0600b" text-anchor="middle">Micro-timing</text>
+<text x="48.70" y="109.10" class="klabel pat-txt" fill="#1f6fd1" text-anchor="middle">Track scale</text>
+<rect class="label-pill" x="4.80" y="133.60" width="27.60" height="10.20" rx="1.4" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.15"/>
+<circle cx="8.45" cy="114.55" r="2.15" fill="#111111" stroke="#ffffff" stroke-width="0.25"/>
+<text x="8.45" y="115.47" class="badge" text-anchor="middle">1</text>
+<text x="18.60" y="136.00" class="klabel track-txt" fill="#111111" text-anchor="middle">Volume</text>
+<text x="18.60" y="139.00" class="klabel step-txt" fill="#e0600b" text-anchor="middle">Velocity</text>
+<text x="18.60" y="142.00" class="klabel pat-txt" fill="#1f6fd1" text-anchor="middle">Tempo</text>
+<rect class="label-pill" x="34.90" y="133.60" width="27.60" height="10.20" rx="1.4" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.15"/>
+<circle cx="38.55" cy="114.55" r="2.15" fill="#111111" stroke="#ffffff" stroke-width="0.25"/>
+<text x="38.55" y="115.47" class="badge" text-anchor="middle">2</text>
+<text x="48.70" y="136.00" class="klabel track-txt" fill="#111111" text-anchor="middle">Gate</text>
+<text x="48.70" y="139.00" class="klabel step-txt" fill="#e0600b" text-anchor="middle">Gate</text>
+<text x="48.70" y="142.00" class="klabel pat-txt" fill="#1f6fd1" text-anchor="middle">Swing</text>
+<rect class="label-pill" x="66.52" y="4.6" width="127.88" height="4.1" rx="1.3" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.15"/>
+<text x="130.46" y="7.35" class="phead track-txt" fill="#111111" text-anchor="middle"><tspan fill="#e0600b" class="step-txt">STEP 1–16</tspan>  ·  HOLD NOTE REPEAT = TIMING  ·  HOLD PAD BANK = TRACKS (HOLD SRC + TAP DST = COPY)  ·  ⇧+REC SAVE / ⇧+PLAY LOAD</text>
+<rect class="label-pill" x="66.82" y="39.03" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="67.07" y="39.28" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="69.77" y="41.41" class="pstep" text-anchor="middle">1</text>
+<text x="83.62" y="41.43" class="ptiming track-txt" fill="#111111" text-anchor="middle">SW 75%</text>
+<rect class="label-pill" x="99.85" y="39.03" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="100.10" y="39.28" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="102.80" y="41.41" class="pstep" text-anchor="middle">2</text>
+<text x="116.65" y="41.43" class="ptiming step-txt" fill="#e0600b" text-anchor="middle">FILL</text>
+<rect class="label-pill" x="132.88" y="39.03" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="133.13" y="39.28" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="135.83" y="41.41" class="pstep" text-anchor="middle">3</text>
+<text x="149.68" y="41.43" class="ptiming track-txt" fill="#111111" text-anchor="middle">SYNC</text>
+<rect class="label-pill" x="165.90" y="39.03" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="166.15" y="39.28" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="168.85" y="41.41" class="pstep" text-anchor="middle">4</text>
+<text x="182.70" y="41.43" class="ptiming track-txt" fill="#111111" text-anchor="middle">TAP</text>
+<rect class="label-pill" x="66.82" y="71.90" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="67.07" y="72.15" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="69.77" y="74.28" class="pstep" text-anchor="middle">5</text>
+<text x="83.62" y="74.30" class="ptiming track-txt" fill="#111111" text-anchor="middle">SW 50%</text>
+<rect class="label-pill" x="99.85" y="71.90" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="100.10" y="72.15" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="102.80" y="74.28" class="pstep" text-anchor="middle">6</text>
+<text x="116.65" y="74.30" class="ptiming track-txt" fill="#111111" text-anchor="middle">SW 56%</text>
+<rect class="label-pill" x="132.88" y="71.90" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="133.13" y="72.15" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="135.83" y="74.28" class="pstep" text-anchor="middle">7</text>
+<text x="149.68" y="74.30" class="ptiming track-txt" fill="#111111" text-anchor="middle">SW 62%</text>
+<rect class="label-pill" x="165.90" y="71.90" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="166.15" y="72.15" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="168.85" y="74.28" class="pstep" text-anchor="middle">8</text>
+<text x="182.70" y="74.30" class="ptiming track-txt" fill="#111111" text-anchor="middle">SW 68%</text>
+<rect class="label-pill" x="66.82" y="104.77" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="67.07" y="105.02" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="69.77" y="107.15" class="pstep" text-anchor="middle">9</text>
+<text x="73.42" y="107.17" class="ptiming track-txt" fill="#111111">1/16</text>
+<text x="94.22" y="107.09" class="pshift pat-txt" fill="#1f6fd1" text-anchor="end">⇧OCT −</text>
+<rect class="label-pill" x="99.85" y="104.77" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="100.10" y="105.02" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="102.80" y="107.15" class="pstep" text-anchor="middle">10</text>
+<text x="106.45" y="107.17" class="ptiming track-txt" fill="#111111">1/16T</text>
+<text x="127.25" y="107.09" class="pshift pat-txt" fill="#1f6fd1" text-anchor="end">⇧OCT +</text>
+<rect class="label-pill" x="132.88" y="104.77" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="133.13" y="105.02" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="135.83" y="107.15" class="pstep" text-anchor="middle">11</text>
+<text x="149.68" y="107.17" class="ptiming track-txt" fill="#111111" text-anchor="middle">1/32</text>
+<rect class="label-pill" x="165.90" y="104.77" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="166.15" y="105.02" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="168.85" y="107.15" class="pstep" text-anchor="middle">12</text>
+<text x="182.70" y="107.17" class="ptiming track-txt" fill="#111111" text-anchor="middle">1/32T</text>
+<rect class="label-pill" x="66.82" y="137.65" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="67.07" y="137.90" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="69.77" y="140.03" class="pstep" text-anchor="middle">13</text>
+<text x="73.42" y="140.05" class="ptiming track-txt" fill="#111111">1/4</text>
+<text x="94.22" y="139.97" class="pshift pat-txt" fill="#1f6fd1" text-anchor="end">⇧PRESET</text>
+<rect class="label-pill" x="99.85" y="137.65" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="100.10" y="137.90" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="102.80" y="140.03" class="pstep" text-anchor="middle">14</text>
+<text x="106.45" y="140.05" class="ptiming track-txt" fill="#111111">1/4T</text>
+<text x="127.25" y="139.97" class="pshift pat-txt" fill="#1f6fd1" text-anchor="end">⇧CURVE</text>
+<rect class="label-pill" x="132.88" y="137.65" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="133.13" y="137.90" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="135.83" y="140.03" class="pstep" text-anchor="middle">15</text>
+<text x="139.48" y="140.05" class="ptiming track-txt" fill="#111111">1/8</text>
+<text x="160.28" y="139.97" class="pshift pat-txt" fill="#1f6fd1" text-anchor="end">⇧TR −</text>
+<rect class="label-pill" x="165.90" y="137.65" width="28.20" height="3.30" rx="0.9" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.14"/>
+<rect x="166.15" y="137.90" width="5.40" height="2.80" rx="0.65" fill="#e0600b"/>
+<text x="168.85" y="140.03" class="pstep" text-anchor="middle">16</text>
+<text x="172.50" y="140.05" class="ptiming track-txt" fill="#111111">1/8T</text>
+<text x="193.30" y="139.97" class="pshift pat-txt" fill="#1f6fd1" text-anchor="end">⇧TR +</text>
+<rect class="label-pill" x="215.65" y="23.95" width="8.35" height="9.20" rx="0.8" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.12"/>
+<text x="215.85" y="26.18" class="blabel track-txt" fill="#111111">TAP: VIEW</text>
+<text x="215.85" y="28.12" class="blabel track-txt" fill="#111111">off  step</text>
+<text x="215.85" y="30.08" class="blabel track-txt" fill="#111111">on   play</text>
+<text x="215.85" y="32.02" class="blabel track-txt" fill="#111111">HOLD TRACKS</text>
+<rect class="label-pill" x="215.65" y="39.00" width="8.35" height="5.10" rx="0.8" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.12"/>
+<text x="215.85" y="41.12" class="blabel track-txt" fill="#111111">PATTERN</text>
+<text x="215.85" y="43.07" class="blabel track-txt" fill="#111111">KNOBS</text>
+<rect class="label-pill" x="215.65" y="52.00" width="8.35" height="5.10" rx="0.8" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.12"/>
+<text x="215.85" y="54.12" class="blabel track-txt" fill="#111111">PAGE ◂</text>
+<text x="215.85" y="56.07" class="blabel track-txt" fill="#111111">⇧ UNDO</text>
+<rect class="label-pill" x="215.65" y="65.00" width="8.35" height="5.10" rx="0.8" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.12"/>
+<text x="215.85" y="67.12" class="blabel track-txt" fill="#111111">PAGE ▸</text>
+<text x="215.85" y="69.07" class="blabel track-txt" fill="#111111">⇧ REDO</text>
+<rect class="label-pill" x="215.65" y="78.00" width="8.35" height="5.10" rx="0.8" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.12"/>
+<text x="215.85" y="80.12" class="blabel track-txt" fill="#111111">PLAY</text>
+<text x="215.85" y="82.07" class="blabel track-txt" fill="#111111">⇧ LOAD</text>
+<rect class="label-pill" x="215.65" y="88.95" width="8.35" height="9.20" rx="0.8" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.12"/>
+<text x="215.85" y="91.17" class="blabel track-txt" fill="#111111">STOP</text>
+<text x="215.85" y="93.12" class="blabel track-txt" fill="#111111">BANK+pad</text>
+<text x="215.85" y="95.07" class="blabel track-txt" fill="#111111">MUTE</text>
+<text x="215.85" y="97.02" class="blabel track-txt" fill="#111111">⇧ CLEAR</text>
+<rect class="label-pill" x="215.65" y="104.00" width="8.35" height="5.10" rx="0.8" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.12"/>
+<text x="215.85" y="106.12" class="blabel track-txt" fill="#111111">REC</text>
+<text x="215.85" y="108.07" class="blabel track-txt" fill="#111111">⇧ SAVE</text>
+<rect class="label-pill" x="215.65" y="115.97" width="8.35" height="7.15" rx="0.8" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.12"/>
+<text x="215.85" y="118.15" class="blabel track-txt" fill="#111111">+pad MENU</text>
+<text x="215.85" y="120.10" class="blabel track-txt" fill="#111111">+K3 ROOT</text>
+<text x="215.85" y="122.05" class="blabel track-txt" fill="#111111">+K4 SCALE</text>
+<rect class="label-pill" x="215.65" y="127.95" width="8.35" height="9.20" rx="0.8" fill="rgba(255, 255, 255, 0.86)" stroke="rgba(0, 0, 0, 0.12)" stroke-width="0.12"/>
+<text x="215.85" y="130.18" class="blabel track-txt" fill="#111111">hold TIMING</text>
+<text x="215.85" y="132.13" class="blabel track-txt" fill="#111111">⇧ SEQ</text>
+<text x="215.85" y="134.08" class="blabel track-txt" fill="#111111">+step</text>
+<text x="215.85" y="136.03" class="blabel track-txt" fill="#111111">RATCHET</text>
+</g>
+<g id="cut-lines">
+<path id="cut-outer-panel" d="M11.500,2.500 L215.500,2.500 A9.000,9.000 0 0 1 224.500,11.500 L224.500,135.500 A9.000,9.000 0 0 1 215.500,144.500 L11.500,144.500 A9.000,9.000 0 0 1 2.500,135.500 L2.500,11.500 A9.000,9.000 0 0 1 11.500,2.500 Z" class="cut-line"/>
+<circle id="cut-knob-1" cx="18.600" cy="123.300" r="9.750" class="cut-line"/>
+<circle id="cut-knob-2" cx="48.700" cy="123.300" r="9.750" class="cut-line"/>
+<circle id="cut-knob-3" cx="18.600" cy="90.400" r="9.750" class="cut-line"/>
+<circle id="cut-knob-4" cx="48.700" cy="90.400" r="9.750" class="cut-line"/>
+<circle id="cut-knob-5" cx="18.600" cy="57.400" r="9.750" class="cut-line"/>
+<circle id="cut-knob-6" cx="48.700" cy="57.400" r="9.750" class="cut-line"/>
+<circle id="cut-knob-7" cx="18.600" cy="24.500" r="9.750" class="cut-line"/>
+<circle id="cut-knob-8" cx="48.700" cy="24.500" r="9.750" class="cut-line"/>
+<path id="cut-pad-13" d="M67.720,9.910 L94.120,9.910 A1.200,1.200 0 0 1 95.320,11.110 L95.320,37.410 A1.200,1.200 0 0 1 94.120,38.610 L67.720,38.610 A1.200,1.200 0 0 1 66.520,37.410 L66.520,11.110 A1.200,1.200 0 0 1 67.720,9.910 Z" class="cut-line"/>
+<path id="cut-pad-14" d="M100.750,9.910 L127.150,9.910 A1.200,1.200 0 0 1 128.350,11.110 L128.350,37.410 A1.200,1.200 0 0 1 127.150,38.610 L100.750,38.610 A1.200,1.200 0 0 1 99.550,37.410 L99.550,11.110 A1.200,1.200 0 0 1 100.750,9.910 Z" class="cut-line"/>
+<path id="cut-pad-15" d="M133.780,9.910 L160.180,9.910 A1.200,1.200 0 0 1 161.380,11.110 L161.380,37.410 A1.200,1.200 0 0 1 160.180,38.610 L133.780,38.610 A1.200,1.200 0 0 1 132.580,37.410 L132.580,11.110 A1.200,1.200 0 0 1 133.780,9.910 Z" class="cut-line"/>
+<path id="cut-pad-16" d="M166.800,9.910 L193.200,9.910 A1.200,1.200 0 0 1 194.400,11.110 L194.400,37.410 A1.200,1.200 0 0 1 193.200,38.610 L166.800,38.610 A1.200,1.200 0 0 1 165.600,37.410 L165.600,11.110 A1.200,1.200 0 0 1 166.800,9.910 Z" class="cut-line"/>
+<path id="cut-pad-9" d="M67.720,42.780 L94.120,42.780 A1.200,1.200 0 0 1 95.320,43.980 L95.320,70.280 A1.200,1.200 0 0 1 94.120,71.480 L67.720,71.480 A1.200,1.200 0 0 1 66.520,70.280 L66.520,43.980 A1.200,1.200 0 0 1 67.720,42.780 Z" class="cut-line"/>
+<path id="cut-pad-10" d="M100.750,42.780 L127.150,42.780 A1.200,1.200 0 0 1 128.350,43.980 L128.350,68.280 A3.200,3.200 0 0 1 125.150,71.480 L100.750,71.480 A1.200,1.200 0 0 1 99.550,70.280 L99.550,43.980 A1.200,1.200 0 0 1 100.750,42.780 Z" class="cut-line"/>
+<path id="cut-pad-11" d="M133.780,42.780 L160.180,42.780 A1.200,1.200 0 0 1 161.380,43.980 L161.380,70.280 A1.200,1.200 0 0 1 160.180,71.480 L135.780,71.480 A3.200,3.200 0 0 1 132.580,68.280 L132.580,43.980 A1.200,1.200 0 0 1 133.780,42.780 Z" class="cut-line"/>
+<path id="cut-pad-12" d="M166.800,42.780 L193.200,42.780 A1.200,1.200 0 0 1 194.400,43.980 L194.400,70.280 A1.200,1.200 0 0 1 193.200,71.480 L166.800,71.480 A1.200,1.200 0 0 1 165.600,70.280 L165.600,43.980 A1.200,1.200 0 0 1 166.800,42.780 Z" class="cut-line"/>
+<path id="cut-pad-5" d="M67.720,75.650 L94.120,75.650 A1.200,1.200 0 0 1 95.320,76.850 L95.320,103.150 A1.200,1.200 0 0 1 94.120,104.350 L67.720,104.350 A1.200,1.200 0 0 1 66.520,103.150 L66.520,76.850 A1.200,1.200 0 0 1 67.720,75.650 Z" class="cut-line"/>
+<path id="cut-pad-6" d="M100.750,75.650 L125.150,75.650 A3.200,3.200 0 0 1 128.350,78.850 L128.350,103.150 A1.200,1.200 0 0 1 127.150,104.350 L100.750,104.350 A1.200,1.200 0 0 1 99.550,103.150 L99.550,76.850 A1.200,1.200 0 0 1 100.750,75.650 Z" class="cut-line"/>
+<path id="cut-pad-7" d="M135.780,75.650 L160.180,75.650 A1.200,1.200 0 0 1 161.380,76.850 L161.380,103.150 A1.200,1.200 0 0 1 160.180,104.350 L133.780,104.350 A1.200,1.200 0 0 1 132.580,103.150 L132.580,78.850 A3.200,3.200 0 0 1 135.780,75.650 Z" class="cut-line"/>
+<path id="cut-pad-8" d="M166.800,75.650 L193.200,75.650 A1.200,1.200 0 0 1 194.400,76.850 L194.400,103.150 A1.200,1.200 0 0 1 193.200,104.350 L166.800,104.350 A1.200,1.200 0 0 1 165.600,103.150 L165.600,76.850 A1.200,1.200 0 0 1 166.800,75.650 Z" class="cut-line"/>
+<path id="cut-pad-1" d="M67.720,108.530 L94.120,108.530 A1.200,1.200 0 0 1 95.320,109.730 L95.320,136.030 A1.200,1.200 0 0 1 94.120,137.230 L67.720,137.230 A1.200,1.200 0 0 1 66.520,136.030 L66.520,109.730 A1.200,1.200 0 0 1 67.720,108.530 Z" class="cut-line"/>
+<path id="cut-pad-2" d="M100.750,108.530 L127.150,108.530 A1.200,1.200 0 0 1 128.350,109.730 L128.350,136.030 A1.200,1.200 0 0 1 127.150,137.230 L100.750,137.230 A1.200,1.200 0 0 1 99.550,136.030 L99.550,109.730 A1.200,1.200 0 0 1 100.750,108.530 Z" class="cut-line"/>
+<path id="cut-pad-3" d="M133.780,108.530 L160.180,108.530 A1.200,1.200 0 0 1 161.380,109.730 L161.380,136.030 A1.200,1.200 0 0 1 160.180,137.230 L133.780,137.230 A1.200,1.200 0 0 1 132.580,136.030 L132.580,109.730 A1.200,1.200 0 0 1 133.780,108.530 Z" class="cut-line"/>
+<path id="cut-pad-4" d="M166.800,108.530 L193.200,108.530 A1.200,1.200 0 0 1 194.400,109.730 L194.400,136.030 A1.200,1.200 0 0 1 193.200,137.230 L166.800,137.230 A1.200,1.200 0 0 1 165.600,136.030 L165.600,109.730 A1.200,1.200 0 0 1 166.800,108.530 Z" class="cut-line"/>
+<path id="cut-btn-1" d="M203.700,10.400 L214.200,10.400 A1.200,1.200 0 0 1 215.400,11.600 L215.400,19.500 A1.200,1.200 0 0 1 214.200,20.700 L203.700,20.700 A1.200,1.200 0 0 1 202.500,19.500 L202.500,11.600 A1.200,1.200 0 0 1 203.700,10.400 Z" class="cut-line"/>
+<path id="cut-btn-2" d="M203.700,23.400 L214.200,23.400 A1.200,1.200 0 0 1 215.400,24.600 L215.400,32.500 A1.200,1.200 0 0 1 214.200,33.700 L203.700,33.700 A1.200,1.200 0 0 1 202.500,32.500 L202.500,24.600 A1.200,1.200 0 0 1 203.700,23.400 Z" class="cut-line"/>
+<path id="cut-btn-3" d="M203.700,36.400 L214.200,36.400 A1.200,1.200 0 0 1 215.400,37.600 L215.400,45.500 A1.200,1.200 0 0 1 214.200,46.700 L203.700,46.700 A1.200,1.200 0 0 1 202.500,45.500 L202.500,37.600 A1.200,1.200 0 0 1 203.700,36.400 Z" class="cut-line"/>
+<path id="cut-btn-4" d="M203.700,49.400 L214.200,49.400 A1.200,1.200 0 0 1 215.400,50.600 L215.400,58.500 A1.200,1.200 0 0 1 214.200,59.700 L203.700,59.700 A1.200,1.200 0 0 1 202.500,58.500 L202.500,50.600 A1.200,1.200 0 0 1 203.700,49.400 Z" class="cut-line"/>
+<path id="cut-btn-5" d="M203.700,62.400 L214.200,62.400 A1.200,1.200 0 0 1 215.400,63.600 L215.400,71.500 A1.200,1.200 0 0 1 214.200,72.700 L203.700,72.700 A1.200,1.200 0 0 1 202.500,71.500 L202.500,63.600 A1.200,1.200 0 0 1 203.700,62.400 Z" class="cut-line"/>
+<path id="cut-btn-6" d="M203.700,75.400 L214.200,75.400 A1.200,1.200 0 0 1 215.400,76.600 L215.400,84.500 A1.200,1.200 0 0 1 214.200,85.700 L203.700,85.700 A1.200,1.200 0 0 1 202.500,84.500 L202.500,76.600 A1.200,1.200 0 0 1 203.700,75.400 Z" class="cut-line"/>
+<path id="cut-btn-7" d="M203.700,88.400 L214.200,88.400 A1.200,1.200 0 0 1 215.400,89.600 L215.400,97.500 A1.200,1.200 0 0 1 214.200,98.700 L203.700,98.700 A1.200,1.200 0 0 1 202.500,97.500 L202.500,89.600 A1.200,1.200 0 0 1 203.700,88.400 Z" class="cut-line"/>
+<path id="cut-btn-8" d="M203.700,101.400 L214.200,101.400 A1.200,1.200 0 0 1 215.400,102.600 L215.400,110.500 A1.200,1.200 0 0 1 214.200,111.700 L203.700,111.700 A1.200,1.200 0 0 1 202.500,110.500 L202.500,102.600 A1.200,1.200 0 0 1 203.700,101.400 Z" class="cut-line"/>
+<path id="cut-btn-9" d="M203.700,114.400 L214.200,114.400 A1.200,1.200 0 0 1 215.400,115.600 L215.400,123.500 A1.200,1.200 0 0 1 214.200,124.700 L203.700,124.700 A1.200,1.200 0 0 1 202.500,123.500 L202.500,115.600 A1.200,1.200 0 0 1 203.700,114.400 Z" class="cut-line"/>
+<path id="cut-btn-10" d="M203.700,127.400 L214.200,127.400 A1.200,1.200 0 0 1 215.400,128.600 L215.400,136.500 A1.200,1.200 0 0 1 214.200,137.700 L203.700,137.700 A1.200,1.200 0 0 1 202.500,136.500 L202.500,128.600 A1.200,1.200 0 0 1 203.700,127.400 Z" class="cut-line"/>
+</g>
+</svg>
+  </div>
+
+  <div class="foot-bar">
+    <div>
+      <svg class="cameo-ruler" style="width:130mm;height:7mm" viewBox="-1 -0.5 140 7" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="100" y1="0" stroke="#111" stroke-width="0.25"/><line x1="0" y1="0" x2="0" y2="3.0" stroke="#111" stroke-width="0.18"/><text x="0" y="5.4" font-size="2" text-anchor="middle">0</text><line x1="1" y1="0" x2="1" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="2" y1="0" x2="2" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="3" y1="0" x2="3" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="4" y1="0" x2="4" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="5" y1="0" x2="5" y2="2.0" stroke="#111" stroke-width="0.18"/><line x1="6" y1="0" x2="6" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="7" y1="0" x2="7" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="8" y1="0" x2="8" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="9" y1="0" x2="9" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="10" y1="0" x2="10" y2="3.0" stroke="#111" stroke-width="0.18"/><text x="10" y="5.4" font-size="2" text-anchor="middle">1</text><line x1="11" y1="0" x2="11" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="12" y1="0" x2="12" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="13" y1="0" x2="13" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="14" y1="0" x2="14" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="15" y1="0" x2="15" y2="2.0" stroke="#111" stroke-width="0.18"/><line x1="16" y1="0" x2="16" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="17" y1="0" x2="17" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="18" y1="0" x2="18" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="19" y1="0" x2="19" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="20" y1="0" x2="20" y2="3.0" stroke="#111" stroke-width="0.18"/><text x="20" y="5.4" font-size="2" text-anchor="middle">2</text><line x1="21" y1="0" x2="21" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="22" y1="0" x2="22" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="23" y1="0" x2="23" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="24" y1="0" x2="24" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="25" y1="0" x2="25" y2="2.0" stroke="#111" stroke-width="0.18"/><line x1="26" y1="0" x2="26" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="27" y1="0" x2="27" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="28" y1="0" x2="28" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="29" y1="0" x2="29" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="30" y1="0" x2="30" y2="3.0" stroke="#111" stroke-width="0.18"/><text x="30" y="5.4" font-size="2" text-anchor="middle">3</text><line x1="31" y1="0" x2="31" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="32" y1="0" x2="32" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="33" y1="0" x2="33" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="34" y1="0" x2="34" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="35" y1="0" x2="35" y2="2.0" stroke="#111" stroke-width="0.18"/><line x1="36" y1="0" x2="36" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="37" y1="0" x2="37" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="38" y1="0" x2="38" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="39" y1="0" x2="39" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="40" y1="0" x2="40" y2="3.0" stroke="#111" stroke-width="0.18"/><text x="40" y="5.4" font-size="2" text-anchor="middle">4</text><line x1="41" y1="0" x2="41" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="42" y1="0" x2="42" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="43" y1="0" x2="43" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="44" y1="0" x2="44" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="45" y1="0" x2="45" y2="2.0" stroke="#111" stroke-width="0.18"/><line x1="46" y1="0" x2="46" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="47" y1="0" x2="47" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="48" y1="0" x2="48" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="49" y1="0" x2="49" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="50" y1="0" x2="50" y2="3.0" stroke="#111" stroke-width="0.18"/><text x="50" y="5.4" font-size="2" text-anchor="middle">5</text><line x1="51" y1="0" x2="51" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="52" y1="0" x2="52" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="53" y1="0" x2="53" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="54" y1="0" x2="54" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="55" y1="0" x2="55" y2="2.0" stroke="#111" stroke-width="0.18"/><line x1="56" y1="0" x2="56" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="57" y1="0" x2="57" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="58" y1="0" x2="58" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="59" y1="0" x2="59" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="60" y1="0" x2="60" y2="3.0" stroke="#111" stroke-width="0.18"/><text x="60" y="5.4" font-size="2" text-anchor="middle">6</text><line x1="61" y1="0" x2="61" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="62" y1="0" x2="62" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="63" y1="0" x2="63" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="64" y1="0" x2="64" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="65" y1="0" x2="65" y2="2.0" stroke="#111" stroke-width="0.18"/><line x1="66" y1="0" x2="66" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="67" y1="0" x2="67" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="68" y1="0" x2="68" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="69" y1="0" x2="69" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="70" y1="0" x2="70" y2="3.0" stroke="#111" stroke-width="0.18"/><text x="70" y="5.4" font-size="2" text-anchor="middle">7</text><line x1="71" y1="0" x2="71" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="72" y1="0" x2="72" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="73" y1="0" x2="73" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="74" y1="0" x2="74" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="75" y1="0" x2="75" y2="2.0" stroke="#111" stroke-width="0.18"/><line x1="76" y1="0" x2="76" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="77" y1="0" x2="77" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="78" y1="0" x2="78" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="79" y1="0" x2="79" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="80" y1="0" x2="80" y2="3.0" stroke="#111" stroke-width="0.18"/><text x="80" y="5.4" font-size="2" text-anchor="middle">8</text><line x1="81" y1="0" x2="81" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="82" y1="0" x2="82" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="83" y1="0" x2="83" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="84" y1="0" x2="84" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="85" y1="0" x2="85" y2="2.0" stroke="#111" stroke-width="0.18"/><line x1="86" y1="0" x2="86" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="87" y1="0" x2="87" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="88" y1="0" x2="88" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="89" y1="0" x2="89" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="90" y1="0" x2="90" y2="3.0" stroke="#111" stroke-width="0.18"/><text x="90" y="5.4" font-size="2" text-anchor="middle">9</text><line x1="91" y1="0" x2="91" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="92" y1="0" x2="92" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="93" y1="0" x2="93" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="94" y1="0" x2="94" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="95" y1="0" x2="95" y2="2.0" stroke="#111" stroke-width="0.18"/><line x1="96" y1="0" x2="96" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="97" y1="0" x2="97" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="98" y1="0" x2="98" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="99" y1="0" x2="99" y2="1.2" stroke="#111" stroke-width="0.18"/><line x1="100" y1="0" x2="100" y2="3.0" stroke="#111" stroke-width="0.18"/><text x="100" y="5.4" font-size="2" text-anchor="middle">10</text><text x="102" y="2.6" font-size="2.2">100 mm: check with a ruler</text></svg>
+    </div>
+    <div style="max-width:92mm">
+      <b>Silhouette Cameo 5 workflow:</b> Open <code>smcpad_seq_cameo.svg</code> (Designer) or
+      <code>smcpad_seq_cameo_cut.dxf</code> (Basic) at <b>100 % / mm units</b>, or use this page/SVG for
+      <b>Print &amp; Cut</b> on printable vinyl / sticker sheet. Uncheck <i>Cut lines</i> before printing if you only
+      want the blade to follow the SVG/DXF paths without visible red outlines.
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const svg = document.getElementById('cameo-svg');
+  const bgImg = document.getElementById('bg-image');
+  const bgBase = document.getElementById('bg-base');
+  const holeMasks = document.getElementById('hole-masks');
+  const cutGroup = document.getElementById('cut-lines');
+  const sheet = document.getElementById('sheet');
+  const baseBox = { x: 1.00, y: 1.00,
+                     w: 225.00,
+                     h: 145.00 };
+
+  function updateTransform() {
+    const z = parseFloat(document.getElementById('bg-zoom').value) || 1;
+    const px = parseFloat(document.getElementById('bg-panx').value) || 0;
+    const py = parseFloat(document.getElementById('bg-pany').value) || 0;
+    const w = baseBox.w * z, h = baseBox.h * z;
+    const x = baseBox.x + (baseBox.w - w) / 2 + px;
+    const y = baseBox.y + (baseBox.h - h) / 2 + py;
+    bgImg.setAttribute('x', x.toFixed(2));
+    bgImg.setAttribute('y', y.toFixed(2));
+    bgImg.setAttribute('width', w.toFixed(2));
+    bgImg.setAttribute('height', h.toFixed(2));
+  }
+
+  function loadFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      bgImg.setAttribute('href', e.target.result);
+      bgImg.style.display = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  document.getElementById('bg-file').addEventListener('change', e => loadFile(e.target.files[0]));
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+
+  document.getElementById('bg-clear').addEventListener('click', () => {
+    bgImg.setAttribute('href', '');
+    bgImg.style.display = 'none';
+  });
+
+  document.getElementById('bg-fit').addEventListener('change', e => {
+    const map = { cover: 'xMidYMid slice', contain: 'xMidYMid meet', stretch: 'none' };
+    bgImg.setAttribute('preserveAspectRatio', map[e.target.value] || 'xMidYMid slice');
+  });
+
+  document.getElementById('bg-opacity').addEventListener('input', e => {
+    bgImg.setAttribute('opacity', parseFloat(e.target.value).toFixed(2));
+  });
+
+  ['bg-zoom', 'bg-panx', 'bg-pany'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateTransform);
+  });
+
+  document.getElementById('pill-mode').addEventListener('change', e => {
+    const m = e.target.value;
+    const pills = svg.querySelectorAll('.label-pill');
+    const trackTxt = svg.querySelectorAll('.track-txt');
+    const stepTxt = svg.querySelectorAll('.step-txt');
+    const patTxt = svg.querySelectorAll('.pat-txt');
+    if (m === 'dark') {
+      pills.forEach(p => { p.setAttribute('fill', 'rgba(16, 18, 24, 0.84)'); p.setAttribute('stroke', 'rgba(255,255,255,0.22)'); });
+      trackTxt.forEach(t => t.setAttribute('fill', '#f3f4f6'));
+      stepTxt.forEach(t => t.setAttribute('fill', '#ff8533'));
+      patTxt.forEach(t => t.setAttribute('fill', '#5ea3ff'));
+      bgBase.setAttribute('fill', '#181a20');
+    } else if (m === 'solid') {
+      pills.forEach(p => { p.setAttribute('fill', '#ffffff'); p.setAttribute('stroke', 'rgba(0,0,0,0.18)'); });
+      trackTxt.forEach(t => t.setAttribute('fill', '#111111'));
+      stepTxt.forEach(t => t.setAttribute('fill', '#e0600b'));
+      patTxt.forEach(t => t.setAttribute('fill', '#1f6fd1'));
+      bgBase.setAttribute('fill', '#ffffff');
+    } else if (m === 'none') {
+      pills.forEach(p => { p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'none'); });
+      trackTxt.forEach(t => t.setAttribute('fill', '#111111'));
+      stepTxt.forEach(t => t.setAttribute('fill', '#e0600b'));
+      patTxt.forEach(t => t.setAttribute('fill', '#1f6fd1'));
+      bgBase.setAttribute('fill', '#ffffff');
+    } else {
+      pills.forEach(p => { p.setAttribute('fill', 'rgba(255, 255, 255, 0.86)'); p.setAttribute('stroke', 'rgba(0,0,0,0.12)'); });
+      trackTxt.forEach(t => t.setAttribute('fill', '#111111'));
+      stepTxt.forEach(t => t.setAttribute('fill', '#e0600b'));
+      patTxt.forEach(t => t.setAttribute('fill', '#1f6fd1'));
+      bgBase.setAttribute('fill', '#ffffff');
+    }
+  });
+
+  document.getElementById('toggle-cut').addEventListener('change', e => {
+    cutGroup.style.display = e.target.checked ? '' : 'none';
+  });
+
+  document.getElementById('toggle-holes').addEventListener('change', e => {
+    holeMasks.style.display = e.target.checked ? '' : 'none';
+  });
+
+  document.getElementById('toggle-reg').addEventListener('change', e => {
+    sheet.classList.toggle('show-reg', e.target.checked);
+  });
+
+  function downloadSvg(cutOnly, filename) {
+    const clone = svg.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.removeAttribute('class');
+    clone.setAttribute('width', '227.0mm');
+    clone.setAttribute('height', '147.0mm');
+    const cg = clone.querySelector('#cut-lines');
+    if (cg) cg.style.display = '';
+    if (cutOnly) {
+      const bg = clone.querySelector('#background');
+      const pg = clone.querySelector('#print-graphics');
+      const defs = clone.querySelector('defs');
+      if (bg) bg.remove();
+      if (pg) pg.remove();
+      if (defs) defs.remove();
+    }
+    const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + clone.outerHTML], { type: 'image/svg+xml' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  document.getElementById('dl-svg').addEventListener('click', () => downloadSvg(false, 'smcpad_seq_cameo.svg'));
+  document.getElementById('dl-cut-svg').addEventListener('click', () => downloadSvg(true, 'smcpad_seq_cameo_cut.svg'));
+})();
+</script>
+</body>
+</html>

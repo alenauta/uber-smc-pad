@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300.0mm" height="435.0mm" viewBox="0 0 300.0 435.0" xmlns="http://www.w3.org/2000/svg">
+  <style>.cut { fill: none; stroke: #ff0000; stroke-width: 0.15; }</style>
+  <rect id="a4-blank-1" x="1.500" y="5.000" width="297.000" height="210.000" class="cut"/>
+  <rect id="a4-blank-2" x="1.500" y="220.000" width="297.000" height="210.000" class="cut"/>
+</svg>
