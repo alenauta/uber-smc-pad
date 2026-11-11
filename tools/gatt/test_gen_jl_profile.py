@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Golden-vector test for gen_jl_profile.py (Python stdlib only; runs on the Mac).
+"""Golden-vector test for gen_jl_profile.py (Python stdlib only).
 
 The expected bytes are copied from the SDK's vendor-generated
 apps/spp_and_le/examples/trans_data/ble_trans_profile.h (AC63 SDK v2.4.0), including its

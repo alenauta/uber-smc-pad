@@ -1,4 +1,4 @@
-/* Host unit tests for sinco/sinco_store.c with a fake NOR flash and VM .
+/* Host unit tests for sinco/sinco_store.c with a fake NOR flash and VM.
  *   gcc -Wall -Wextra -Werror -std=c11 -I sinco test/test_sinco_store.c -o /tmp/t && /tmp/t
  */
 #define SMCPAD_HOST_TEST 1

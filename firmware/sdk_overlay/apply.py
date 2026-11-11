@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Create/refresh the SMC-PAD working copy of the JieLi AC63 SDK .
+"""Create/refresh the SMC-PAD working copy of the JieLi AC63 SDK.
 
     python3 firmware/sdk_overlay/apply.py [--fresh]
 
-* The pristine SDK in /workspace/src/<tag> is never modified.
-* A working copy is made once at /workspace/work/sdk-smcpad (cp -a; --fresh recreates it).
+* The pristine SDK in $SMCPAD_WORK/src/<tag> (default /workspace/src/ac63_bt_sdk_release_v2.4.0)
+  is never modified.
+* A working copy is made once at $SMCPAD_WORK/work/sdk-smcpad (cp -a; --fresh recreates it).
 * Every run regenerates our files from the pristine sources, so it is idempotent:
   - apps/spp_and_le/board/br25/board_smcpad.c / board_smcpad_cfg.h
       = the AC636N demo board with CONFIG_BOARD_AC636N_DEMO -> CONFIG_BOARD_SMCPAD
@@ -12,7 +13,6 @@
     board dir, frees the demo peripherals that clash with docs/pinmap.md (UART0 on PC4, ADKEY on
     PB1, SDK SPI1/SPI2 drivers, AT UART pins), adds adc_ext_set_value() to cpu/br25/adc_api.c
     and calls smcpad_start() from trans_data after usb_start().
-    Pins are the real ones but the drivers are UNTESTED on hardware: still NOT for flashing.
   - board_smcpad_global_build_cfg.h  = ours (stock-compatible flash layout), from this directory
   - board_config.h selects CONFIG_BOARD_SMCPAD; the board Makefile compiles board_smcpad.c
   - cpu/br25/tools/isd_config_rule.c: CONFIG_NO_UBOOT_DEBUG_PIN suppresses the PA05 UTTX default
@@ -25,7 +25,7 @@
     ble_smcpad.c instead of trans_data/ble_trans.c (stock GATT: BLE-MIDI, Sinco AE40, RCSP
     AE00, battery, device info), turns Classic Bluetooth off (TCFG_USER_EDR_ENABLE 0) and
     pairing on ("Just Works": CONFIG_BT_SM_SUPPORT_ENABLE 1 in app_config.h)
-Then build with:  bash firmware/builder/build_ufw.sh ac636n_spp_and_le /workspace/work/sdk-smcpad
+Then build with:  bash firmware/builder/build_ufw.sh ac636n_spp_and_le "$SMCPAD_WORK/work/sdk-smcpad"
 """
 import argparse
 import os
@@ -34,8 +34,9 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PRISTINE = "/workspace/src/ac63_bt_sdk_release_v2.4.0"
-WORK = "/workspace/work/sdk-smcpad"
+BASE_WORK = os.environ.get("SMCPAD_WORK", "/workspace")
+PRISTINE = os.environ.get("SMCPAD_SDK", os.path.join(BASE_WORK, "src", "ac63_bt_sdk_release_v2.4.0"))
+WORK = os.environ.get("SMCPAD_SDK_WORK", os.path.join(BASE_WORK, "work", "sdk-smcpad"))
 BOARD = "apps/spp_and_le/board/br25"
 
 

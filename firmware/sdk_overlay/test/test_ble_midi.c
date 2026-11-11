@@ -1,4 +1,4 @@
-/* Host unit tests for midi/ble_midi.c .
+/* Host unit tests for midi/ble_midi.c.
  *   gcc -Wall -Wextra -Werror -std=c11 -I sinco -I midi test/test_ble_midi.c -o /tmp/t && /tmp/t
  * Vectors follow the Apple "MIDI over Bluetooth LE" packet rules (header/timestamp bytes,
  * running status, real-time inside SysEx, SysEx continuation packets).

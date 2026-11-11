@@ -1,9 +1,10 @@
 #!/bin/bash
-# Post-build verification: every smcpad function placed in RAM
-# (.data_code) must not reference flash (0x1Exxxxx): no calls, gotos or literal loads.
+# Post-build verification: every smcpad function placed in RAM (.data_code)
+# must not reference flash (0x1Exxxxx): no calls, gotos or literal loads.
 # Usage: bash check_ram_isr.sh [sdk-dir] [out-dir]
-SDK=${1:-/workspace/work/sdk-smcpad}
-OUT=${2:-/workspace/out/smcpad_midi}
+WORK="${SMCPAD_WORK:-/workspace}"
+SDK=${1:-$WORK/work/sdk-smcpad}
+OUT=${2:-$WORK/out/ac636n_spp_and_le}
 OBJDUMP=/opt/jieli/pi32v2/bin/objdump
 ELF=$SDK/cpu/br25/tools/sdk.elf
 rc=0
