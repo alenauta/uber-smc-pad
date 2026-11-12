@@ -7,7 +7,7 @@ Clean-room custom firmware, hardware interoperability documentation, offline pre
 >
 > **Use at your own risk:** Flashing modified firmware voids your manufacturer warranty and carries the risk of soft- or hard-bricking your controller or losing per-device pad calibration (`USRTRIM` at `0x7E000`) and presets (`USRFLASH` at `0x77000`). This software is provided **"AS IS" without warranty of any kind** (see [LICENSE](LICENSE) and [NOTICE](NOTICE)). **Never flash anything without first taking a verified 512 KB flash backup of your own unit ([firmware/backup/](firmware/backup/README.md)) and reading [docs/first_flash.md](docs/first_flash.md) and [docs/recovery.md](docs/recovery.md).**
 
-Start with **[docs/index.html](docs/index.html) for the zero-install browser firmware patcher & SincoOTA flashing guide** (drop your own official `SMC-PAD_005.fwsc` in the browser to build `SMC-PAD_925.fwsc` locally — nothing is uploaded anywhere), [firmware/sdk_overlay/README.md](firmware/sdk_overlay/README.md) for the custom firmware architecture, [firmware/builder/README.md](firmware/builder/README.md) for the Docker / Linux build setup, [docs/overlay/smcpad_seq_overlay.html](docs/overlay/smcpad_seq_overlay.html) for the printable 1:1 sequencer overlay & cheat sheet, and [docs/references.md](docs/references.md) for upstream SDK and documentation links.
+Start with **[docs/index.html](docs/index.html) for the browser firmware patcher & SincoOTA flashing guide** (select your official `SMC-PAD_005.fwsc` to build `SMC-PAD_925.fwsc` without compiling from source), [firmware/sdk_overlay/README.md](firmware/sdk_overlay/README.md) for the custom firmware architecture, [firmware/builder/README.md](firmware/builder/README.md) for the Docker / Linux build setup, [docs/overlay/smcpad_seq_overlay.html](docs/overlay/smcpad_seq_overlay.html) for the printable 1:1 sequencer overlay & cheat sheet, and [docs/references.md](docs/references.md) for upstream SDK and documentation links.
 
 ## Highlights
 - **Full controller parity:** 16 velocity- & pressure-sensitive RGB pads, 8 endless encoders, 10 buttons, class-compliant USB-MIDI 1.0 (3 virtual cables), 3.5 mm TRS MIDI out, and low-latency BLE-MIDI (1 ms hardware-timer timestamps and automatic pairing on MIDI subscribe).
@@ -23,7 +23,7 @@ Start with **[docs/index.html](docs/index.html) for the zero-install browser fir
 - **Printable 1:1 hardware overlays:** A4/Letter and Silhouette Cameo Print & Cut overlays (including interactive browser theme/color customizer) in [docs/overlay/](docs/overlay/) (`tools/overlay/`).
 
 ## What this repository contains, and what it doesn't
-- **No M-VAVE / Sinco firmware, keys, or vendor binaries are included.** Users building firmware locally supply their own downloaded official `.fwsc` update file (`prepare_stock.py` extracts the bootloader, OTA loader, and image keyfile locally on your machine).
+- **No M-VAVE / Sinco firmware, keys, or vendor binaries are included.** Users supply their own downloaded official `.fwsc` update file (`prepare_stock.py` extracts the bootloader, OTA loader, and image keyfile during the build).
 - **No JieLi SDK source code or compiler binaries are included.** `firmware/builder/setup_toolchain.py` fetches the official `Jieli-Tech/fw-AC63_BT_SDK` release tarball and Linux toolchain directly from upstream at build time, and `firmware/sdk_overlay/apply.py` overlays our clean-room C drivers, MIDI stack, and sequencer onto a local working copy.
 - See [NOTICE](NOTICE) for third-party acknowledgements, USB VID:PID notes (`1209:0001` test ID), and trademark disclaimers.
 
@@ -51,7 +51,7 @@ tools/
   config/decode_presets.py       offline preset / globals decoder
   config/preset_json.py          lossless offline preset binary <-> JSON editor
   fw/make_fwsc.py                SincoOTA .ufw <-> .fwsc container wrapper
-  fw/make_web_payload.py         generates zero-key client-side web patcher bundle (docs/payload/)
+  fw/make_web_payload.py         generates the web patcher payload bundle (docs/payload/)
   gatt/gen_jl_profile.py         JieLi ATT GATT table generator (JSON -> C header), golden-tested
   midi/midimon.py                receive-only CoreMIDI monitor (Python stdlib ctypes)
   midi/smcdiag.py                live diagnostic SysEx client for custom firmware builds
@@ -59,8 +59,8 @@ tools/
   ble/sinco_read.swift           read-only BLE flash backup helper (no write path)
   overlay/                       generators for 1:1 printable & Silhouette Cameo vinyl overlays
 docs/
-  index.html, patcher.js         zero-install client-side browser firmware patcher & flashing guide
-  payload/smcpad_925.bin         clean-room custom firmware bundle for the browser patcher
+  index.html, patcher.js         browser firmware patcher & SincoOTA flashing guide
+  payload/smcpad_925.bin         custom firmware payload bundle for the browser patcher
   pinmap.md                      hardware GPIO map: pad mux+SARADC, SPI2 key matrix, WS2812, TRS MIDI
   preset_format.md               on-flash preset, global settings, and calibration record format
   midisuite_protocol.md          00 59 configuration packet & 7-bit USB SysEx framing specification

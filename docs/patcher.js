@@ -1,11 +1,9 @@
 /**
- * Client-side SMC-PAD firmware image assembler (runs 100% locally in the browser).
+ * SMC-PAD browser firmware image assembler.
  *
- * Combines the user's own official SMC-PAD_005.fwsc container (stock SDK v1.0.0 bootloader,
- * BLE RCSP updater ota.bin, container seed table, and trailer) with the clean-room compiled
- * custom application payload (docs/payload/smcpad_925.bin).
- *
- * Nothing is uploaded anywhere; all hashing, CRC16 checks, and container framing happen in RAM.
+ * Combines the user's official SMC-PAD_005.fwsc container (stock SDK v1.0.0 bootloader,
+ * BLE RCSP updater ota.bin, container seed table, and trailer) with the compiled custom
+ * application payload (docs/payload/smcpad_925.bin).
  */
 (function (root) {
   "use strict";

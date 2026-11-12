@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the static client-side web patcher bundle (docs/payload/smcpad_925.bin).
+"""Generate the static web patcher bundle (docs/payload/smcpad_925.bin).
 
 Extracts only clean-room custom firmware sections from a locally built custom .fwsc image
 (unscrambling the 0x1000+ application area using the container seed read dynamically from the

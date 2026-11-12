@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Uber SMC-PAD — Browser Firmware Builder &amp; Flashing Guide</title>
+    <title>Uber SMC-PAD — Firmware Patcher &amp; Flashing Guide</title>
     <meta
       name="description"
-      content="Client-side browser firmware builder and SincoOTA flashing guide for the M-VAVE SMC-PAD clean-room 16-track step sequencer OS."
+      content="Browser firmware patcher and SincoOTA flashing guide for the M-VAVE SMC-PAD 16-track step sequencer OS."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -35,11 +35,11 @@
             <span class="hw-led" aria-hidden="true"></span>
             <span>UBER SMC-PAD · CLEAN-ROOM SEQUENCER OS · BUILD 925</span>
           </div>
-          <h1>SMC-PAD Browser Firmware Patcher</h1>
+          <h1>SMC-PAD Firmware Patcher</h1>
           <p class="lead">
-            Drop your own official <code>SMC-PAD_005.fwsc</code> firmware file below to assemble the
-            custom 16-track × 64-step sequencer firmware (<code>SMC-PAD_925.fwsc</code>) locally in
-            your browser — no compiler setup and zero server uploads.
+            Select your official <code>SMC-PAD_005.fwsc</code> firmware file below to build the
+            custom 16-track × 64-step sequencer firmware (<code>SMC-PAD_925.fwsc</code>) directly in
+            your browser without compiling from source.
           </p>
         </div>
         <div class="topbar-actions">
@@ -90,13 +90,13 @@
           </p>
         </section>
 
-        <!-- Client-Side Firmware Patcher -->
+        <!-- Firmware Patcher -->
         <section class="card" id="patcher-section" aria-labelledby="patcher-heading">
           <div class="card-header">
-            <h2 id="patcher-heading">Build Custom Firmware in Browser</h2>
+            <h2 id="patcher-heading">Build Custom Firmware</h2>
             <div class="status-pill" id="payload-status-pill" role="status" aria-live="polite">
               <span class="status-dot" aria-hidden="true"></span>
-              <span id="payload-status-text">Loading custom payload…</span>
+              <span id="payload-status-text">Loading payload…</span>
             </div>
           </div>
 
@@ -111,8 +111,8 @@
               Drop your official <code>SMC-PAD_005.fwsc</code> here, or click to browse
             </p>
             <p class="dropzone-sub" id="dropzone-sub">
-              Obtained from M-VAVE's official SMC-PAD firmware package. Processed 100% in browser
-              memory — your file never leaves your device.
+              Use the unmodified <code>SMC-PAD_005.fwsc</code> from M-VAVE's official SMC-PAD
+              firmware download.
             </p>
           </div>
 
@@ -142,9 +142,8 @@
                 Download SMC-PAD_925.fwsc
               </button>
               <p class="privacy-note">
-                100% client-side WebCrypto SHA-256 &amp; CRC-16 verified · Preserves stock
-                bootloader, presets (<code>0x77000</code>), and pad calibration
-                (<code>0x7E000</code>).
+                SHA-256 &amp; CRC-16 verified · Preserves stock bootloader, presets
+                (<code>0x77000</code>), and pad calibration (<code>0x7E000</code>).
               </p>
             </div>
           </div>
@@ -275,8 +274,7 @@
 
       <footer class="site-footer">
         <span>
-          MIT License · Clean-room custom firmware built on JieLi's public
-          <code>fw-AC63_BT_SDK</code>. Zero vendor binaries or keys hosted on this site.
+          MIT License · Custom firmware built on JieLi's public <code>fw-AC63_BT_SDK</code>.
         </span>
         <span>
           SMC-PAD, M-VAVE, Sinco, Midi Suite, and SincoOTA are trademarks of their respective
@@ -362,13 +360,11 @@
             res.fileName +
             "</code>";
           dropSub.textContent =
-            "Assembled & verified locally in " +
-            elapsedMs +
-            " ms. Click or drop again to re-select.";
+            "Assembled in " + elapsedMs + " ms. Click or drop again to select another file.";
           verifyPanel.hidden = false;
           verifyPanel.className = "verify-box ok";
           verifyTitle.textContent =
-            "✓ Stock SMC-PAD_005 verified & custom image " + res.fileName + " assembled in RAM";
+            "✓ Stock SMC-PAD_005 verified — " + res.fileName + " ready";
           verifyDetails.innerHTML =
             "<div>Input SHA-256: <strong>" +
             res.stockSha256.slice(0, 16) +
@@ -462,9 +458,9 @@
             statusPill.className = "status-pill ready";
             statusText.textContent =
               parsed.manifest.build_name +
-              " payload ready (" +
+              " ready (" +
               Math.round(payloadBytes.length / 1024) +
-              " KB · 100% local)";
+              " KB)";
             if (pendingFile) {
               const f = pendingFile;
               pendingFile = null;
