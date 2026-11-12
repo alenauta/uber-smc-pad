@@ -26,37 +26,37 @@ Why custom builds report version `000`:
 
 ---
 
-## How to Flash with `SincoOTA` (Always Takes 2 Passes)
+## How to Flash with `SincoOTA`
 
-Just like official M-VAVE firmware updates on the SMC-PAD, flashing over Bluetooth via **`SincoOTA`** (iOS or Android) **always takes two passes** because the first pass reboots the controller from normal application mode into JieLi's BLE recovery/updater loader (`ota.bin`).
+In practice (just like official M-VAVE firmware updates on the SMC-PAD, especially on iOS), flashing over Bluetooth via **`SincoOTA`** **often takes two attempts**: the first attempt reboots the controller from normal application mode into JieLi's BLE recovery/updater loader (`ota.bin`) and stalls waiting to reconnect, and the second attempt writes the firmware. *(If your phone reconnects automatically and completes in a single pass, you're already done.)*
 
 ### Preparation (Important!)
 1. **Unplug USB** from the SMC-PAD, switch the unit **ON**, and make sure Bluetooth is active (close **Midi Suite** / **CubeSuite** and any DAW).
 2. **Remove / "Forget" `SMC-PAD` from paired Bluetooth devices** in your phone's OS **Settings → Bluetooth** menu. *(If the OS holds an active BLE-MIDI connection in the background, `SincoOTA` will stall during handoff.)*
 3. Copy `SMC-PAD_925.fwsc` (and keep `SMC-PAD_005.fwsc` as your stock backup) onto your phone.
 
-### Pass 1 — Enter Recovery / Updater Mode
+### Attempt 1 — Start Flash (Enters Recovery / Updater Mode)
 1. Open **`SincoOTA`**.
 2. Scan and **select `SMC-PAD`**.
 3. Select **`SMC-PAD_925.fwsc`** and tap **Start / Upgrade**.
-4. `SincoOTA` transfers the small updater stub (`ota.bin`) and **reboots the SMC-PAD into recovery/updater mode** (pad RGBs turn off or freeze, Bluetooth LED turns off, and the first pass stops/times out waiting to reconnect around ~0–3%). **This is completely normal — nothing in your code flash has been overwritten yet.**
+4. If it flashes all the way to 100%, you're done! Often, however, `SincoOTA` transfers the small updater stub (`ota.bin`), **reboots the SMC-PAD into recovery/updater mode** (pad RGBs turn off or freeze, Bluetooth LED turns off), and stops/times out waiting to reconnect around ~0–3%. **Nothing in your code flash has been overwritten yet — proceed to Attempt 2.**
 
-### Pass 2 — Re-Select the Device & Flash to 100%
-1. **Crucial step:** Inside `SincoOTA`, **unselect / disconnect the current device**, then **search / scan again and select the newly discovered device** (now running in recovery/updater mode).
+### Attempt 2 (If Stalled) — Re-Select the Device & Flash to 100%
+1. **Key step:** Inside `SincoOTA`, **unselect / disconnect the current device**, then **search / scan again and select the newly discovered device** (now running in recovery/updater mode).
 2. Select **`SMC-PAD_925.fwsc`** again and tap **Start / Upgrade**.
-3. The second pass writes the firmware smoothly to **100%** and automatically reboots the controller into the new firmware.
+3. The second attempt writes the firmware smoothly to **100%** and automatically reboots the controller into the new firmware.
 
 > [!TIP]
-> **Updating from one custom build to a newer custom build:** If starting Pass 1 directly with a custom `.fwsc` reports *"OTA failed"*, run Pass 1 selecting the official `SMC-PAD_005.fwsc` (which cleanly enters recovery/updater mode), then unselect, scan & re-select the device, and select `SMC-PAD_925.fwsc` for Pass 2.
+> **Updating from one custom build to a newer custom build:** If starting Attempt 1 directly with a custom `.fwsc` reports *"OTA failed"*, run Attempt 1 selecting the official `SMC-PAD_005.fwsc` (which cleanly enters recovery/updater mode), then unselect, scan & re-select the device, and select `SMC-PAD_925.fwsc` for Attempt 2.
 
 ---
 
 ## Returning to Official Stock Firmware (`SMC-PAD_005.fwsc`)
 
-Because custom images preserve the exact stock SDK v1.0.0 bootloader (`uboot.boot`), stock RCSP updater (`ota.bin`), factory pad calibration (`USRTRIM` at `0x7E000`), and preset partition (`USRFLASH` at `0x77000`), reverting to stock uses the exact same 2-pass `SincoOTA` procedure with **`SMC-PAD_005.fwsc`**:
+Because custom images preserve the exact stock SDK v1.0.0 bootloader (`uboot.boot`), stock RCSP updater (`ota.bin`), factory pad calibration (`USRTRIM` at `0x7E000`), and preset partition (`USRFLASH` at `0x77000`), reverting to stock uses the same `SincoOTA` procedure with **`SMC-PAD_005.fwsc`**:
 
 1. Forget `SMC-PAD` in your phone's Bluetooth settings if paired.
-2. Run **Pass 1** + **Pass 2** (unselect → scan → re-select) in `SincoOTA` using **`SMC-PAD_005.fwsc`**.
+2. Flash **`SMC-PAD_005.fwsc`** in `SincoOTA` (using Attempt 2 — unselect → scan → re-select — if Attempt 1 stops in recovery mode).
 3. On reboot, USB enumerates as stock `4353:3243` again and `SincoOTA` **Get Version** reports `SMC-PAD_005`. *(Note: the official `SMC-PAD_005.fwsc` carries factory presets in `USRFLASH`, so flashing stock resets presets to factory defaults while keeping pad calibration untouched.)*
 
 ### Safe Mode & Hardware Recovery

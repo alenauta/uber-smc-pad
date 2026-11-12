@@ -157,9 +157,11 @@
           </div>
 
           <div class="two-pass-callout">
-            <strong>Important — SincoOTA always takes 2 passes:</strong> Just like the official
-            firmware update, the first attempt reboots the SMC-PAD into recovery/updater mode, and
-            the second attempt (after unselecting and scanning again) writes the firmware.
+            <strong>Heads up — SincoOTA often takes 2 attempts:</strong> In my experience (just like
+            with the official firmware update), the first attempt reboots the SMC-PAD into
+            recovery/updater mode and stops waiting to reconnect, and a second attempt (after
+            unselecting and scanning again) writes the firmware. If yours completes in a single
+            pass, you're already done.
           </div>
 
           <ol class="steps-list">
@@ -178,21 +180,22 @@
             </li>
 
             <li class="step-item">
-              <span class="step-badge">Pass 1</span>
+              <span class="step-badge">Attempt 1</span>
               <div class="step-body">
-                <h3>Select Device → Select Firmware → Start Flash (Enters Recovery Mode)</h3>
+                <h3>Select Device → Select Firmware → Start Flash</h3>
                 <p>
                   Open the <strong>SincoOTA</strong> app, scan and <strong>select SMC-PAD</strong>,
-                  choose <code>SMC-PAD_925.fwsc</code>, and tap <strong>Start / Upgrade</strong>. At
-                  this point the pad reboots into <strong>recovery / updater mode</strong> (pad RGBs
-                  turn off or freeze, BT LED goes off) and the first transfer stops or stalls.
-                  <strong>This is expected — nothing has been overwritten yet.</strong>
+                  choose <code>SMC-PAD_925.fwsc</code>, and tap <strong>Start / Upgrade</strong>. If
+                  it flashes straight to 100%, you're done! Often, however, the pad reboots into
+                  <strong>recovery / updater mode</strong> (pad RGBs turn off or freeze, BT LED goes
+                  off) and the first attempt stops or stalls —
+                  <strong>nothing has been overwritten yet; proceed to Attempt 2.</strong>
                 </p>
               </div>
             </li>
 
             <li class="step-item highlight">
-              <span class="step-badge">Pass 2 · Key Step</span>
+              <span class="step-badge">Attempt 2 · If Stalled</span>
               <div class="step-body">
                 <h3>Unselect Device → Search &amp; Select Again → Flash to 100%</h3>
                 <p>
@@ -200,8 +203,8 @@
                   <strong>search / scan again and select the newly found device</strong>
                   <em>(do not skip unselecting and re-scanning!)</em>. Select
                   <code>SMC-PAD_925.fwsc</code> again and tap <strong>Start / Upgrade</strong> a
-                  second time — it will flash smoothly to <strong>100%</strong> and reboot into the
-                  custom firmware.
+                  second time — it should flash smoothly to <strong>100%</strong> and reboot into
+                  the custom firmware.
                 </p>
               </div>
             </li>
@@ -218,13 +221,13 @@
               <li>
                 <strong>Revert to stock anytime:</strong> Custom builds keep the stock bootloader
                 and report version <code>000</code>, so SincoOTA always accepts the official
-                <code>SMC-PAD_005.fwsc</code> back using the exact same 2-pass procedure above.
+                <code>SMC-PAD_005.fwsc</code> back using the same procedure above.
               </li>
               <li>
-                <strong>Updating custom → custom:</strong> If Pass 1 reports
-                <em>"OTA failed"</em> while already running custom firmware, run Pass 1 selecting
+                <strong>Updating custom → custom:</strong> If Attempt 1 reports
+                <em>"OTA failed"</em> while already running custom firmware, run Attempt 1 selecting
                 <code>SMC-PAD_005.fwsc</code> (to enter recovery mode), then unselect, scan &amp;
-                re-select, and choose the new <code>SMC-PAD_925.fwsc</code> on Pass 2.
+                re-select, and choose the new <code>SMC-PAD_925.fwsc</code> on Attempt 2.
               </li>
               <li>
                 <strong>Boot-loop Safe Mode:</strong> Switching power
