@@ -1,9 +1,11 @@
 # M-VAVE SMC-PAD Clean-Room Custom Firmware & Step Sequencer
 
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/alenauta)
+
 Clean-room custom firmware, hardware interoperability documentation, offline preset tools, and a full standalone **16-track × 64-step polyphonic/drum step sequencer** for the **M-VAVE SMC-PAD** wireless MIDI pad controller (**JieLi AC636N / BR25**, `pi32v2` CPU), built from scratch on JieLi's public [fw-AC63_BT_SDK](https://github.com/Jieli-Tech/fw-AC63_BT_SDK).
 
 > [!CAUTION]
-> **Unofficial, experimental, and independent.** This is a personal, non-commercial hobby and interoperability project. It is **not affiliated with, endorsed by, sponsored by, or supported by M-VAVE (Sinco Audio / Cuvave), Zhuhai Jieli Technology (JieLi), or any employer of the author.**
+> **Unofficial, experimental, and independent.** This is a personal, open-source hobby and interoperability project. It is **not affiliated with, endorsed by, sponsored by, or supported by M-VAVE (Sinco Audio / Cuvave), Zhuhai Jieli Technology (JieLi), or any employer of the author.**
 >
 > **Use at your own risk:** Flashing modified firmware voids your manufacturer warranty and carries the risk of soft- or hard-bricking your controller or losing per-device pad calibration (`USRTRIM` at `0x7E000`) and presets (`USRFLASH` at `0x77000`). This software is provided **"AS IS" without warranty of any kind** (see [LICENSE](LICENSE) and [NOTICE](NOTICE)). **Never flash anything without first taking a verified 512 KB flash backup of your own unit ([firmware/backup/](firmware/backup/README.md)) and reading [docs/first_flash.md](docs/first_flash.md) and [docs/recovery.md](docs/recovery.md).**
 

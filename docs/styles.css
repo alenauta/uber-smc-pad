@@ -179,6 +179,17 @@ h1 {
   color: var(--ink);
 }
 
+.btn-kofi {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-kofi:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
 /* Strong Disclaimer Box */
 .disclaimer-card {
   background: var(--danger-soft);
