@@ -1,5 +1,11 @@
 # M-VAVE SMC-PAD Clean-Room Custom Firmware & Step Sequencer
 
+> [!TIP]
+> ### 👉 Web Firmware Patcher, Flashing Guide & Printable Overlays
+> ### **[https://alenauta.github.io/uber-smc-pad/](https://alenauta.github.io/uber-smc-pad/)**
+> Build `SMC-PAD_925.fwsc` directly in your browser from your official `SMC-PAD_005.fwsc` without compiling from source, read the `SincoOTA` flashing steps, and print 1:1 sequencer overlays.
+
+[![Web Firmware Patcher](https://img.shields.io/badge/Web_Firmware_Patcher-alenauta.github.io-ea580c?style=flat)](https://alenauta.github.io/uber-smc-pad/)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/alenauta)
 
 Clean-room custom firmware, hardware interoperability documentation, offline preset tools, and a full standalone **16-track × 64-step polyphonic/drum step sequencer** for the **M-VAVE SMC-PAD** wireless MIDI pad controller (**JieLi AC636N / BR25**, `pi32v2` CPU), built from scratch on JieLi's public [fw-AC63_BT_SDK](https://github.com/Jieli-Tech/fw-AC63_BT_SDK).
@@ -9,7 +15,7 @@ Clean-room custom firmware, hardware interoperability documentation, offline pre
 >
 > **Use at your own risk:** Flashing modified firmware voids your manufacturer warranty and carries the risk of soft- or hard-bricking your controller or losing per-device pad calibration (`USRTRIM` at `0x7E000`) and presets (`USRFLASH` at `0x77000`). This software is provided **"AS IS" without warranty of any kind** (see [LICENSE](LICENSE) and [NOTICE](NOTICE)). **Never flash anything without first taking a verified 512 KB flash backup of your own unit ([firmware/backup/](firmware/backup/README.md)) and reading [docs/first_flash.md](docs/first_flash.md) and [docs/recovery.md](docs/recovery.md).**
 
-Start with **[docs/index.html](docs/index.html) for the browser firmware patcher & SincoOTA flashing guide** (select your official `SMC-PAD_005.fwsc` to build `SMC-PAD_925.fwsc` without compiling from source), [firmware/sdk_overlay/README.md](firmware/sdk_overlay/README.md) for the custom firmware architecture, [firmware/builder/README.md](firmware/builder/README.md) for the Docker / Linux build setup, [docs/overlay/smcpad_seq_overlay.html](docs/overlay/smcpad_seq_overlay.html) for the printable 1:1 sequencer overlay & cheat sheet, and [docs/references.md](docs/references.md) for upstream SDK and documentation links.
+For source builds and technical documentation, see [firmware/sdk_overlay/README.md](firmware/sdk_overlay/README.md) for the custom firmware architecture, [firmware/builder/README.md](firmware/builder/README.md) for the Docker / Linux build setup, and [docs/references.md](docs/references.md) for upstream SDK and documentation links.
 
 ## Highlights
 - **Full controller parity:** 16 velocity- & pressure-sensitive RGB pads, 8 endless encoders, 10 buttons, class-compliant USB-MIDI 1.0 (3 virtual cables), 3.5 mm TRS MIDI out, and low-latency BLE-MIDI (1 ms hardware-timer timestamps and automatic pairing on MIDI subscribe).
