@@ -7,38 +7,32 @@
     .sheet-paper-bg { fill: #ffffff; stroke: #cbd5e1; stroke-width: 0.16; }
     .sheet-annotations text { fill: #334155 !important; }
     .sheet-ruler .box-bg { fill: #ffffff !important; fill-opacity: 1 !important; stroke: #0f172a !important; }
-    .sheet-ruler .ink, .sheet-ruler .tro-fill, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c { fill: #0f172a !important; }
-    .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi, .sheet-ruler .tro-ink { stroke: #0f172a !important; }
+    .sheet-ruler .ink, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c { fill: #0f172a !important; }
+    .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi { stroke: #0f172a !important; }
     .cutout-preview-mask { display: none; fill: #0b0e14; fill-opacity: 0.76; stroke: #64748b; stroke-width: 0.14; pointer-events: none; }
-    .seam-tick { fill: none; stroke: #FACC15; stroke-width: 0.20; stroke-dasharray: 0.9 0.7; }
-    .bg-base { fill: #13171D; }
-    .bg-veil { fill: #13171D; fill-opacity: 0; pointer-events: none; }
-    .panel-sub { fill: #171C24; }
-    .box-bg { fill: #1B222C; stroke: #4A5B73; stroke-width: 0.16; }
-    .box-alt { fill: #10141A; stroke: #4A5B73; stroke-width: 0.15; }
-    .grid-min { stroke: #1C232E; stroke-width: 0.07; fill: none; }
-    .grid-maj { stroke: #252F3D; stroke-width: 0.12; fill: none; }
-    .sc-trace { stroke: #2E3B4E; stroke-width: 0.18; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-    .sc-rule { stroke: #4A5B73; fill: none; }
-    .sc-rule-hi { stroke: #7C91AD; fill: none; }
-    .tro-ink { stroke: #ECF0F5; fill: none; stroke-linecap: square; stroke-linejoin: miter; }
-    .tro-fill { fill: #ECF0F5; }
-    .tro-paper { fill: #1B222C; stroke: #ECF0F5; }
-    .ink { fill: #ECF0F5; }
-    .muted { fill: #8C9BAE; }
-    .step-c { fill: #FF7A1A; }
-    .step-bg { fill: #FF7A1A; }
-    .step-fg { fill: #111317; }
-    .pat-c { fill: #38BDF8; }
-    .warn-c { fill: #FACC15; }
-    .warn-stroke { stroke: #FACC15; fill: none; }
-    .ok-c { fill: #34D399; }
+    .seam-tick { fill: none; stroke: #CA8A04; stroke-width: 0.20; stroke-dasharray: 0.9 0.7; }
+    .bg-base { fill: #FFFFFF; }
+    .bg-veil { fill: #FFFFFF; fill-opacity: 0; pointer-events: none; }
+    .panel-sub { fill: #F8FAFC; }
+    .box-bg { fill: #F8FAFC; stroke: #475569; stroke-width: 0.16; }
+    .box-alt { fill: #F1F5F9; stroke: #475569; stroke-width: 0.15; }
+    .cad-grid-lines { display: none; }
+    .grid-min { stroke: #EDF2F7; stroke-width: 0.07; fill: none; }
+    .grid-maj { stroke: #CBD5E1; stroke-width: 0.12; fill: none; }
+    .sc-trace { stroke: #94A3B8; stroke-width: 0.18; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .sc-rule { stroke: #475569; fill: none; }
+    .sc-rule-hi { stroke: #0F172A; fill: none; }
+    .ink { fill: #0F172A; }
+    .muted { fill: #475569; }
+    .step-c { fill: #EA580C; }
+    .step-bg { fill: #EA580C; }
+    .step-fg { fill: #FFFFFF; }
+    .pat-c { fill: #0284C7; }
+    .warn-c { fill: #CA8A04; }
+    .warn-stroke { stroke: #CA8A04; fill: none; }
+    .ok-c { fill: #16A34A; }
     .f-cond { font-family: "Roboto Condensed", "Avenir Next Condensed", "Bahnschrift", "Liberation Sans Narrow", "Arial Narrow", sans-serif; }
     .f-mono { font-family: "Noto Sans Mono", "JetBrains Mono", "SF Mono", "DejaVu Sans Mono", "Liberation Mono", monospace; }
-    
-    .tro-only { display: none; }
-    .non-tro { display: inline; }
-    
     </style>
 <g inkscape:groupmode="layer" id="regmark" inkscape:label="Regmarks" sodipodi:insensitive="true">
   <path id="regmark-safe-area" d="M 15.0,35.0 L 35.0,35.0 L 35.0,15.0 L 180.9,15.0 L 180.9,35.0 L 200.9,35.0 L 200.9,245.0 L 35.0,245.0 L 35.0,225.0 L 15.0,225.0 Z" style="fill:#ffffff;stroke:none;"/>
@@ -60,37 +54,14 @@
 <path d="M0,1.1V145.8 M25,1.1V145.8 M50,1.1V145.8 M75,1.1V145.8 M100,1.1V145.8 M125,1.1V145.8 M150,1.1V145.8 M175,1.1V145.8 M200,1.1V145.8 M225,1.1V145.8 M1.1,0H225.8 M1.1,25H225.8 M1.1,50H225.8 M1.1,75H225.8 M1.1,100H225.8 M1.1,125H225.8 M1.1,150H225.8" class="grid-maj"/>
 </g></g>
 <g id="mie1tp-fg" class="piece-fg-layer">
-<path d="M11.500,3.550 L15.550,3.550 M20.450,3.550 L42.750,3.550 M47.650,3.550 L69.950,3.550 M74.850,3.550 L97.150,3.550 M102.050,3.550 L124.350,3.550 M129.250,3.550 L151.550,3.550 M156.450,3.550 L178.750,3.550 M183.650,3.550 L205.950,3.550 M210.850,3.550 L215.500,3.550 A7.950,7.950 0 0 1 223.450,11.500 L223.450,135.500 A7.950,7.950 0 0 1 215.500,143.450 L47.200,143.450 M20.100,143.450 L11.500,143.450 A7.950,7.950 0 0 1 3.550,135.500 L3.550,11.500 A7.950,7.950 0 0 1 11.500,3.550" class="sc-rule" stroke-width="0.18"/>
+<path d="M11.500,3.550 L215.500,3.550 A7.950,7.950 0 0 1 223.450,11.500 L223.450,135.500 A7.950,7.950 0 0 1 215.500,143.450 L47.200,143.450 M20.100,143.450 L11.500,143.450 A7.950,7.950 0 0 1 3.550,135.500 L3.550,11.500 A7.950,7.950 0 0 1 11.500,3.550" class="sc-rule" stroke-width="0.18"/>
 <line x1="64.55" y1="4.15" x2="64.55" y2="142.85" class="sc-rule" stroke-width="0.22"/>
-<line x1="65.10" y1="6.05" x2="65.10" y2="140.95" class="sc-trace non-tro" stroke-dasharray="1.8 1.0"/>
 <line x1="195.85" y1="4.15" x2="195.85" y2="142.85" class="sc-rule" stroke-width="0.22"/>
-<g class="tro-only f-cond" id="mie1tp-tro-border"><path d="M11.500,3.550 L15.550,3.550 M20.450,3.550 L42.750,3.550 M47.650,3.550 L69.950,3.550 M74.850,3.550 L97.150,3.550 M102.050,3.550 L124.350,3.550 M129.250,3.550 L151.550,3.550 M156.450,3.550 L178.750,3.550 M183.650,3.550 L205.950,3.550 M210.850,3.550 L215.500,3.550 A7.950,7.950 0 0 1 223.450,11.500 L223.450,135.500 A7.950,7.950 0 0 1 215.500,143.450 L47.200,143.450 M20.100,143.450 L11.500,143.450 A7.950,7.950 0 0 1 3.550,135.500 L3.550,11.500 A7.950,7.950 0 0 1 11.500,3.550" class="tro-ink" stroke-width="0.34"/><path d="M11.500,4.100 L15.550,4.100 M20.450,4.100 L42.750,4.100 M47.650,4.100 L69.950,4.100 M74.850,4.100 L97.150,4.100 M102.050,4.100 L124.350,4.100 M129.250,4.100 L151.550,4.100 M156.450,4.100 L178.750,4.100 M183.650,4.100 L205.950,4.100 M210.850,4.100 L215.500,4.100 A7.400,7.400 0 0 1 222.900,11.500 L222.900,135.500 A7.400,7.400 0 0 1 215.500,142.900 L47.200,142.900 M20.100,142.900 L11.500,142.900 A7.400,7.400 0 0 1 4.100,135.500 L4.100,11.500 A7.400,7.400 0 0 1 11.500,4.100" class="tro-ink" stroke-width="0.11"/></g>
-<text x="18.00" y="4.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z8]</text>
-<text x="45.20" y="4.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z7]</text>
-<text x="72.40" y="4.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z6]</text>
-<text x="99.60" y="4.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z5]</text>
-<text x="126.80" y="4.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z4]</text>
-<text x="154.00" y="4.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z3]</text>
-<text x="181.20" y="4.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z2]</text>
-<text x="208.40" y="4.03" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z1]</text>
-<path d="M33.65,15.50 V43.70 M33.65,46.30 V76.60 M33.65,79.20 V109.60 M33.65,112.20 V139.50" class="sc-trace non-tro"/>
-<path d="M32.75,20.00 V43.70 M32.75,46.30 V76.60 M32.75,79.20 V109.60 M32.75,112.20 V135.00" class="sc-trace non-tro" stroke-dasharray="1.2 0.9"/>
-<path d="M29.45,24.50 H37.85" class="sc-trace non-tro"/>
-<circle cx="33.65" cy="24.50" r="0.55" class="pat-c non-tro"/>
-<path d="M29.45,57.40 H37.85" class="sc-trace non-tro"/>
-<circle cx="33.65" cy="57.40" r="0.55" class="pat-c non-tro"/>
-<path d="M29.45,90.40 H37.85" class="sc-trace non-tro"/>
-<circle cx="33.65" cy="90.40" r="0.55" class="pat-c non-tro"/>
-<path d="M29.45,123.30 H37.85" class="sc-trace non-tro"/>
-<circle cx="33.65" cy="123.30" r="0.55" class="pat-c non-tro"/>
-<text x="34.85" y="45.65" class="f-cond muted" font-size="1.45" font-weight="700" text-anchor="middle">SPI2 · 595 MUX</text>
-<text x="34.85" y="78.55" class="f-cond muted" font-size="1.45" font-weight="700" text-anchor="middle">QUAD DEC · ISR</text>
 <text x="34.85" y="111.55" class="f-cond warn-c" font-size="1.45" font-weight="700" text-anchor="middle">RPT + K1–4 LIVE</text>
 <path d="M11.500,4.850 L62.000,4.850 A0.800,0.800 0 0 1 62.800,5.650 L62.800,12.300 A0.800,0.800 0 0 1 62.000,13.100 L5.650,13.100 A0.800,0.800 0 0 1 4.850,12.300 L4.850,11.500 A6.650,6.650 0 0 1 11.500,4.850 Z" class="box-bg"/>
 <path d="M61.60,4.85 L62.80,4.85 L62.80,6.05 M4.85,11.90 L4.85,13.10 L6.05,13.10 M61.60,13.10 L62.80,13.10 L62.80,11.90" fill="none" class="sc-rule-hi" stroke-width="0.18"/>
 <line x1="5.40" y1="9.05" x2="62.80" y2="9.05" class="sc-rule" stroke-width="0.13"/>
-<g class="non-tro"><text x="8.80" y="7.87" class="ink" font-size="2.22" font-weight="700" letter-spacing="0.14">SEC-01 // ENCODER ARRAY</text><text x="61.60" y="7.83" class="f-cond pat-c" font-size="1.78" font-weight="700" text-anchor="end">AN/SMC-925</text></g>
-<g class="tro-only"><defs><mask id="mie1tp-sec1-slit" maskUnits="userSpaceOnUse" x="6.70" y="4.27" width="44.50" height="5.50"><rect x="6.70" y="4.27" width="44.50" height="5.50" fill="#ffffff"/><line x1="8.70" y1="7.15" x2="49.20" y2="7.15" stroke="#000000" stroke-width="0.30"/></mask></defs><text x="8.70" y="8.07" mask="url(#mie1tp-sec1-slit)" class="tro-fill f-cond" font-size="2.62" font-weight="900" letter-spacing="0.28" text-anchor="start">TECH READOUT: SMC-925</text><text x="61.70" y="7.87" class="f-cond tro-fill" font-size="1.65" font-weight="700" text-anchor="end">WHM-925</text></g>
+<text x="8.80" y="7.87" class="ink" font-size="2.22" font-weight="700" letter-spacing="0.14">ENCODERS K1–K8</text><text x="61.60" y="7.83" class="f-cond pat-c" font-size="1.78" font-weight="700" text-anchor="end">SMC-PAD</text>
 <circle cx="7.35" cy="11.15" r="0.88" class="ink"/>
 <text x="8.85" y="11.87" class="ink" font-size="1.92" font-weight="700">TRACK</text>
 <rect x="21.75" y="10.27" width="1.75" height="1.75" rx="0.25" class="step-bg"/>
@@ -215,18 +186,6 @@
 <line x1="66.52" y1="6.90" x2="194.40" y2="6.90" class="sc-rule" stroke-width="0.12"/>
 <text x="130.46" y="6.23" class="ink" font-size="1.95" font-weight="700" text-anchor="middle"><tspan class="step-c">HOLD STEP + LATER PAD = NOTE LEN [1–32S]</tspan>  ·  HOLD STEP + RPT = RATCHET  ·  <tspan class="pat-c">REC + STEP = CHORD</tspan></text>
 <text x="130.46" y="8.89" class="ink" font-size="1.90" font-weight="700" text-anchor="middle"><tspan class="warn-c">HOLD RPT = TIMING</tspan>  ·  HOLD BANK = TRACKS [<tspan class="pat-c">SRC+DST = COPY</tspan> · +STOP = MUTE]  ·  <tspan class="step-c">⇧+REC SAVE</tspan> / <tspan class="ok-c">⇧+PLAY LOAD</tspan></text>
-<g class="non-tro">
-<g class="sc-rule-hi" fill="none" stroke-width="0.13"><circle cx="130.47" cy="73.56" r="1.43"/><line x1="128.16" y1="73.56" x2="132.77" y2="73.56"/><line x1="130.47" y1="71.27" x2="130.47" y2="75.86"/></g>
-<circle cx="130.47" cy="73.56" r="2.75" class="sc-trace" stroke-dasharray="0.8 0.6"/>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="97.44" cy="40.70" r="0.71"/><line x1="96.28" y1="40.70" x2="98.59" y2="40.70"/><line x1="97.44" y1="39.55" x2="97.44" y2="41.84"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="130.47" cy="40.70" r="0.71"/><line x1="129.31" y1="40.70" x2="131.62" y2="40.70"/><line x1="130.47" y1="39.55" x2="130.47" y2="41.84"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="163.49" cy="40.70" r="0.71"/><line x1="162.34" y1="40.70" x2="164.64" y2="40.70"/><line x1="163.49" y1="39.55" x2="163.49" y2="41.84"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="97.44" cy="73.56" r="0.71"/><line x1="96.28" y1="73.56" x2="98.59" y2="73.56"/><line x1="97.44" y1="72.41" x2="97.44" y2="74.72"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="163.49" cy="73.56" r="0.71"/><line x1="162.34" y1="73.56" x2="164.64" y2="73.56"/><line x1="163.49" y1="72.41" x2="163.49" y2="74.72"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="97.44" cy="106.44" r="0.71"/><line x1="96.28" y1="106.44" x2="98.59" y2="106.44"/><line x1="97.44" y1="105.29" x2="97.44" y2="107.59"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="130.47" cy="106.44" r="0.71"/><line x1="129.31" y1="106.44" x2="131.62" y2="106.44"/><line x1="130.47" y1="105.29" x2="130.47" y2="107.59"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="163.49" cy="106.44" r="0.71"/><line x1="162.34" y1="106.44" x2="164.64" y2="106.44"/><line x1="163.49" y1="105.29" x2="163.49" y2="107.59"/></g>
-</g>
 <rect x="66.72" y="38.83" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
 <rect x="66.94" y="39.05" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
 <text x="70.29" y="41.47" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S01</text>
@@ -327,7 +286,7 @@
 <rect x="66.52" y="141.32" width="127.88" height="2.55" rx="0.55" class="box-alt"/>
 <text x="130.46" y="143.20" class="f-cond muted" font-size="1.75" font-weight="700" text-anchor="middle">960 PPQN ENGINE  ·  16 TRACKS × 64 STEPS  ·  USB-C + BLE + 3.5MM TRS MIDI OUT  ·  AUTO-SAVE ON STOP  ·  FW ≥ 925</text>
 <path d="M197.350,4.850 L215.500,4.850 A6.650,6.650 0 0 1 221.860,9.550 L197.350,9.550 A0.700,0.700 0 0 1 196.650,8.850 L196.650,5.550 A0.700,0.700 0 0 1 197.350,4.850 Z" class="box-bg"/>
-<text x="208.10" y="6.92" class="ink" font-size="1.85" font-weight="700" text-anchor="middle">SEC-03 // TRANSPORT</text><text x="209.00" y="8.88" class="f-cond muted" font-size="1.52" font-weight="700" text-anchor="middle">MODE &amp; SEQ CONTROLS</text>
+<text x="208.10" y="6.92" class="ink" font-size="1.85" font-weight="700" text-anchor="middle">TRANSPORT</text><text x="209.00" y="8.88" class="f-cond muted" font-size="1.52" font-weight="700" text-anchor="middle">MODE &amp; SEQ CONTROLS</text>
 <line x1="201.55" y1="15.55" x2="202.28" y2="15.55" class="sc-rule-hi" stroke-width="0.20"/>
 <text x="201.35" y="16.33" class="f-cond ink" font-size="2.22" font-weight="700" text-anchor="end">BT</text>
 <rect x="215.65" y="12.80" width="6.60" height="5.50" rx="0.55" class="box-alt"/>
@@ -437,7 +396,7 @@
 </g>
 </g>
 </g>
-<text x="107.95" y="261.0" class="f-cond" fill="#334155" font-size="2.35" font-weight="700" text-anchor="middle">AN/SMC-925 // CAMEO SHEET 1 OF 2: TOP CONTROL DECK (US LETTER 8.5×11" · PRINT 100% · INKSCAPE X-OFFSET = 6 MM)</text>
+<text x="107.95" y="261.0" class="f-cond" fill="#334155" font-size="2.35" font-weight="700" text-anchor="middle">SMC-PAD // CAMEO SHEET 1 OF 2: TOP CONTROL DECK (US LETTER 8.5×11" · PRINT 100% · INKSCAPE X-OFFSET = 6 MM)</text>
 </g>
 <g inkscape:groupmode="layer" id="layer-cut" inkscape:label="Cut">
 <g transform="translate(181.450,16.500) rotate(90)">

@@ -23,7 +23,10 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT_DIR = os.path.join(ROOT, "docs", "overlay")
-CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+CHROME = next(
+    (c for c in ("/usr/bin/google-chrome", "/usr/bin/chromium", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome") if os.path.exists(c)),
+    "google-chrome",
+)
 
 # ---- device geometry (mm, origin = top-left of 227 x 147 mm body) -------------------------
 BODY_W, BODY_H = 227.0, 147.0
@@ -735,12 +738,10 @@ def build_cameo_html(bg_uri="", bg_opacity=1.0, bg_fit="cover", bleed_mm=1.5, pi
   <label>Zoom <input type="range" id="bg-zoom" min="0.5" max="2.5" step="0.05" value="1.00"></label>
   <label>Pan X <input type="range" id="bg-panx" min="-60" max="60" step="1" value="0"></label>
   <label>Pan Y <input type="range" id="bg-pany" min="-60" max="60" step="1" value="0"></label>
-  <label>Labels
+  <label>Theme
     <select id="pill-mode">
-      <option value="light" {"selected" if pill_mode == "light" else ""}>Frosted Light</option>
-      <option value="dark" {"selected" if pill_mode == "dark" else ""}>Frosted Dark</option>
-      <option value="solid" {"selected" if pill_mode == "solid" else ""}>Solid White</option>
-      <option value="none" {"selected" if pill_mode == "none" else ""}>No Backing</option>
+      <option value="light" {"selected" if pill_mode == "light" else ""}>Light</option>
+      <option value="dark" {"selected" if pill_mode == "dark" else ""}>Dark</option>
     </select>
   </label>
   <label><input type="checkbox" id="toggle-cut" checked> Cut lines</label>
@@ -853,18 +854,6 @@ def build_cameo_html(bg_uri="", bg_opacity=1.0, bg_fit="cover", bleed_mm=1.5, pi
       stepTxt.forEach(t => t.setAttribute('fill', '#ff8533'));
       patTxt.forEach(t => t.setAttribute('fill', '#5ea3ff'));
       bgBase.setAttribute('fill', '#181a20');
-    }} else if (m === 'solid') {{
-      pills.forEach(p => {{ p.setAttribute('fill', '#ffffff'); p.setAttribute('stroke', 'rgba(0,0,0,0.18)'); }});
-      trackTxt.forEach(t => t.setAttribute('fill', '#111111'));
-      stepTxt.forEach(t => t.setAttribute('fill', '#e0600b'));
-      patTxt.forEach(t => t.setAttribute('fill', '#1f6fd1'));
-      bgBase.setAttribute('fill', '#ffffff');
-    }} else if (m === 'none') {{
-      pills.forEach(p => {{ p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'none'); }});
-      trackTxt.forEach(t => t.setAttribute('fill', '#111111'));
-      stepTxt.forEach(t => t.setAttribute('fill', '#e0600b'));
-      patTxt.forEach(t => t.setAttribute('fill', '#1f6fd1'));
-      bgBase.setAttribute('fill', '#ffffff');
     }} else {{
       pills.forEach(p => {{ p.setAttribute('fill', 'rgba(255, 255, 255, 0.86)'); p.setAttribute('stroke', 'rgba(0,0,0,0.12)'); }});
       trackTxt.forEach(t => t.setAttribute('fill', '#111111'));
@@ -919,7 +908,7 @@ def build_cameo_html(bg_uri="", bg_opacity=1.0, bg_fit="cover", bleed_mm=1.5, pi
 
 
 def render_pdf(html_path, pdf_path):
-    subprocess.run([CHROME, "--headless", "--disable-gpu", "--no-pdf-header-footer",
+    subprocess.run([CHROME, "--headless", "--disable-gpu", "--no-sandbox", "--no-pdf-header-footer",
                     f"--print-to-pdf={pdf_path}", "file://" + html_path], check=True,
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -931,8 +920,8 @@ def main():
     ap.add_argument("--bg-opacity", type=float, default=1.0, help="background image opacity (0.0..1.0, default 1.0)")
     ap.add_argument("--bg-fit", choices=("cover", "contain", "stretch"), default="cover", help="background image fit")
     ap.add_argument("--bleed", type=float, default=1.5, help="background bleed outside outer cut line in mm (default 1.5)")
-    ap.add_argument("--theme", choices=("light", "dark", "none"), default="light",
-                    help="label backing pill style over the background image (default: light)")
+    ap.add_argument("--theme", choices=("light", "dark"), default="light",
+                    help="theme style (default: light)")
     ap.add_argument("--mask-holes", action="store_true", help="mask knob/pad/button cutouts in white on the print layer")
     args = ap.parse_args()
 

@@ -57,12 +57,10 @@ html, body { margin: 0; padding: 0; background: #f3f4f6; color: #111;
   <label>Zoom <input type="range" id="bg-zoom" min="0.5" max="2.5" step="0.05" value="1.00"></label>
   <label>Pan X <input type="range" id="bg-panx" min="-60" max="60" step="1" value="0"></label>
   <label>Pan Y <input type="range" id="bg-pany" min="-60" max="60" step="1" value="0"></label>
-  <label>Labels
+  <label>Theme
     <select id="pill-mode">
-      <option value="light" selected>Frosted Light</option>
-      <option value="dark" >Frosted Dark</option>
-      <option value="solid" >Solid White</option>
-      <option value="none" >No Backing</option>
+      <option value="light" selected>Light</option>
+      <option value="dark" >Dark</option>
     </select>
   </label>
   <label><input type="checkbox" id="toggle-cut" checked> Cut lines</label>
@@ -432,18 +430,6 @@ html, body { margin: 0; padding: 0; background: #f3f4f6; color: #111;
       stepTxt.forEach(t => t.setAttribute('fill', '#ff8533'));
       patTxt.forEach(t => t.setAttribute('fill', '#5ea3ff'));
       bgBase.setAttribute('fill', '#181a20');
-    } else if (m === 'solid') {
-      pills.forEach(p => { p.setAttribute('fill', '#ffffff'); p.setAttribute('stroke', 'rgba(0,0,0,0.18)'); });
-      trackTxt.forEach(t => t.setAttribute('fill', '#111111'));
-      stepTxt.forEach(t => t.setAttribute('fill', '#e0600b'));
-      patTxt.forEach(t => t.setAttribute('fill', '#1f6fd1'));
-      bgBase.setAttribute('fill', '#ffffff');
-    } else if (m === 'none') {
-      pills.forEach(p => { p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'none'); });
-      trackTxt.forEach(t => t.setAttribute('fill', '#111111'));
-      stepTxt.forEach(t => t.setAttribute('fill', '#e0600b'));
-      patTxt.forEach(t => t.setAttribute('fill', '#1f6fd1'));
-      bgBase.setAttribute('fill', '#ffffff');
     } else {
       pills.forEach(p => { p.setAttribute('fill', 'rgba(255, 255, 255, 0.86)'); p.setAttribute('stroke', 'rgba(0,0,0,0.12)'); });
       trackTxt.forEach(t => t.setAttribute('fill', '#111111'));

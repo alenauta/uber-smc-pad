@@ -6,38 +6,32 @@
     .sheet-paper-bg { fill: #ffffff; stroke: #cbd5e1; stroke-width: 0.16; }
     .sheet-annotations text { fill: #334155 !important; }
     .sheet-ruler .box-bg { fill: #ffffff !important; fill-opacity: 1 !important; stroke: #0f172a !important; }
-    .sheet-ruler .ink, .sheet-ruler .tro-fill, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c { fill: #0f172a !important; }
-    .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi, .sheet-ruler .tro-ink { stroke: #0f172a !important; }
+    .sheet-ruler .ink, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c { fill: #0f172a !important; }
+    .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi { stroke: #0f172a !important; }
     .cutout-preview-mask { display: none; fill: #0b0e14; fill-opacity: 0.76; stroke: #64748b; stroke-width: 0.14; pointer-events: none; }
-    .seam-tick { fill: none; stroke: #FACC15; stroke-width: 0.20; stroke-dasharray: 0.9 0.7; }
-    .bg-base { fill: #13171D; }
-    .bg-veil { fill: #13171D; fill-opacity: 0; pointer-events: none; }
-    .panel-sub { fill: #171C24; }
-    .box-bg { fill: #1B222C; stroke: #4A5B73; stroke-width: 0.16; }
-    .box-alt { fill: #10141A; stroke: #4A5B73; stroke-width: 0.15; }
-    .grid-min { stroke: #1C232E; stroke-width: 0.07; fill: none; }
-    .grid-maj { stroke: #252F3D; stroke-width: 0.12; fill: none; }
-    .sc-trace { stroke: #2E3B4E; stroke-width: 0.18; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-    .sc-rule { stroke: #4A5B73; fill: none; }
-    .sc-rule-hi { stroke: #7C91AD; fill: none; }
-    .tro-ink { stroke: #ECF0F5; fill: none; stroke-linecap: square; stroke-linejoin: miter; }
-    .tro-fill { fill: #ECF0F5; }
-    .tro-paper { fill: #1B222C; stroke: #ECF0F5; }
-    .ink { fill: #ECF0F5; }
-    .muted { fill: #8C9BAE; }
-    .step-c { fill: #FF7A1A; }
-    .step-bg { fill: #FF7A1A; }
-    .step-fg { fill: #111317; }
-    .pat-c { fill: #38BDF8; }
-    .warn-c { fill: #FACC15; }
-    .warn-stroke { stroke: #FACC15; fill: none; }
-    .ok-c { fill: #34D399; }
+    .seam-tick { fill: none; stroke: #CA8A04; stroke-width: 0.20; stroke-dasharray: 0.9 0.7; }
+    .bg-base { fill: #FFFFFF; }
+    .bg-veil { fill: #FFFFFF; fill-opacity: 0; pointer-events: none; }
+    .panel-sub { fill: #F8FAFC; }
+    .box-bg { fill: #F8FAFC; stroke: #475569; stroke-width: 0.16; }
+    .box-alt { fill: #F1F5F9; stroke: #475569; stroke-width: 0.15; }
+    .cad-grid-lines { display: none; }
+    .grid-min { stroke: #EDF2F7; stroke-width: 0.07; fill: none; }
+    .grid-maj { stroke: #CBD5E1; stroke-width: 0.12; fill: none; }
+    .sc-trace { stroke: #94A3B8; stroke-width: 0.18; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .sc-rule { stroke: #475569; fill: none; }
+    .sc-rule-hi { stroke: #0F172A; fill: none; }
+    .ink { fill: #0F172A; }
+    .muted { fill: #475569; }
+    .step-c { fill: #EA580C; }
+    .step-bg { fill: #EA580C; }
+    .step-fg { fill: #FFFFFF; }
+    .pat-c { fill: #0284C7; }
+    .warn-c { fill: #CA8A04; }
+    .warn-stroke { stroke: #CA8A04; fill: none; }
+    .ok-c { fill: #16A34A; }
     .f-cond { font-family: "Roboto Condensed", "Avenir Next Condensed", "Bahnschrift", "Liberation Sans Narrow", "Arial Narrow", sans-serif; }
     .f-mono { font-family: "Noto Sans Mono", "JetBrains Mono", "SF Mono", "DejaVu Sans Mono", "Liberation Mono", monospace; }
-    
-    .tro-only { display: none; }
-    .non-tro { display: inline; }
-    
     </style>
 <g id="s1tp-cut">
 <path id="s1tp-cut-outer" d="M23.000,11.500 L227.000,11.500 A9.000,9.000 0 0 1 236.000,20.500 L236.000,144.500 A9.000,9.000 0 0 1 227.000,153.500 L23.000,153.500 A9.000,9.000 0 0 1 14.000,144.500 L14.000,20.500 A9.000,9.000 0 0 1 23.000,11.500 Z" class="cut-line"/>

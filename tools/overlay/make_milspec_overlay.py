@@ -1,26 +1,10 @@
 #!/usr/bin/env python3
-"""MIL-SPEC & FASA Tech Readout 360-degree full-device overlay generator for SMC-PAD (FW 925+).
+"""360-degree full-device Print & Cut overlay generator for SMC-PAD (FW 925+).
 
-Generates 1:1 millimeter Print & Cut assets tailored for Silhouette Silhouette Cameo 5 +
-Linux Inkscape (`fablabnbg/inkscape-silhouette` on US Letter 8.5 x 11 in = 215.9 x 279.4 mm,
-Left=15mm / Top=15mm / X=185.9mm / Y=230.0mm registration marks, X-Offset=6mm), plus A4/12x12
-Silhouette Studio SVG/DXF/PNG assets:
-
-  docs/overlay/
-    smcpad_milspec_overlay.html                  Interactive studio (6 themes, Cameo Letter / A4 / 12x12)
-    smcpad_cameo_milspec_sheet1_letter.svg    Cameo US Letter Sheet 1 (3-layer Inkscape SVG: Regmarks/Print/Cut)
-    smcpad_cameo_milspec_sheet2_letter.svg    Cameo US Letter Sheet 2 (3-layer Inkscape SVG: 4 Pinwheel Sides + 2x I/O)
-    smcpad_cameo_milspec_print_letter.pdf     Cameo 2-page 1:1 US Letter Print-Only PDF (Regmarks + Print, no red cut lines)
-    smcpad_cameo_battletech_sheet1_letter.svg Cameo US Letter Sheet 1 (Clean FASA 3025 Line-Art theme)
-    smcpad_cameo_battletech_sheet2_letter.svg Cameo US Letter Sheet 2 (Clean FASA 3025 Line-Art theme)
-    smcpad_cameo_battletech_print_letter.pdf  Cameo 2-page 1:1 US Letter Print-Only PDF (Clean Line-Art theme)
-    smcpad_cameo_sheet0_roll_to_letter.svg    Optional Step-0 Roll-Feeder job: cuts 215.9 x 279.4 mm US Letter sheet from roll
-    smcpad_milspec_overlay.pdf                   2-page 1:1 A4 Landscape vector PDF
-    smcpad_battletech_overlay.pdf                2-page 1:1 A4 Landscape vector PDF (Clean Line-Art theme)
-    smcpad_milspec_sheet0_roll_to_a4.svg/.dxf    Optional A4 blank cutter from 12" roll
-    smcpad_milspec_sheet1_top*.svg/.dxf          A4 Landscape Sheet 1 (250 x 165 mm frame)
-    smcpad_milspec_sheet2_sides*.svg/.dxf        A4 Landscape Sheet 2 (250 x 165 mm frame)
-    smcpad_milspec_single_12x12*.svg/.dxf        Single-sheet 12x12" / A3 nested full kit (256 x 284 mm frame)
+Generates 1:1 millimeter Print & Cut assets for Silhouette Cameo 5 + Silhouette Studio
+(US Letter 8.5 x 11 in Landscape, A4 Landscape, and 12x12 in) as well as Linux Inkscape
+(`fablabnbg/inkscape-silhouette` on US Letter 215.9 x 279.4 mm), with two clean themes
+(`light` and `dark`).
 
 All CAD coordinates (top panel + 23.8 mm flat vertical side walls + R=10.66 mm corner arcs +
 recessed 48.6 x 15.25 mm rear I/O well + POWER / LED / USB-C / 3.5mm TRS MIDI OUT) were extracted
@@ -102,10 +86,29 @@ FRAME_LTR_W, FRAME_LTR_H = 240.00, 154.00   # Cameo US Letter Landscape (279.4 x
 FRAME_A4_W, FRAME_A4_H = 250.00, 165.00     # A4 Landscape (297.0 x 210.0 mm)
 FRAME_12_W, FRAME_12_H = 256.00, 284.00     # 12x12 in (304.8 x 304.8 mm)
 
-# ---- 5 MIL-SPEC / Engineering Schematic Themes --------------------------------------------
+# ---- Simple Light & Dark Themes ------------------------------------------------------------
 THEMES = {
-    "stealth": {
-        "label": "AN/PRC Tactical Stealth Dark",
+    "light": {
+        "label": "Light",
+        "bg": "#FFFFFF",
+        "panel_sub": "#F8FAFC",
+        "box_bg": "#F8FAFC",
+        "box_alt": "#F1F5F9",
+        "grid_min": "#EDF2F7",
+        "grid_maj": "#CBD5E1",
+        "trace": "#94A3B8",
+        "rule": "#475569",
+        "rule_hi": "#0F172A",
+        "ink": "#0F172A",
+        "muted": "#475569",
+        "step": "#EA580C",
+        "step_fg": "#FFFFFF",
+        "pat": "#0284C7",
+        "warn": "#CA8A04",
+        "ok": "#16A34A",
+    },
+    "dark": {
+        "label": "Dark",
         "bg": "#13171D",
         "panel_sub": "#171C24",
         "box_bg": "#1B222C",
@@ -122,120 +125,6 @@ THEMES = {
         "pat": "#38BDF8",
         "warn": "#FACC15",
         "ok": "#34D399",
-    },
-    "vellum": {
-        "label": "MIL-DTL Archival Vellum",
-        "bg": "#F2EEE2",
-        "panel_sub": "#EBE5D5",
-        "box_bg": "#FAF7F0",
-        "box_alt": "#E5DEC9",
-        "grid_min": "#E4DEC9",
-        "grid_maj": "#D2C9B0",
-        "trace": "#BEB396",
-        "rule": "#4A463D",
-        "rule_hi": "#1C1B18",
-        "ink": "#151618",
-        "muted": "#5C584E",
-        "step": "#D9480F",
-        "step_fg": "#FFFFFF",
-        "pat": "#1862AB",
-        "warn": "#B45309",
-        "ok": "#15803D",
-    },
-    "blueprint": {
-        "label": "Cyanotype Engineering Blueprint",
-        "bg": "#0B2138",
-        "panel_sub": "#0E2946",
-        "box_bg": "#103052",
-        "box_alt": "#08192B",
-        "grid_min": "#123254",
-        "grid_maj": "#1B4673",
-        "trace": "#275D94",
-        "rule": "#4EA8DE",
-        "rule_hi": "#90E0EF",
-        "ink": "#F0F8FF",
-        "muted": "#8ECAE6",
-        "step": "#FFB703",
-        "step_fg": "#08192B",
-        "pat": "#64DFDF",
-        "warn": "#FFD166",
-        "ok": "#52B788",
-    },
-    "olive": {
-        "label": "FS-34087 Tactical Olive Drab",
-        "bg": "#22291D",
-        "panel_sub": "#283022",
-        "box_bg": "#2D3727",
-        "box_alt": "#1B2117",
-        "grid_min": "#2B3424",
-        "grid_maj": "#384430",
-        "trace": "#49583E",
-        "rule": "#697D5B",
-        "rule_hi": "#9CB08B",
-        "ink": "#EFECE0",
-        "muted": "#A0AE94",
-        "step": "#FF8811",
-        "step_fg": "#181D14",
-        "pat": "#5CE1E6",
-        "warn": "#EAB308",
-        "ok": "#84CC16",
-    },
-    "arctic": {
-        "label": "Cleanroom Low-Ink White",
-        "bg": "#F8FAFC",
-        "panel_sub": "#F1F5F9",
-        "box_bg": "#FFFFFF",
-        "box_alt": "#E2E8F0",
-        "grid_min": "#E9EEF5",
-        "grid_maj": "#CBD5E1",
-        "trace": "#94A3B8",
-        "rule": "#475569",
-        "rule_hi": "#0F172A",
-        "ink": "#0F172A",
-        "muted": "#475569",
-        "step": "#EA580C",
-        "step_fg": "#FFFFFF",
-        "pat": "#0284C7",
-        "warn": "#CA8A04",
-        "ok": "#16A34A",
-    },
-    "battletech": {
-        "label": "FASA 3025 Tech Readout (Black Line-Art)",
-        "bg": "#FFFFFF",
-        "panel_sub": "#FFFFFF",
-        "box_bg": "#FFFFFF",
-        "box_alt": "#FFFFFF",
-        "grid_min": "none",
-        "grid_maj": "#1E2024",
-        "trace": "#141619",
-        "rule": "#141619",
-        "rule_hi": "#090A0C",
-        "ink": "#090A0C",
-        "muted": "#262930",
-        "step": "#090A0C",
-        "step_fg": "#FFFFFF",
-        "pat": "#090A0C",
-        "warn": "#090A0C",
-        "ok": "#090A0C",
-    },
-    "battletech_light": {
-        "label": "FASA 3025 Tech Readout (White Line-Art)",
-        "bg": "#11141A",
-        "panel_sub": "#161A22",
-        "box_bg": "#151921",
-        "box_alt": "#0E1116",
-        "grid_min": "none",
-        "grid_maj": "#94A3B8",
-        "trace": "#CBD5E1",
-        "rule": "#E2E8F0",
-        "rule_hi": "#F8FAFC",
-        "ink": "#F8FAFC",
-        "muted": "#CBD5E1",
-        "step": "#F8FAFC",
-        "step_fg": "#0F172A",
-        "pat": "#F8FAFC",
-        "warn": "#F8FAFC",
-        "ok": "#F8FAFC",
     },
 }
 
@@ -357,28 +246,16 @@ def crosshair(cx, cy, r=1.5, cls="sc-rule"):
     )
 
 
-def svg_theme_css(theme_key="stealth"):
+def svg_theme_css(theme_key="light"):
     t = THEMES[theme_key]
-    is_tro = theme_key in ("battletech", "battletech_light")
-    tro_extra = """
-    .tro-only { display: inline; }
-    .non-tro { display: none; }
-    .cad-grid-lines { display: none; }
-    .box-bg { stroke-width: 0.24 !important; }
-    .box-alt { stroke-width: 0.20 !important; }
-    .seam-tick { stroke-width: 0.24; stroke-dasharray: 2.2 0.7 0.5 0.7; }
-    """ if is_tro else """
-    .tro-only { display: none; }
-    .non-tro { display: inline; }
-    """
     return f"""
     .cut-line {{ fill: none; stroke: #ff0000; stroke-width: 0.12; stroke-linecap: round; stroke-linejoin: round; }}
     .align-frame {{ fill: none; stroke: #0066ff; stroke-width: 0.10; stroke-dasharray: 2.0 1.2; }}
     .sheet-paper-bg {{ fill: #ffffff; stroke: #cbd5e1; stroke-width: 0.16; }}
     .sheet-annotations text {{ fill: #334155 !important; }}
     .sheet-ruler .box-bg {{ fill: #ffffff !important; fill-opacity: 1 !important; stroke: #0f172a !important; }}
-    .sheet-ruler .ink, .sheet-ruler .tro-fill, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c {{ fill: #0f172a !important; }}
-    .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi, .sheet-ruler .tro-ink {{ stroke: #0f172a !important; }}
+    .sheet-ruler .ink, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c {{ fill: #0f172a !important; }}
+    .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi {{ stroke: #0f172a !important; }}
     .cutout-preview-mask {{ display: none; fill: #0b0e14; fill-opacity: 0.76; stroke: #64748b; stroke-width: 0.14; pointer-events: none; }}
     .seam-tick {{ fill: none; stroke: {t['warn']}; stroke-width: 0.20; stroke-dasharray: 0.9 0.7; }}
     .bg-base {{ fill: {t['bg']}; }}
@@ -386,14 +263,12 @@ def svg_theme_css(theme_key="stealth"):
     .panel-sub {{ fill: {t['panel_sub']}; }}
     .box-bg {{ fill: {t['box_bg']}; stroke: {t['rule']}; stroke-width: 0.16; }}
     .box-alt {{ fill: {t['box_alt']}; stroke: {t['rule']}; stroke-width: 0.15; }}
+    .cad-grid-lines {{ display: none; }}
     .grid-min {{ stroke: {t['grid_min']}; stroke-width: 0.07; fill: none; }}
     .grid-maj {{ stroke: {t['grid_maj']}; stroke-width: 0.12; fill: none; }}
     .sc-trace {{ stroke: {t['trace']}; stroke-width: 0.18; fill: none; stroke-linecap: round; stroke-linejoin: round; }}
     .sc-rule {{ stroke: {t['rule']}; fill: none; }}
     .sc-rule-hi {{ stroke: {t['rule_hi']}; fill: none; }}
-    .tro-ink {{ stroke: {t['ink']}; fill: none; stroke-linecap: square; stroke-linejoin: miter; }}
-    .tro-fill {{ fill: {t['ink']}; }}
-    .tro-paper {{ fill: {t['box_bg']}; stroke: {t['ink']}; }}
     .ink {{ fill: {t['ink']}; }}
     .muted {{ fill: {t['muted']}; }}
     .step-c {{ fill: {t['step']}; }}
@@ -405,7 +280,6 @@ def svg_theme_css(theme_key="stealth"):
     .ok-c {{ fill: {t['ok']}; }}
     .f-cond {{ font-family: "Roboto Condensed", "Avenir Next Condensed", "Bahnschrift", "Liberation Sans Narrow", "Arial Narrow", sans-serif; }}
     .f-mono {{ font-family: "Noto Sans Mono", "JetBrains Mono", "SF Mono", "DejaVu Sans Mono", "Liberation Mono", monospace; }}
-    {tro_extra}
     """
 
 
@@ -472,44 +346,6 @@ def cad_grid_group(clip_id, x0, y0, w, h, sheet_slot="s1", piece_kind="top", ref
     return "\n".join(o)
 
 
-def tro_stencil_banner(x, y, text, mask_id, font_size=2.95, slit_offset=1.02, slit_w=54.0, anchor="start"):
-    """1986 FASA BattleTech split-stencil display lettering with a true SVG mask slit (transparent to any BG!)."""
-    sx0 = x if anchor == "start" else (x - slit_w / 2.0)
-    mx, my, mw, mh = sx0 - 2.0, y - font_size * 1.45, slit_w + 4.0, font_size * 2.1
-    return (
-        f'<defs><mask id="{mask_id}" maskUnits="userSpaceOnUse" x="{mx:.2f}" y="{my:.2f}" width="{mw:.2f}" height="{mh:.2f}">'
-        f'<rect x="{mx:.2f}" y="{my:.2f}" width="{mw:.2f}" height="{mh:.2f}" fill="#ffffff"/>'
-        f'<line x1="{sx0:.2f}" y1="{y - slit_offset:.2f}" x2="{sx0 + slit_w:.2f}" y2="{y - slit_offset:.2f}" '
-        f'stroke="#000000" stroke-width="0.30"/>'
-        f'</mask></defs>'
-        f'<text x="{x:.2f}" y="{y:.2f}" mask="url(#{mask_id})" class="tro-fill f-cond" font-size="{font_size:.2f}" '
-        f'font-weight="900" letter-spacing="0.28" text-anchor="{anchor}">{esc(text)}</text>'
-    )
-
-
-def render_tro_top_underlay(ox, oy, uid, top_gaps=(), bot_gaps=()):
-    """Clean FASA 3025 Rapidograph double outer drafting border with clean vector breaks at micro-labels."""
-    px0, py0, px1, py1 = PANEL_RECT[0] + ox, PANEL_RECT[1] + oy, PANEL_RECT[2] + ox, PANEL_RECT[3] + oy
-    bx0, by0, bx1, by1 = px0 + 1.05, py0 + 1.05, px1 - 1.05, py1 - 1.05
-    return (
-        f'<g class="tro-only f-cond" id="{uid}-tro-border">'
-        f'<path d="{gapped_panel_border_path(bx0, by0, bx1, by1, CORNER_R-1.05, top_gaps, bot_gaps)}" '
-        f'class="tro-ink" stroke-width="0.34"/>'
-        f'<path d="{gapped_panel_border_path(bx0+0.55, by0+0.55, bx1-0.55, by1-0.55, CORNER_R-1.60, top_gaps, bot_gaps)}" '
-        f'class="tro-ink" stroke-width="0.11"/>'
-        f'</g>'
-    )
-
-
-def render_tro_band_underlay(ox, oy, w, h, uid):
-    """Clean FASA 3025 Rapidograph inner perimeter border concentric with R=1.00mm cut corners."""
-    return (
-        f'<g class="tro-only" id="{uid}-tro-band">'
-        f'<rect x="{ox+0.70:.2f}" y="{oy+0.70:.2f}" width="{w-1.4:.2f}" height="{h-1.4:.2f}" rx="0.55" class="tro-ink" stroke-width="0.28"/>'
-        f'</g>'
-    )
-
-
 def render_top_panel(ox, oy, bleed=1.50, include_print=True, include_cut=True, uid="tp", sheet_slot="s1", ref_rect=None):
     """Render Piece 1: 222.0 x 142.0 mm Top Panel shifted so body (0,0) is at (ox, oy)."""
     px0, py0, px1, py1 = PANEL_RECT[0] + ox, PANEL_RECT[1] + oy, PANEL_RECT[2] + ox, PANEL_RECT[3] + oy
@@ -537,47 +373,18 @@ def render_top_panel(ox, oy, bleed=1.50, include_print=True, include_cut=True, u
         ))
         o.append(f'<g id="{uid}-fg" class="piece-fg-layer">')
 
-        # Inner MIL-STD perimeter drafting border (inset 1.05 mm inside cut line, cleanly gapped around edge micro-labels)
+        # Inner perimeter border (inset 1.05 mm inside cut line, cleanly gapped around bottom label)
         bx0, by0, bx1, by1 = px0 + 1.05, py0 + 1.05, px1 - 1.05, py1 - 1.05
-        top_gaps = [(ox + 18.0 + zi * 27.2 - 2.45, ox + 18.0 + zi * 27.2 + 2.45) for zi in range(8)]
         bot_gaps = [(ox + 20.10, ox + 47.20)]
-        o.append(f'<path d="{gapped_panel_border_path(bx0, by0, bx1, by1, CORNER_R-1.05, top_gaps, bot_gaps)}" '
+        o.append(f'<path d="{gapped_panel_border_path(bx0, by0, bx1, by1, CORNER_R-1.05, (), bot_gaps)}" '
                  f'class="sc-rule" stroke-width="0.18"/>')
 
-        # Vertical subsystem bulkheads: Knobs | Pads | Buttons
+        # Vertical subsystem dividers: Knobs | Pads | Buttons
         div1_x = ox + 64.55
         div2_x = ox + 195.85
         o.append(f'<line x1="{div1_x:.2f}" y1="{by0+0.6:.2f}" x2="{div1_x:.2f}" y2="{by1-0.6:.2f}" class="sc-rule" stroke-width="0.22"/>')
-        o.append(f'<line x1="{div1_x+0.55:.2f}" y1="{by0+2.5:.2f}" x2="{div1_x+0.55:.2f}" y2="{by1-2.5:.2f}" class="sc-trace non-tro" stroke-dasharray="1.8 1.0"/>')
         o.append(f'<line x1="{div2_x:.2f}" y1="{by0+0.6:.2f}" x2="{div2_x:.2f}" y2="{by1-0.6:.2f}" class="sc-rule" stroke-width="0.22"/>')
 
-        # Clean FASA 3025 Rapidograph double outer border (visible when theme is battletech / battletech_light)
-        o.append(render_tro_top_underlay(ox, oy, uid, top_gaps, bot_gaps))
-
-        # Drawing zone micro-markers framed cleanly along gapped top border line (by0 = oy + 3.55)
-        for zi, zlbl in enumerate(("Z8", "Z7", "Z6", "Z5", "Z4", "Z3", "Z2", "Z1")):
-            zx = ox + 18.0 + zi * 27.2
-            o.append(f'<text x="{zx:.2f}" y="{by0+0.48:.2f}" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[{zlbl}]</text>')
-
-        # Schematic PCB bus traces in the knob center corridor (x = ox + 33.65, gapped cleanly around corridor labels)
-        cor_x = ox + 33.65
-        o.append(
-            f'<path d="M{cor_x:.2f},{oy+15.5:.2f} V{oy+43.7:.2f} M{cor_x:.2f},{oy+46.3:.2f} V{oy+76.6:.2f} '
-            f'M{cor_x:.2f},{oy+79.2:.2f} V{oy+109.6:.2f} M{cor_x:.2f},{oy+112.2:.2f} V{oy+139.5:.2f}" class="sc-trace non-tro"/>'
-        )
-        o.append(
-            f'<path d="M{cor_x-0.9:.2f},{oy+20.0:.2f} V{oy+43.7:.2f} M{cor_x-0.9:.2f},{oy+46.3:.2f} V{oy+76.6:.2f} '
-            f'M{cor_x-0.9:.2f},{oy+79.2:.2f} V{oy+109.6:.2f} M{cor_x-0.9:.2f},{oy+112.2:.2f} V{oy+135.0:.2f}" '
-            f'class="sc-trace non-tro" stroke-dasharray="1.2 0.9"/>'
-        )
-        for ry in KNOB_Y:
-            ky = oy + ry
-            o.append(f'<path d="M{cor_x-4.2:.2f},{ky:.2f} H{cor_x+4.2:.2f}" class="sc-trace non-tro"/>')
-            o.append(f'<circle cx="{cor_x:.2f}" cy="{ky:.2f}" r="0.55" class="pat-c non-tro"/>')
-        o.append(f'<text x="{ox+34.85:.2f}" y="{oy+45.65:.2f}" class="f-cond muted" font-size="1.45" font-weight="700" text-anchor="middle">'
-                 f'SPI2 · 595 MUX</text>')
-        o.append(f'<text x="{ox+34.85:.2f}" y="{oy+78.55:.2f}" class="f-cond muted" font-size="1.45" font-weight="700" text-anchor="middle">'
-                 f'QUAD DEC · ISR</text>')
         o.append(f'<text x="{ox+34.85:.2f}" y="{oy+111.55:.2f}" class="f-cond warn-c" font-size="1.45" font-weight="700" text-anchor="middle">'
                  f'RPT + K1–4 LIVE</text>')
 
@@ -586,16 +393,10 @@ def render_top_panel(ox, oy, bleed=1.50, include_print=True, include_cut=True, u
         o.append(f'<path d="{rounded_rect_path(tx0, ty0, tx0 + tw, ty0 + th, 6.65, 0.80, 0.80, 0.80)}" class="box-bg"/>')
         o.append(corner_brackets(tx0, ty0, tx0 + tw, ty0 + th, arm=1.2, corners=("tr", "br", "bl")))
         o.append(f'<line x1="{tx0+0.55:.2f}" y1="{ty0+4.20:.2f}" x2="{tx0+tw:.2f}" y2="{ty0+4.20:.2f}" class="sc-rule" stroke-width="0.13"/>')
-        # Standard MIL-SPEC header vs FASA Split-Stencil Technical Readout header
-        o.append(f'<g class="non-tro">'
-                 f'<text x="{tx0+3.95:.2f}" y="{ty0+3.02:.2f}" class="ink" font-size="2.22" font-weight="700" letter-spacing="0.14">'
-                 f'SEC-01 // ENCODER ARRAY</text>'
+        o.append(f'<text x="{tx0+3.95:.2f}" y="{ty0+3.02:.2f}" class="ink" font-size="2.22" font-weight="700" letter-spacing="0.14">'
+                 f'ENCODERS K1–K8</text>'
                  f'<text x="{tx0+tw-1.2:.2f}" y="{ty0+2.98:.2f}" class="f-cond pat-c" font-size="1.78" font-weight="700" text-anchor="end">'
-                 f'AN/SMC-925</text></g>')
-        o.append(f'<g class="tro-only">'
-                 f'{tro_stencil_banner(tx0 + 3.85, ty0 + 3.22, "TECH READOUT: SMC-925", f"{uid}-sec1-slit", font_size=2.62, slit_offset=0.92, slit_w=40.5)}'
-                 f'<text x="{tx0+tw-1.1:.2f}" y="{ty0+3.02:.2f}" class="f-cond tro-fill" font-size="1.65" font-weight="700" text-anchor="end">'
-                 f'WHM-925</text></g>')
+                 f'SMC-PAD</text>')
         # 3-Mode Color Legend
         o.append(f'<circle cx="{tx0+2.5:.2f}" cy="{ty0+6.3:.2f}" r="0.88" class="ink"/>')
         o.append(f'<text x="{tx0+4.0:.2f}" y="{ty0+7.02:.2f}" class="ink" font-size="1.92" font-weight="700">TRACK</text>')
@@ -685,21 +486,6 @@ def render_top_panel(ox, oy, bleed=1.50, include_print=True, include_cut=True, u
             f'<tspan class="step-c">⇧+REC SAVE</tspan> / <tspan class="ok-c">⇧+PLAY LOAD</tspan></text>'
         )
 
-        # Center Avionics Reticle Island between Pads 6, 7, 10, 11 (hidden in clean line-art theme)
-        icx, icy = ox + (PAD_X[1] + PAD_X[2]) / 2, oy + (PAD_Y[1] + PAD_Y[2]) / 2
-        o.append(f'<g class="non-tro">')
-        o.append(crosshair(icx, icy, r=2.3, cls="sc-rule-hi"))
-        o.append(f'<circle cx="{icx:.2f}" cy="{icy:.2f}" r="2.75" class="sc-trace" stroke-dasharray="0.8 0.6"/>')
-        # Secondary mini reticles at other 8 pad intersections
-        for r_i in range(3):
-            for c_i in range(3):
-                if r_i == 1 and c_i == 1:
-                    continue
-                mx = ox + (PAD_X[c_i] + PAD_X[c_i + 1]) / 2
-                my = oy + (PAD_Y[r_i] + PAD_Y[r_i + 1]) / 2
-                o.append(crosshair(mx, my, r=1.15, cls="sc-trace"))
-        o.append(f'</g>')
-
         # 16 Pad Telemetry Strips in the 4.17 mm inter-pad bridges
         for r_top in range(4):
             for c_idx in range(4):
@@ -752,7 +538,7 @@ def render_top_panel(ox, oy, bleed=1.50, include_print=True, include_cut=True, u
         )
         o.append(f'<path d="{sec3_d}" class="box-bg"/>')
         o.append(f'<text x="{ox+208.1:.2f}" y="{oy+6.92:.2f}" class="ink" font-size="1.85" font-weight="700" text-anchor="middle">'
-                 f'SEC-03 // TRANSPORT</text>'
+                 f'TRANSPORT</text>'
                  f'<text x="{ox+209.0:.2f}" y="{oy+8.88:.2f}" class="f-cond muted" font-size="1.52" font-weight="700" text-anchor="middle">'
                  f'MODE &amp; SEQ CONTROLS</text>')
 
@@ -862,7 +648,6 @@ def render_rear_band(ox, oy, bleed=1.50, include_print=True, include_cut=True, u
                                 sheet_slot=sheet_slot, piece_kind="side", ref_rect=ref_rect))
         o.append(f'<g id="{uid}-fg" class="piece-fg-layer">')
         o.append(f'<rect x="{ox+0.7:.2f}" y="{oy+0.7:.2f}" width="{w-1.4:.2f}" height="{h-1.4:.2f}" rx="0.6" class="sc-rule" stroke-width="0.16"/>')
-        o.append(render_tro_band_underlay(ox, oy, w, h, uid))
 
         # Back-Right 90-deg corner wrap at u = 0..16.745 (right end u=222.425 butts cleanly at Back-Left tangent!)
         u_t1 = ox + CORNER_ARC
@@ -971,7 +756,6 @@ def render_front_band(ox, oy, bleed=1.50, include_print=True, include_cut=True, 
                                 sheet_slot=sheet_slot, piece_kind="side", ref_rect=ref_rect))
         o.append(f'<g id="{uid}-fg" class="piece-fg-layer">')
         o.append(f'<rect x="{ox+0.7:.2f}" y="{oy+0.7:.2f}" width="{w-1.4:.2f}" height="{h-1.4:.2f}" rx="0.6" class="sc-rule" stroke-width="0.16"/>')
-        o.append(render_tro_band_underlay(ox, oy, w, h, uid))
 
         u_t1 = ox + CORNER_ARC
         o.append(render_corner_tab(ox, oy, h, "CNR-FL", "KNOB SIDE", "⇧+RPT=SEQ", sub3="FW ≥ 925", sub2_cls="step-c", sub3_cls="ok-c"))
@@ -1044,7 +828,6 @@ def render_left_band(ox, oy, bleed=1.50, include_print=True, include_cut=True, u
                                 sheet_slot=sheet_slot, piece_kind="side", ref_rect=ref_rect))
         o.append(f'<g id="{uid}-fg" class="piece-fg-layer">')
         o.append(f'<rect x="{ox+0.7:.2f}" y="{oy+0.7:.2f}" width="{w-1.4:.2f}" height="{h-1.4:.2f}" rx="0.6" class="sc-rule" stroke-width="0.16"/>')
-        o.append(render_tro_band_underlay(ox, oy, w, h, uid))
 
         u_t1 = ox + CORNER_ARC
         o.append(render_corner_tab(ox, oy, h, "CNR-BL", "REAR SEAM", "SEAM ──►"))
@@ -1115,7 +898,6 @@ def render_right_band(ox, oy, bleed=1.50, include_print=True, include_cut=True, 
                                 sheet_slot=sheet_slot, piece_kind="side", ref_rect=ref_rect))
         o.append(f'<g id="{uid}-fg" class="piece-fg-layer">')
         o.append(f'<rect x="{ox+0.7:.2f}" y="{oy+0.7:.2f}" width="{w-1.4:.2f}" height="{h-1.4:.2f}" rx="0.6" class="sc-rule" stroke-width="0.16"/>')
-        o.append(render_tro_band_underlay(ox, oy, w, h, uid))
 
         u_t1 = ox + CORNER_ARC
         o.append(render_corner_tab(ox, oy, h, "CNR-FR", "FRONT SEAM", "STOP×2=0", sub2_cls="step-c"))
@@ -1188,7 +970,6 @@ def render_io_insert(ox, oy, bleed=1.20, include_print=True, include_cut=True, u
                                 sheet_slot=sheet_slot, piece_kind="side", ref_rect=ref_rect))
         o.append(f'<g id="{uid}-fg" class="piece-fg-layer">')
         o.append(f'<rect x="{ox+0.45:.2f}" y="{oy+0.45:.2f}" width="{w-0.9:.2f}" height="{h-0.9:.2f}" rx="{IO_INS_R-0.4:.2f}" class="sc-rule" stroke-width="0.14"/>')
-        o.append(f'<rect x="{ox+0.45:.2f}" y="{oy+0.45:.2f}" width="{w-0.9:.2f}" height="{h-0.9:.2f}" rx="{IO_INS_R-0.4:.2f}" class="tro-only tro-ink" stroke-width="0.28"/>')
         o.append(f'<text x="{ox+px:.2f}" y="{oy+3.95:.2f}" class="f-cond ink" font-size="2.10" font-weight="700" text-anchor="middle">POWER</text>')
         o.append(f'<text x="{ox+lx:.2f}" y="{oy+3.45:.2f}" class="f-cond warn-c" font-size="1.85" font-weight="700" text-anchor="middle">CHG</text>')
         o.append(f'<text x="{ox+ux:.2f}" y="{oy+3.18:.2f}" class="f-cond pat-c" font-size="1.95" font-weight="700" text-anchor="middle">USB-C</text>')
@@ -1217,20 +998,11 @@ def render_io_insert(ox, oy, bleed=1.20, include_print=True, include_cut=True, u
 
 
 def render_vernier_ruler(ox, oy, uid="vr"):
-    """100.00 mm 1:1 physical verification ruler + seam map / FASA Tech Readout classification block."""
+    """100.00 mm 1:1 physical verification ruler + wrap guide."""
     o = [f'<g class="f-cond sheet-ruler" transform="translate({ox:.2f},{oy:.2f})">']
     o.append('<rect x="0" y="0" width="104" height="23.8" rx="0.8" class="box-bg"/>')
-    # Standard MIL-SPEC header vs FASA Technical Readout Split-Stencil header
-    o.append('<text x="2.0" y="3.35" class="step-c non-tro" font-size="1.92" font-weight="700">SCALE CHECK: 100.00 MM VERNIER</text>')
-    o.append(f'<g class="tro-only">{tro_stencil_banner(2.0, 3.35, "TECH READOUT: WHM-925 // 100 MM", f"{uid}-vr-slit", font_size=2.05, slit_offset=0.72, slit_w=64.0)}'
-             f'<text x="102.0" y="3.20" class="tro-fill f-cond" font-size="1.58" font-weight="700" text-anchor="end">CLASSIFIED</text></g>')
+    o.append('<text x="2.0" y="3.35" class="step-c" font-size="1.92" font-weight="700">SCALE CHECK: 100.00 MM VERNIER</text>')
     o.append('<line x1="2" y1="5.0" x2="102" y2="5.0" class="sc-rule-hi" stroke-width="0.22"/>')
-    # Alternating ink / transparent drafted surveyor blocks in FASA mode (0..100 mm in 10 mm bars)
-    o.append('<g class="tro-only">')
-    o.append('<rect x="2" y="4.25" width="100" height="0.75" class="tro-ink" stroke-width="0.14"/>')
-    for seg in range(0, 10, 2):
-        o.append(f'<rect x="{2 + seg*10}" y="4.25" width="10" height="0.75" class="tro-fill"/>')
-    o.append('</g>')
     ticks = []
     for mm in range(101):
         th = 3.2 if (mm % 10 == 0) else (2.1 if (mm % 5 == 0) else 1.2)
@@ -1239,7 +1011,6 @@ def render_vernier_ruler(ox, oy, uid="vr"):
             o.append(f'<text x="{2+mm}" y="10.65" class="ink" font-size="1.65" font-weight="700" text-anchor="middle">{mm}</text>')
     o.append(f'<path d="{" ".join(ticks)}" class="sc-rule-hi" stroke-width="0.16"/>')
 
-    o.append('<g class="non-tro">')
     o.append('<line x1="0" y1="11.8" x2="104" y2="11.8" class="sc-rule" stroke-width="0.14"/>')
     o.append('<line x1="52.0" y1="11.8" x2="52.0" y2="23.8" class="sc-rule" stroke-width="0.14"/>')
     o.append('<text x="2.0" y="15.0" class="pat-c" font-size="1.78" font-weight="700">360° PINWHEEL WRAP:</text>')
@@ -1248,19 +1019,6 @@ def render_vernier_ruler(ox, oy, uid="vr"):
     o.append('<text x="53.8" y="15.0" class="ink" font-size="1.72" font-weight="700">3. Front → Right (butt at SEAM)</text>')
     o.append('<text x="53.8" y="18.6" class="ink" font-size="1.72" font-weight="700">4. I/O Insert (inside rear well)</text>')
     o.append('<text x="53.8" y="22.1" class="warn-c" font-size="1.66" font-weight="700">1:1 SCALE · US LETTER 8.5×11</text>')
-    o.append('</g>')
-
-    # FASA 1986 Star Corp Technical Readout Spec + General Arrangement Title Block
-    o.append('<g class="tro-only f-cond">')
-    o.append('<line x1="0" y1="11.8" x2="104" y2="11.8" class="tro-ink" stroke-width="0.20"/>')
-    o.append('<line x1="54.0" y1="11.8" x2="54.0" y2="23.8" class="tro-ink" stroke-width="0.20"/>')
-    o.append('<text x="2.0" y="15.0" class="tro-fill" font-size="1.70" font-weight="700">Engine: Jieli AC636N (960 PPQN)</text>')
-    o.append('<text x="2.0" y="18.6" class="tro-fill" font-size="1.70" font-weight="700">Chassis: Star Corp SMC-100 · 16T/64S</text>')
-    o.append('<text x="2.0" y="22.1" class="tro-fill" font-size="1.70" font-weight="700">Mfg: M-VAVE / Custom FW ≥925</text>')
-    o.append('<text x="55.8" y="15.0" class="tro-fill" font-size="1.75" font-weight="900">STAR CORP WHM-925 PROTOTYPE</text>')
-    o.append('<text x="55.8" y="18.6" class="tro-fill" font-size="1.68" font-weight="700">1:1 MM GENERAL ARRANGEMENT</text>')
-    o.append('<text x="55.8" y="22.1" class="tro-fill" font-size="1.68" font-weight="700">WRAP: 1.Top · 2.R→L→F→R · 3.I/O</text>')
-    o.append('</g>')
     o.append("</g>")
     return "\n".join(o)
 
@@ -1312,7 +1070,7 @@ def _inkscape_svg_open(fw, fh, standalone=True, dom_id="svg-mie"):
     )
 
 
-def build_cameo_letter_sheet1_svg(theme="stealth", include_cut=True, standalone=True):
+def build_cameo_letter_sheet1_svg(theme="light", include_cut=True, standalone=True):
     """Cameo US Letter (215.9 x 279.4 mm) Sheet 1: Rotated +90 deg Top Panel inside 185.9 x 230.0 mm Regmarks."""
     fw, fh = LETTER_W, LETTER_H
     # Rotated +90 deg: local (x, y) -> (tx - y, ty + x).
@@ -1328,7 +1086,7 @@ def build_cameo_letter_sheet1_svg(theme="stealth", include_cut=True, standalone=
     o.append('</g>')
     o.append(
         f'<text x="{fw/2:.2f}" y="261.0" class="f-cond" fill="#334155" font-size="2.35" font-weight="700" text-anchor="middle">'
-        f'AN/SMC-925 // CAMEO SHEET 1 OF 2: TOP CONTROL DECK (US LETTER 8.5×11" · PRINT 100% · INKSCAPE X-OFFSET = 6 MM)</text>'
+        f'SMC-PAD // CAMEO SHEET 1 OF 2: TOP CONTROL DECK (US LETTER 8.5×11" · PRINT 100% · INKSCAPE X-OFFSET = 6 MM)</text>'
     )
     o.append('</g>')
 
@@ -1343,7 +1101,7 @@ def build_cameo_letter_sheet1_svg(theme="stealth", include_cut=True, standalone=
     return "\n".join(o)
 
 
-def build_cameo_letter_sheet2_svg(theme="stealth", include_cut=True, standalone=True):
+def build_cameo_letter_sheet2_svg(theme="light", include_cut=True, standalone=True):
     """Cameo US Letter (215.9 x 279.4 mm) Sheet 2: 4 Pinwheel Side Bands + 2x I/O Inserts + 100mm Ruler."""
     fw, fh = LETTER_W, LETTER_H
     # 5 vertical columns inside X=[36.15..179.30], Y=[17.44..242.56] (100% inside [35..180.9] x [15..245]!)
@@ -1366,7 +1124,7 @@ def build_cameo_letter_sheet2_svg(theme="stealth", include_cut=True, standalone=
         o.append(f'<g transform="translate({tx:.3f},{ty:.3f}) rotate(90)">\n{svg_frag}\n</g>')
     o.append(
         f'<text x="{fw/2:.2f}" y="261.0" class="f-cond" fill="#334155" font-size="2.35" font-weight="700" text-anchor="middle">'
-        f'AN/SMC-925 // CAMEO SHEET 2 OF 2: 360° PINWHEEL SIDES + 2× I/O INSERTS (US LETTER · PRINT 100% · X-OFFSET = 6 MM)</text>'
+        f'SMC-PAD // CAMEO SHEET 2 OF 2: 360° PINWHEEL SIDES + 2× I/O INSERTS (US LETTER · PRINT 100% · X-OFFSET = 6 MM)</text>'
     )
     o.append('</g>')
 
@@ -1405,7 +1163,7 @@ def build_cameo_roll_to_letter_svg():
 
 
 # ---- Sheet Builders (Cameo US Letter Studio, A4 Landscape & Single 12x12 SVG + DXF) ----
-def build_cameo_studio_sheet1_svg(theme="stealth", cut_only=False, include_cut=True, standalone=True, include_align=True):
+def build_cameo_studio_sheet1_svg(theme="light", cut_only=False, include_cut=True, standalone=True, include_align=True):
     """Cameo US Letter Landscape (279.4 x 215.9 mm) Silhouette Studio Sheet 1 (240.0 x 154.0 mm frame)."""
     fw, fh = FRAME_LTR_W, FRAME_LTR_H
     ox, oy = (fw - BODY_W) / 2.0, (fh - BODY_H) / 2.0   # 6.50, 3.50
@@ -1420,7 +1178,7 @@ def build_cameo_studio_sheet1_svg(theme="stealth", cut_only=False, include_cut=T
         o.append(
             f'<g class="sheet-annotations f-cond">'
             f'<text x="3.5" y="3.3" class="muted" font-size="1.82" font-weight="700">'
-            f'AN/SMC-925 // SHEET 1 OF 2: MAIN CONTROL DECK (US LETTER 8.5×11" LANDSCAPE) — ALIGN FRAME: 240.00 × 154.00 MM</text>'
+            f'SMC-PAD // SHEET 1 OF 2: MAIN CONTROL DECK (US LETTER 8.5×11" LANDSCAPE) — ALIGN FRAME: 240.00 × 154.00 MM</text>'
             f'<text x="236.5" y="3.3" class="muted" font-size="1.72" font-weight="700" text-anchor="end">1:1 MM · SILHOUETTE STUDIO</text>'
             f'</g>'
         )
@@ -1431,7 +1189,7 @@ def build_cameo_studio_sheet1_svg(theme="stealth", cut_only=False, include_cut=T
     return "\n".join(o)
 
 
-def build_cameo_studio_sheet2_svg(theme="stealth", cut_only=False, include_cut=True, standalone=True, include_align=True):
+def build_cameo_studio_sheet2_svg(theme="light", cut_only=False, include_cut=True, standalone=True, include_align=True):
     """Cameo US Letter Landscape (279.4 x 215.9 mm) Silhouette Studio Sheet 2 (240.0 x 154.0 mm frame)."""
     fw, fh = FRAME_LTR_W, FRAME_LTR_H
     bx_fb = (fw - FB_BAND_W) / 2.0   # 8.7875 mm
@@ -1448,8 +1206,8 @@ def build_cameo_studio_sheet2_svg(theme="stealth", cut_only=False, include_cut=T
         o.append(
             f'<g class="sheet-annotations f-cond">'
             f'<text x="5.0" y="3.8" class="muted" font-size="1.82" font-weight="700">'
-            f'AN/SMC-925 // SHEET 2 OF 2: 360° PINWHEEL SIDES &amp; I/O INSERT (US LETTER 8.5×11") — ALIGN FRAME: 240.00 × 154.00 MM</text>'
-            f'<text x="8.8" y="33.2" class="muted" font-size="1.52" font-weight="700">▲ REAR BULKHEAD (222.43×23.80mm)   ▼ FRONT OPERATOR CHEAT SHEET (222.43×23.80mm)</text>'
+            f'SMC-PAD // SHEET 2 OF 2: 360° PINWHEEL SIDES &amp; I/O INSERT (US LETTER 8.5×11") — ALIGN FRAME: 240.00 × 154.00 MM</text>'
+            f'<text x="8.8" y="33.2" class="muted" font-size="1.52" font-weight="700">▲ REAR PANEL (222.43×23.80mm)   ▼ FRONT CHEAT SHEET (222.43×23.80mm)</text>'
             f'<text x="5.0" y="62.2" class="muted" font-size="1.52" font-weight="700">▼ LEFT ENCODER SIDE (142.43×23.80mm)</text>'
             f'<text x="171.0" y="66.8" class="muted" font-size="1.52" font-weight="700">▼ REAR I/O INSERTS (PRIMARY + SPARE)</text>'
             f'<text x="5.0" y="91.2" class="muted" font-size="1.52" font-weight="700">▼ RIGHT TRANSPORT SIDE (142.43×23.80mm)</text>'
@@ -1477,7 +1235,7 @@ def build_cameo_studio_sheet2_svg(theme="stealth", cut_only=False, include_cut=T
     return "\n".join(o)
 
 
-def build_sheet1_svg(theme="stealth", cut_only=False, standalone=True, include_align=True):
+def build_sheet1_svg(theme="light", cut_only=False, standalone=True, include_align=True):
     """Sheet 1 (250 x 165 mm frame): Flush 222 x 142 mm Top Panel centered at (+11.5, +9.0)."""
     fw, fh = FRAME_A4_W, FRAME_A4_H
     ox, oy = (fw - BODY_W) / 2.0, (fh - BODY_H) / 2.0   # 11.50, 9.00
@@ -1491,7 +1249,7 @@ def build_sheet1_svg(theme="stealth", cut_only=False, standalone=True, include_a
         o.append(
             f'<g class="sheet-annotations f-cond">'
             f'<text x="3.0" y="4.4" class="muted" font-size="1.95" font-weight="700">'
-            f'AN/SMC-925 // SHEET 1 OF 2: MAIN CONTROL DECK (222.0 × 142.0 MM) — ALIGN FRAME: 250.00 × 165.00 MM</text>'
+            f'SMC-PAD // SHEET 1 OF 2: MAIN CONTROL DECK (222.0 × 142.0 MM) — ALIGN FRAME: 250.00 × 165.00 MM</text>'
             f'<text x="247.0" y="4.4" class="muted" font-size="1.80" font-weight="700" text-anchor="end">1:1 MM SCALE · FW≥925</text>'
             f'</g>'
         )
@@ -1502,7 +1260,7 @@ def build_sheet1_svg(theme="stealth", cut_only=False, standalone=True, include_a
     return "\n".join(o)
 
 
-def build_sheet2_svg(theme="stealth", cut_only=False, standalone=True, include_align=True):
+def build_sheet2_svg(theme="light", cut_only=False, standalone=True, include_align=True):
     """Sheet 2 (250 x 165 mm frame): 4 Pinwheel Side Bands + 2x Rear I/O Inserts + Ruler."""
     fw, fh = FRAME_A4_W, FRAME_A4_H
     bx_fb = (fw - FB_BAND_W) / 2.0   # 13.788 mm
@@ -1519,8 +1277,8 @@ def build_sheet2_svg(theme="stealth", cut_only=False, standalone=True, include_a
         o.append(
             f'<g class="sheet-annotations f-cond">'
             f'<text x="4.5" y="4.8" class="muted" font-size="1.92" font-weight="700">'
-            f'AN/SMC-925 // SHEET 2 OF 2: 360° PINWHEEL SIDE BANDS &amp; I/O WELL INSERT — ALIGN FRAME: 250.00 × 165.00 MM</text>'
-            f'<text x="13.8" y="35.6" class="muted" font-size="1.58" font-weight="700">▲ REAR BULKHEAD (222.43×23.80mm)   ▼ FRONT OPERATOR CHEAT SHEET (222.43×23.80mm)</text>'
+            f'SMC-PAD // SHEET 2 OF 2: 360° PINWHEEL SIDE BANDS &amp; I/O WELL INSERT — ALIGN FRAME: 250.00 × 165.00 MM</text>'
+            f'<text x="13.8" y="35.6" class="muted" font-size="1.58" font-weight="700">▲ REAR PANEL (222.43×23.80mm)   ▼ FRONT CHEAT SHEET (222.43×23.80mm)</text>'
             f'<text x="4.5" y="65.8" class="muted" font-size="1.58" font-weight="700">▼ LEFT ENCODER SIDE (142.43×23.80mm)</text>'
             f'<text x="152.0" y="69.5" class="muted" font-size="1.58" font-weight="700">▼ REAR I/O WELL INSERTS (PRIMARY + SPARE, 46.00×12.80mm)</text>'
             f'<text x="4.5" y="95.8" class="muted" font-size="1.58" font-weight="700">▼ RIGHT TRANSPORT SIDE (142.43×23.80mm)</text>'
@@ -1544,7 +1302,7 @@ def build_sheet2_svg(theme="stealth", cut_only=False, standalone=True, include_a
     return "\n".join(o)
 
 
-def build_single_12x12_svg(theme="stealth", cut_only=False, standalone=True, include_align=True):
+def build_single_12x12_svg(theme="light", cut_only=False, standalone=True, include_align=True):
     """Single-sheet nested layout (256 x 284 mm frame) for 12x12 in (305x305) or A3 (297x420) roll cuts."""
     fw, fh = FRAME_12_W, FRAME_12_H
     ox_tp = (fw - BODY_W) / 2.0       # 14.50 mm
@@ -1561,7 +1319,7 @@ def build_single_12x12_svg(theme="stealth", cut_only=False, standalone=True, inc
         o.append(
             f'<g class="sheet-annotations f-mono">'
             f'<text x="4.0" y="4.2" class="muted" font-size="1.80" font-weight="700">'
-            f'AN/SMC-925 // SINGLE-SHEET FULL KIT (12×12" OR A3 ROLL CUT) — ALIGN FRAME: 256.00 × 284.00 MM</text>'
+            f'SMC-PAD // SINGLE-SHEET FULL KIT (12×12" OR A3 ROLL CUT) — ALIGN FRAME: 256.00 × 284.00 MM</text>'
             f'</g>'
         )
     o.append(render_top_panel(ox_tp, 5.0, bleed=1.50, include_print=not cut_only, include_cut=True, uid="sgtp", sheet_slot="s1"))
@@ -1746,7 +1504,7 @@ def build_roll_to_a4_dxf():
     return d.finish()
 
 
-def build_cameo_print_html(theme="stealth"):
+def build_cameo_print_html(theme="light"):
     """Dedicated 2-page 1:1 US Letter (215.9 x 279.4 mm) Print-Only HTML for headless Chrome PDF export."""
     p1 = build_cameo_letter_sheet1_svg(theme=theme, include_cut=False, standalone=False)
     p2 = build_cameo_letter_sheet2_svg(theme=theme, include_cut=False, standalone=False)
@@ -1770,7 +1528,7 @@ html, body {{ margin: 0; padding: 0; background: #fff; }}
 """
 
 
-def build_a4_print_html(theme="stealth"):
+def build_a4_print_html(theme="light"):
     """Dedicated 2-page 1:1 A4 Landscape (297 x 210 mm) Print+Preview HTML for headless Chrome PDF export."""
     s1 = build_sheet1_svg(theme=theme, cut_only=False, standalone=False, include_align=False)
     s2 = build_sheet2_svg(theme=theme, cut_only=False, standalone=False, include_align=False)
@@ -1800,7 +1558,7 @@ STUDIO_HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>AN/SMC-925 360° Overlay Studio — Detached Writings &amp; Custom Background</title>
+<title>SMC-PAD 360° Overlay Builder — Light &amp; Dark Print &amp; Cut</title>
 <style id="page-size-style">@page { size: 279.4mm 215.9mm; margin: 0; }</style>
 <style>
 * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -1887,7 +1645,7 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
 
 <div class="studio-header no-print">
   <div class="top-bar">
-    <h1>AN/SMC-925 360° OVERLAY STUDIO</h1>
+    <h1>SMC-PAD 360° OVERLAY BUILDER</h1>
     <span class="badge">FW 925+</span>
     <label class="ctrl">Target Setup
       <select id="sel-layout">
@@ -1911,32 +1669,32 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
   <div class="layer-dock">
     <!-- Layer 1: Detached Foreground Writings & Graphics -->
     <div class="layer-card">
-      <span class="layer-tag fg">1 · Writings &amp; Graphics</span>
-      <label class="ctrl">Style
+      <span class="layer-tag fg">1 · Theme &amp; Colors</span>
+      <label class="ctrl">Theme
         <select id="sel-theme">__OPTS_HTML__</select>
       </label>
       <label class="ctrl" title="Primary text, TRACK mode, line-art &amp; border ink">Ink
-        <input type="color" id="inp-fg-ink" value="#ECF0F5">
+        <input type="color" id="inp-fg-ink" value="#0F172A">
       </label>
       <label class="ctrl" title="HOLD STEP mode, S: knob row &amp; K1–K8 / S01–S16 badges">Hold Step
-        <input type="color" id="inp-fg-step" value="#FF7A1A">
+        <input type="color" id="inp-fg-step" value="#EA580C">
       </label>
       <label class="ctrl" title="KNOB BANK mode, B: knob row &amp; Shift pad shortcuts">Knob Bank
-        <input type="color" id="inp-fg-pat" value="#38BDF8">
+        <input type="color" id="inp-fg-pat" value="#0284C7">
       </label>
       <label class="ctrl" title="HOLD RPT timing callouts, FILL/SYNC/TAP &amp; fold ticks">Timing
-        <input type="color" id="inp-fg-warn" value="#FACC15">
+        <input type="color" id="inp-fg-warn" value="#CA8A04">
       </label>
       <label class="ctrl" title="PLAY transport &amp; LOAD status callouts">Play/OK
-        <input type="color" id="inp-fg-ok" value="#34D399">
+        <input type="color" id="inp-fg-ok" value="#16A34A">
       </label>
       <button type="button" id="btn-fg-reset" class="ghost" title="Restore preset ink &amp; mode colors">Reset Ink</button>
       <label class="ctrl" title="Readout box backing color &amp; opacity (0% = pure transparent detached writings)">Card Backing
-        <input type="color" id="inp-box-bg" value="#FFFFFF">
-        <input type="range" id="rng-box-op" min="0" max="100" value="0">
-        <span class="val-pill" id="lbl-box-op">0%</span>
+        <input type="color" id="inp-box-bg" value="#F8FAFC">
+        <input type="range" id="rng-box-op" min="0" max="100" value="100">
+        <span class="val-pill" id="lbl-box-op">100%</span>
       </label>
-      <label class="ctrl"><input type="checkbox" id="chk-grid" checked> 5mm Grid</label>
+      <label class="ctrl"><input type="checkbox" id="chk-grid"> 5mm Grid</label>
     </div>
 
     <!-- Layer 2: Detached Background Solid Color + Uploaded Image -->
@@ -1948,13 +1706,13 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
       </label>
       <div class="swatches" title="Quick solid background swatches">
         <button type="button" class="swatch" data-bg="#FFFFFF" style="background:#FFFFFF" title="Pure White (#FFFFFF)"></button>
-        <button type="button" class="swatch" data-bg="#F1F3F5" style="background:#F1F3F5" title="Tactical Alloy (#F1F3F5)"></button>
-        <button type="button" class="swatch" data-bg="#FEF08A" style="background:#FEF08A" title="Hazard Yellow (#FEF08A)"></button>
-        <button type="button" class="swatch" data-bg="#FBCFE8" style="background:#FBCFE8" title="Synth Pink (#FBCFE8)"></button>
+        <button type="button" class="swatch" data-bg="#F1F3F5" style="background:#F1F3F5" title="Light Gray (#F1F3F5)"></button>
+        <button type="button" class="swatch" data-bg="#FEF08A" style="background:#FEF08A" title="Soft Yellow (#FEF08A)"></button>
+        <button type="button" class="swatch" data-bg="#FBCFE8" style="background:#FBCFE8" title="Soft Pink (#FBCFE8)"></button>
         <button type="button" class="swatch" data-bg="#BAE6FD" style="background:#BAE6FD" title="Ice Cyan (#BAE6FD)"></button>
-        <button type="button" class="swatch" data-bg="#BBF7D0" style="background:#BBF7D0" title="Mint Phosphor (#BBF7D0)"></button>
+        <button type="button" class="swatch" data-bg="#BBF7D0" style="background:#BBF7D0" title="Mint Green (#BBF7D0)"></button>
         <button type="button" class="swatch" data-bg="#1E293B" style="background:#1E293B" title="Dark Slate (#1E293B)"></button>
-        <button type="button" class="swatch" data-bg="#090A0F" style="background:#090A0F" title="Stealth Black (#090A0F)"></button>
+        <button type="button" class="swatch" data-bg="#090A0F" style="background:#090A0F" title="Deep Black (#090A0F)"></button>
       </div>
       <label class="ctrl" title="Leave sticker background transparent (for clear/metallic/holographic vinyl)"><input type="checkbox" id="chk-bg-trans"> Transparent</label>
       <button type="button" id="btn-bg-reset" class="ghost" title="Match background color to current Writings Style">Match Style</button>
@@ -2085,8 +1843,6 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const XLINK_NS = 'http://www.w3.org/1999/xlink';
 
-  const isTroTheme = k => (k === 'battletech' || k === 'battletech_light');
-
   const state = {
     theme: DEFAULT_THEME,
     fgInkCustom: false,
@@ -2102,8 +1858,8 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
     boxBgCustom: false,
     boxBg: THEMES[DEFAULT_THEME].box_bg,
     boxOpacityUserSet: false,
-    boxOpacity: isTroTheme(DEFAULT_THEME) ? 0 : 100,
-    showGrid: !isTroTheme(DEFAULT_THEME),
+    boxOpacity: 100,
+    showGrid: false,
     bgCustom: false,
     bgColor: THEMES[DEFAULT_THEME].bg,
     bgTransparent: false,
@@ -2185,8 +1941,7 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
   }
 
   function buildDynamicCss() {
-    const t = THEMES[state.theme] || THEMES.stealth;
-    const isTro = isTroTheme(state.theme);
+    const t = THEMES[state.theme] || THEMES.light;
     const ink = state.fgInkCustom ? state.fgInk : t.ink;
     const muted = state.fgInkCustom ? state.fgInk : t.muted;
     const mutedOp = state.fgInkCustom ? 'fill-opacity: 0.78;' : '';
@@ -2194,14 +1949,13 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
     const ruleHi = state.fgInkCustom ? state.fgInk : t.rule_hi;
     const trace = state.fgInkCustom ? state.fgInk : t.trace;
     const gridMaj = state.fgInkCustom ? state.fgInk : t.grid_maj;
-    const gridMinColor = (t.grid_min === 'none') ? rule : (state.fgInkCustom ? state.fgInk : t.grid_min);
-    const gridMinOp = (t.grid_min === 'none') ? 'stroke-opacity: 0.20;' : '';
+    const gridMinColor = state.fgInkCustom ? state.fgInk : t.grid_min;
 
-    const step = state.fgStepCustom ? state.fgStep : (state.fgInkCustom && isTro ? state.fgInk : t.step);
-    const pat = state.fgPatCustom ? state.fgPat : (state.fgInkCustom && isTro ? state.fgInk : t.pat);
-    const warn = state.fgWarnCustom ? state.fgWarn : (state.fgInkCustom && isTro ? state.fgInk : t.warn);
-    const ok = state.fgOkCustom ? state.fgOk : (state.fgInkCustom && isTro ? state.fgInk : t.ok);
-    const stepFg = (state.fgStepCustom || (state.fgInkCustom && isTro)) ? contrastTextFor(step) : t.step_fg;
+    const step = state.fgStepCustom ? state.fgStep : t.step;
+    const pat = state.fgPatCustom ? state.fgPat : t.pat;
+    const warn = state.fgWarnCustom ? state.fgWarn : t.warn;
+    const ok = state.fgOkCustom ? state.fgOk : t.ok;
+    const stepFg = state.fgStepCustom ? contrastTextFor(step) : t.step_fg;
 
     const boxFill = state.boxBgCustom ? state.boxBg : t.box_bg;
     const boxAltFill = state.boxBgCustom ? state.boxBg : t.box_alt;
@@ -2217,25 +1971,14 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
     const paperDecl = state.bgTransparent ? 'fill: none;' : 'fill: #ffffff;';
     const veilOp = state.bgTransparent ? 0 : (state.veilOpacity / 100);
 
-    const troRules = isTro ? `
-      .tro-only { display: inline; }
-      .non-tro { display: none; }
-      .box-bg { stroke-width: 0.24 !important; }
-      .box-alt { stroke-width: 0.20 !important; }
-      .seam-tick { stroke-width: 0.24; stroke-dasharray: 2.2 0.7 0.5 0.7; }
-    ` : `
-      .tro-only { display: none; }
-      .non-tro { display: inline; }
-    `;
-
     return `
       .cut-line { fill: none; stroke: #ff0000; stroke-width: 0.12; stroke-linecap: round; stroke-linejoin: round; }
       .align-frame { fill: none; stroke: #0066ff; stroke-width: 0.10; stroke-dasharray: 2.0 1.2; }
       .sheet-paper-bg { ${paperDecl} stroke: #cbd5e1; stroke-width: 0.16; }
       .sheet-annotations text { fill: #334155 !important; }
       .sheet-ruler .box-bg { fill: #ffffff !important; fill-opacity: 1 !important; stroke: #0f172a !important; }
-      .sheet-ruler .ink, .sheet-ruler .muted, .sheet-ruler .tro-fill, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c { fill: #0f172a !important; fill-opacity: 1 !important; }
-      .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi, .sheet-ruler .tro-ink { stroke: #0f172a !important; }
+      .sheet-ruler .ink, .sheet-ruler .muted, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c { fill: #0f172a !important; fill-opacity: 1 !important; }
+      .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi { stroke: #0f172a !important; }
       .cutout-preview-mask { display: ${state.showHoleMask ? 'inline' : 'none'}; fill: #0b0e14; fill-opacity: 0.78; stroke: #94a3b8; stroke-width: 0.15; pointer-events: none; }
       .seam-tick { fill: none; stroke: ${warn}; stroke-width: 0.20; stroke-dasharray: 0.9 0.7; }
       .bg-base { ${bgDecl} }
@@ -2244,14 +1987,11 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
       .box-bg { ${boxFillDecl} stroke: ${rule}; stroke-width: 0.16; }
       .box-alt { ${boxAltDecl} stroke: ${rule}; stroke-width: 0.15; }
       .cad-grid-lines { display: ${state.showGrid ? 'inline' : 'none'}; }
-      .grid-min { stroke: ${gridMinColor}; ${gridMinOp} stroke-width: 0.07; fill: none; }
+      .grid-min { stroke: ${gridMinColor}; stroke-width: 0.07; fill: none; }
       .grid-maj { stroke: ${gridMaj}; stroke-width: 0.12; fill: none; }
       .sc-trace { stroke: ${trace}; stroke-width: 0.18; fill: none; stroke-linecap: round; stroke-linejoin: round; }
       .sc-rule { stroke: ${rule}; fill: none; }
       .sc-rule-hi { stroke: ${ruleHi}; fill: none; }
-      .tro-ink { stroke: ${ink}; fill: none; stroke-linecap: square; stroke-linejoin: miter; }
-      .tro-fill { fill: ${ink}; }
-      .tro-paper { ${boxFillDecl} stroke: ${ink}; }
       .ink { fill: ${ink}; }
       .muted { fill: ${muted}; ${mutedOp} }
       .step-c { fill: ${step}; }
@@ -2263,24 +2003,22 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
       .ok-c { fill: ${ok}; }
       .f-cond { font-family: "Roboto Condensed", "Avenir Next Condensed", "Bahnschrift", "Liberation Sans Narrow", "Arial Narrow", sans-serif; }
       .f-mono { font-family: "Noto Sans Mono", "JetBrains Mono", "SF Mono", "DejaVu Sans Mono", "Liberation Mono", monospace; }
-      ${troRules}
     `;
   }
 
   function syncControlsFromState() {
-    const t = THEMES[state.theme] || THEMES.stealth;
-    const isTro = isTroTheme(state.theme);
+    const t = THEMES[state.theme] || THEMES.light;
     const effInk = state.fgInkCustom ? state.fgInk : t.ink;
-    const effStep = state.fgStepCustom ? state.fgStep : (state.fgInkCustom && isTro ? state.fgInk : t.step);
-    const effPat = state.fgPatCustom ? state.fgPat : (state.fgInkCustom && isTro ? state.fgInk : t.pat);
-    const effWarn = state.fgWarnCustom ? state.fgWarn : (state.fgInkCustom && isTro ? state.fgInk : t.warn);
-    const effOk = state.fgOkCustom ? state.fgOk : (state.fgInkCustom && isTro ? state.fgInk : t.ok);
-    inpFgInk.value = normHex(effInk) || '#ECF0F5';
-    inpFgStep.value = normHex(effStep) || '#FF7A1A';
-    inpFgPat.value = normHex(effPat) || '#38BDF8';
-    inpFgWarn.value = normHex(effWarn) || '#FACC15';
-    inpFgOk.value = normHex(effOk) || '#34D399';
-    inpBoxBg.value = normHex(state.boxBgCustom ? state.boxBg : t.box_bg) || '#FFFFFF';
+    const effStep = state.fgStepCustom ? state.fgStep : t.step;
+    const effPat = state.fgPatCustom ? state.fgPat : t.pat;
+    const effWarn = state.fgWarnCustom ? state.fgWarn : t.warn;
+    const effOk = state.fgOkCustom ? state.fgOk : t.ok;
+    inpFgInk.value = normHex(effInk) || '#0F172A';
+    inpFgStep.value = normHex(effStep) || '#EA580C';
+    inpFgPat.value = normHex(effPat) || '#0284C7';
+    inpFgWarn.value = normHex(effWarn) || '#CA8A04';
+    inpFgOk.value = normHex(effOk) || '#16A34A';
+    inpBoxBg.value = normHex(state.boxBgCustom ? state.boxBg : t.box_bg) || '#F8FAFC';
     rngBoxOp.value = String(state.boxOpacity);
     lblBoxOp.textContent = state.boxOpacity + '%';
     chkGrid.checked = state.showGrid;
@@ -2404,14 +2142,13 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
   // ---- Foreground Controls ----
   selTheme.addEventListener('change', () => {
     state.theme = selTheme.value;
-    const t = THEMES[state.theme] || THEMES.stealth;
+    const t = THEMES[state.theme] || THEMES.light;
     resetFgColorsToTheme(t);
     if (!state.boxBgCustom) state.boxBg = t.box_bg;
-    state.showGrid = !isTroTheme(state.theme);
     if (!state.bgCustom && !imgState.dataUrl) {
       state.bgColor = t.bg;
       if (!state.boxOpacityUserSet) {
-        state.boxOpacity = isTroTheme(state.theme) ? 0 : 100;
+        state.boxOpacity = 100;
       }
     }
     applyThemeStyles();
@@ -2448,7 +2185,7 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
   });
 
   btnFgReset.addEventListener('click', () => {
-    const t = THEMES[state.theme] || THEMES.stealth;
+    const t = THEMES[state.theme] || THEMES.light;
     resetFgColorsToTheme(t);
     applyThemeStyles();
   });
@@ -2501,12 +2238,12 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
   });
 
   btnBgReset.addEventListener('click', () => {
-    const t = THEMES[state.theme] || THEMES.stealth;
+    const t = THEMES[state.theme] || THEMES.light;
     state.bgCustom = false;
     state.bgTransparent = false;
     state.bgColor = t.bg;
     if (!imgState.dataUrl && !state.boxOpacityUserSet) {
-      state.boxOpacity = isTroTheme(state.theme) ? 0 : 100;
+      state.boxOpacity = 100;
     }
     applyThemeStyles();
   });
@@ -2550,7 +2287,7 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
     state.veilOpacity = 0;
     state.showHoleMask = false;
     if (!state.bgCustom && !state.boxOpacityUserSet) {
-      state.boxOpacity = isTroTheme(state.theme) ? 0 : 100;
+      state.boxOpacity = 100;
     }
     applyThemeStyles();
     renderBgImages();
@@ -2992,7 +2729,7 @@ body.has-bg-image.dragging-img .sheet-svg { cursor: grabbing; }
 """
 
 
-def build_studio_html(default_theme="stealth"):
+def build_studio_html(default_theme="light"):
     ms_s1 = build_cameo_studio_sheet1_svg(theme=default_theme, cut_only=False, standalone=False)
     ms_s2 = build_cameo_studio_sheet2_svg(theme=default_theme, cut_only=False, standalone=False)
     mie_s1 = build_cameo_letter_sheet1_svg(theme=default_theme, include_cut=True, standalone=False)
@@ -3087,8 +2824,8 @@ def write_out(filename, content):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--theme", choices=tuple(THEMES.keys()), default="stealth",
-                    help="default MIL-SPEC colorway baked into standalone SVGs/PNGs/PDF (default: stealth)")
+    ap.add_argument("--theme", choices=tuple(THEMES.keys()), default="light",
+                    help="default theme baked into standalone SVGs/PNGs/PDF (default: light)")
     ap.add_argument("--pdf", action="store_true", help="also render 1:1 vector PDFs via headless Chrome")
     args = ap.parse_args()
 
@@ -3103,21 +2840,16 @@ def main():
     write_out("smcpad_cameo_letter_sheet2_sides_cut.dxf", build_cameo_letter_sheet2_dxf())
     write_out("smcpad_cameo_milspec_letter_sheet1_studio.svg", xml_hdr + build_cameo_studio_sheet1_svg(args.theme))
     write_out("smcpad_cameo_milspec_letter_sheet2_studio.svg", xml_hdr + build_cameo_studio_sheet2_svg(args.theme))
-    write_out("smcpad_cameo_battletech_letter_sheet1_studio.svg", xml_hdr + build_cameo_studio_sheet1_svg("battletech"))
-    write_out("smcpad_cameo_battletech_letter_sheet2_studio.svg", xml_hdr + build_cameo_studio_sheet2_svg("battletech"))
 
-    for tag, th in (("milspec", args.theme), ("battletech", "battletech")):
-        s1_print = xml_hdr + build_cameo_studio_sheet1_svg(th, cut_only=False, include_cut=False, standalone=True, include_align=False)
-        s2_print = xml_hdr + build_cameo_studio_sheet2_svg(th, cut_only=False, include_cut=False, standalone=True, include_align=False)
-        render_png300_from_svg_str(s1_print, os.path.join(OUT_DIR, f"smcpad_cameo_{tag}_letter_sheet1_300dpi.png"))
-        render_png300_from_svg_str(s2_print, os.path.join(OUT_DIR, f"smcpad_cameo_{tag}_letter_sheet2_300dpi.png"))
+    s1_print = xml_hdr + build_cameo_studio_sheet1_svg(args.theme, cut_only=False, include_cut=False, standalone=True, include_align=False)
+    s2_print = xml_hdr + build_cameo_studio_sheet2_svg(args.theme, cut_only=False, include_cut=False, standalone=True, include_align=False)
+    render_png300_from_svg_str(s1_print, os.path.join(OUT_DIR, "smcpad_cameo_milspec_letter_sheet1_300dpi.png"))
+    render_png300_from_svg_str(s2_print, os.path.join(OUT_DIR, "smcpad_cameo_milspec_letter_sheet2_300dpi.png"))
 
     # Cameo US Letter (215.9 x 279.4 mm) 3-Layer Inkscape `inkscape-silhouette` SVGs
     write_out("smcpad_cameo_sheet0_roll_to_letter.svg", build_cameo_roll_to_letter_svg())
     write_out("smcpad_cameo_milspec_sheet1_letter.svg", xml_hdr + build_cameo_letter_sheet1_svg(args.theme, include_cut=True, standalone=True))
     write_out("smcpad_cameo_milspec_sheet2_letter.svg", xml_hdr + build_cameo_letter_sheet2_svg(args.theme, include_cut=True, standalone=True))
-    write_out("smcpad_cameo_battletech_sheet1_letter.svg", xml_hdr + build_cameo_letter_sheet1_svg("battletech", include_cut=True, standalone=True))
-    write_out("smcpad_cameo_battletech_sheet2_letter.svg", xml_hdr + build_cameo_letter_sheet2_svg("battletech", include_cut=True, standalone=True))
 
     # Step-0 Roll -> A4 Sheet Cutter (alternate Silhouette Studio workflow)
     write_out("smcpad_milspec_sheet0_roll_to_a4.svg", build_roll_to_a4_svg())
@@ -3138,18 +2870,9 @@ def main():
     write_out("smcpad_milspec_single_12x12_cut.svg", xml_hdr + build_single_12x12_svg(args.theme, cut_only=True, standalone=True))
     write_out("smcpad_milspec_single_12x12_cut.dxf", build_single_dxf())
 
-    # Pre-baked Clean FASA 3025 Line-Art standalone A4 / 12x12 SVGs
-    write_out("smcpad_battletech_sheet1_top.svg", xml_hdr + build_sheet1_svg("battletech", cut_only=False, standalone=True))
-    write_out("smcpad_battletech_sheet2_sides.svg", xml_hdr + build_sheet2_svg("battletech", cut_only=False, standalone=True))
-    write_out("smcpad_battletech_single_12x12.svg", xml_hdr + build_single_12x12_svg("battletech", cut_only=False, standalone=True))
-
     if args.pdf:
-        # Cameo 2-page 1:1 US Letter Print-Only PDFs (Regmarks + Print, NO red cut lines!)
         render_pdf_from_html_str(build_cameo_print_html(args.theme), os.path.join(OUT_DIR, "smcpad_cameo_milspec_print_letter.pdf"))
-        render_pdf_from_html_str(build_cameo_print_html("battletech"), os.path.join(OUT_DIR, "smcpad_cameo_battletech_print_letter.pdf"))
-        # A4 Landscape 2-page 1:1 preview PDFs
         render_pdf_from_html_str(build_a4_print_html(args.theme), os.path.join(OUT_DIR, "smcpad_milspec_overlay.pdf"))
-        render_pdf_from_html_str(build_a4_print_html("battletech"), os.path.join(OUT_DIR, "smcpad_battletech_overlay.pdf"))
 
 
 if __name__ == "__main__":

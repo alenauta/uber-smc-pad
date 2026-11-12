@@ -6,41 +6,35 @@
     .sheet-paper-bg { fill: #ffffff; stroke: #cbd5e1; stroke-width: 0.16; }
     .sheet-annotations text { fill: #334155 !important; }
     .sheet-ruler .box-bg { fill: #ffffff !important; fill-opacity: 1 !important; stroke: #0f172a !important; }
-    .sheet-ruler .ink, .sheet-ruler .tro-fill, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c { fill: #0f172a !important; }
-    .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi, .sheet-ruler .tro-ink { stroke: #0f172a !important; }
+    .sheet-ruler .ink, .sheet-ruler .step-c, .sheet-ruler .pat-c, .sheet-ruler .warn-c { fill: #0f172a !important; }
+    .sheet-ruler .sc-rule, .sheet-ruler .sc-rule-hi { stroke: #0f172a !important; }
     .cutout-preview-mask { display: none; fill: #0b0e14; fill-opacity: 0.76; stroke: #64748b; stroke-width: 0.14; pointer-events: none; }
-    .seam-tick { fill: none; stroke: #FACC15; stroke-width: 0.20; stroke-dasharray: 0.9 0.7; }
-    .bg-base { fill: #13171D; }
-    .bg-veil { fill: #13171D; fill-opacity: 0; pointer-events: none; }
-    .panel-sub { fill: #171C24; }
-    .box-bg { fill: #1B222C; stroke: #4A5B73; stroke-width: 0.16; }
-    .box-alt { fill: #10141A; stroke: #4A5B73; stroke-width: 0.15; }
-    .grid-min { stroke: #1C232E; stroke-width: 0.07; fill: none; }
-    .grid-maj { stroke: #252F3D; stroke-width: 0.12; fill: none; }
-    .sc-trace { stroke: #2E3B4E; stroke-width: 0.18; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-    .sc-rule { stroke: #4A5B73; fill: none; }
-    .sc-rule-hi { stroke: #7C91AD; fill: none; }
-    .tro-ink { stroke: #ECF0F5; fill: none; stroke-linecap: square; stroke-linejoin: miter; }
-    .tro-fill { fill: #ECF0F5; }
-    .tro-paper { fill: #1B222C; stroke: #ECF0F5; }
-    .ink { fill: #ECF0F5; }
-    .muted { fill: #8C9BAE; }
-    .step-c { fill: #FF7A1A; }
-    .step-bg { fill: #FF7A1A; }
-    .step-fg { fill: #111317; }
-    .pat-c { fill: #38BDF8; }
-    .warn-c { fill: #FACC15; }
-    .warn-stroke { stroke: #FACC15; fill: none; }
-    .ok-c { fill: #34D399; }
+    .seam-tick { fill: none; stroke: #CA8A04; stroke-width: 0.20; stroke-dasharray: 0.9 0.7; }
+    .bg-base { fill: #FFFFFF; }
+    .bg-veil { fill: #FFFFFF; fill-opacity: 0; pointer-events: none; }
+    .panel-sub { fill: #F8FAFC; }
+    .box-bg { fill: #F8FAFC; stroke: #475569; stroke-width: 0.16; }
+    .box-alt { fill: #F1F5F9; stroke: #475569; stroke-width: 0.15; }
+    .cad-grid-lines { display: none; }
+    .grid-min { stroke: #EDF2F7; stroke-width: 0.07; fill: none; }
+    .grid-maj { stroke: #CBD5E1; stroke-width: 0.12; fill: none; }
+    .sc-trace { stroke: #94A3B8; stroke-width: 0.18; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .sc-rule { stroke: #475569; fill: none; }
+    .sc-rule-hi { stroke: #0F172A; fill: none; }
+    .ink { fill: #0F172A; }
+    .muted { fill: #475569; }
+    .step-c { fill: #EA580C; }
+    .step-bg { fill: #EA580C; }
+    .step-fg { fill: #FFFFFF; }
+    .pat-c { fill: #0284C7; }
+    .warn-c { fill: #CA8A04; }
+    .warn-stroke { stroke: #CA8A04; fill: none; }
+    .ok-c { fill: #16A34A; }
     .f-cond { font-family: "Roboto Condensed", "Avenir Next Condensed", "Bahnschrift", "Liberation Sans Narrow", "Arial Narrow", sans-serif; }
     .f-mono { font-family: "Noto Sans Mono", "JetBrains Mono", "SF Mono", "DejaVu Sans Mono", "Liberation Mono", monospace; }
-    
-    .tro-only { display: none; }
-    .non-tro { display: inline; }
-    
     </style>
 <rect x="0.08" y="0.08" width="239.84" height="153.84" class="sheet-paper-bg"/>
-<g class="sheet-annotations f-cond"><text x="3.5" y="3.3" class="muted" font-size="1.82" font-weight="700">AN/SMC-925 // SHEET 1 OF 2: MAIN CONTROL DECK (US LETTER 8.5×11" LANDSCAPE) — ALIGN FRAME: 240.00 × 154.00 MM</text><text x="236.5" y="3.3" class="muted" font-size="1.72" font-weight="700" text-anchor="end">1:1 MM · SILHOUETTE STUDIO</text></g>
+<g class="sheet-annotations f-cond"><text x="3.5" y="3.3" class="muted" font-size="1.82" font-weight="700">SMC-PAD // SHEET 1 OF 2: MAIN CONTROL DECK (US LETTER 8.5×11" LANDSCAPE) — ALIGN FRAME: 240.00 × 154.00 MM</text><text x="236.5" y="3.3" class="muted" font-size="1.72" font-weight="700" text-anchor="end">1:1 MM · SILHOUETTE STUDIO</text></g>
 <defs><clipPath id="mls1tp-bleed-clip"><path d="M18.000,4.500 L222.000,4.500 A10.500,10.500 0 0 1 232.500,15.000 L232.500,139.000 A10.500,10.500 0 0 1 222.000,149.500 L18.000,149.500 A10.500,10.500 0 0 1 7.500,139.000 L7.500,15.000 A10.500,10.500 0 0 1 18.000,4.500 Z"/></clipPath><pattern id="mls1tp-haz-pat" width="2.4" height="2.4" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="1.1" height="2.4" class="warn-c" opacity="0.22"/></pattern></defs>
 <g id="mls1tp-print" class="f-cond">
 <g class="piece-bg-layer" clip-path="url(#mls1tp-bleed-clip)" data-sheet="s1" data-piece="top" data-rx="7.50" data-ry="4.50" data-rw="225.00" data-rh="145.00">
@@ -52,37 +46,14 @@
 <path d="M25,4.5V149.5 M50,4.5V149.5 M75,4.5V149.5 M100,4.5V149.5 M125,4.5V149.5 M150,4.5V149.5 M175,4.5V149.5 M200,4.5V149.5 M225,4.5V149.5 M7.5,0H232.5 M7.5,25H232.5 M7.5,50H232.5 M7.5,75H232.5 M7.5,100H232.5 M7.5,125H232.5 M7.5,150H232.5" class="grid-maj"/>
 </g></g>
 <g id="mls1tp-fg" class="piece-fg-layer">
-<path d="M18.000,7.050 L22.050,7.050 M26.950,7.050 L49.250,7.050 M54.150,7.050 L76.450,7.050 M81.350,7.050 L103.650,7.050 M108.550,7.050 L130.850,7.050 M135.750,7.050 L158.050,7.050 M162.950,7.050 L185.250,7.050 M190.150,7.050 L212.450,7.050 M217.350,7.050 L222.000,7.050 A7.950,7.950 0 0 1 229.950,15.000 L229.950,139.000 A7.950,7.950 0 0 1 222.000,146.950 L53.700,146.950 M26.600,146.950 L18.000,146.950 A7.950,7.950 0 0 1 10.050,139.000 L10.050,15.000 A7.950,7.950 0 0 1 18.000,7.050" class="sc-rule" stroke-width="0.18"/>
+<path d="M18.000,7.050 L222.000,7.050 A7.950,7.950 0 0 1 229.950,15.000 L229.950,139.000 A7.950,7.950 0 0 1 222.000,146.950 L53.700,146.950 M26.600,146.950 L18.000,146.950 A7.950,7.950 0 0 1 10.050,139.000 L10.050,15.000 A7.950,7.950 0 0 1 18.000,7.050" class="sc-rule" stroke-width="0.18"/>
 <line x1="71.05" y1="7.65" x2="71.05" y2="146.35" class="sc-rule" stroke-width="0.22"/>
-<line x1="71.60" y1="9.55" x2="71.60" y2="144.45" class="sc-trace non-tro" stroke-dasharray="1.8 1.0"/>
 <line x1="202.35" y1="7.65" x2="202.35" y2="146.35" class="sc-rule" stroke-width="0.22"/>
-<g class="tro-only f-cond" id="mls1tp-tro-border"><path d="M18.000,7.050 L22.050,7.050 M26.950,7.050 L49.250,7.050 M54.150,7.050 L76.450,7.050 M81.350,7.050 L103.650,7.050 M108.550,7.050 L130.850,7.050 M135.750,7.050 L158.050,7.050 M162.950,7.050 L185.250,7.050 M190.150,7.050 L212.450,7.050 M217.350,7.050 L222.000,7.050 A7.950,7.950 0 0 1 229.950,15.000 L229.950,139.000 A7.950,7.950 0 0 1 222.000,146.950 L53.700,146.950 M26.600,146.950 L18.000,146.950 A7.950,7.950 0 0 1 10.050,139.000 L10.050,15.000 A7.950,7.950 0 0 1 18.000,7.050" class="tro-ink" stroke-width="0.34"/><path d="M18.000,7.600 L22.050,7.600 M26.950,7.600 L49.250,7.600 M54.150,7.600 L76.450,7.600 M81.350,7.600 L103.650,7.600 M108.550,7.600 L130.850,7.600 M135.750,7.600 L158.050,7.600 M162.950,7.600 L185.250,7.600 M190.150,7.600 L212.450,7.600 M217.350,7.600 L222.000,7.600 A7.400,7.400 0 0 1 229.400,15.000 L229.400,139.000 A7.400,7.400 0 0 1 222.000,146.400 L53.700,146.400 M26.600,146.400 L18.000,146.400 A7.400,7.400 0 0 1 10.600,139.000 L10.600,15.000 A7.400,7.400 0 0 1 18.000,7.600" class="tro-ink" stroke-width="0.11"/></g>
-<text x="24.50" y="7.53" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z8]</text>
-<text x="51.70" y="7.53" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z7]</text>
-<text x="78.90" y="7.53" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z6]</text>
-<text x="106.10" y="7.53" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z5]</text>
-<text x="133.30" y="7.53" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z4]</text>
-<text x="160.50" y="7.53" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z3]</text>
-<text x="187.70" y="7.53" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z2]</text>
-<text x="214.90" y="7.53" class="f-cond muted" font-size="1.35" font-weight="700" text-anchor="middle">[Z1]</text>
-<path d="M40.15,19.00 V47.20 M40.15,49.80 V80.10 M40.15,82.70 V113.10 M40.15,115.70 V143.00" class="sc-trace non-tro"/>
-<path d="M39.25,23.50 V47.20 M39.25,49.80 V80.10 M39.25,82.70 V113.10 M39.25,115.70 V138.50" class="sc-trace non-tro" stroke-dasharray="1.2 0.9"/>
-<path d="M35.95,28.00 H44.35" class="sc-trace non-tro"/>
-<circle cx="40.15" cy="28.00" r="0.55" class="pat-c non-tro"/>
-<path d="M35.95,60.90 H44.35" class="sc-trace non-tro"/>
-<circle cx="40.15" cy="60.90" r="0.55" class="pat-c non-tro"/>
-<path d="M35.95,93.90 H44.35" class="sc-trace non-tro"/>
-<circle cx="40.15" cy="93.90" r="0.55" class="pat-c non-tro"/>
-<path d="M35.95,126.80 H44.35" class="sc-trace non-tro"/>
-<circle cx="40.15" cy="126.80" r="0.55" class="pat-c non-tro"/>
-<text x="41.35" y="49.15" class="f-cond muted" font-size="1.45" font-weight="700" text-anchor="middle">SPI2 · 595 MUX</text>
-<text x="41.35" y="82.05" class="f-cond muted" font-size="1.45" font-weight="700" text-anchor="middle">QUAD DEC · ISR</text>
 <text x="41.35" y="115.05" class="f-cond warn-c" font-size="1.45" font-weight="700" text-anchor="middle">RPT + K1–4 LIVE</text>
 <path d="M18.000,8.350 L68.500,8.350 A0.800,0.800 0 0 1 69.300,9.150 L69.300,15.800 A0.800,0.800 0 0 1 68.500,16.600 L12.150,16.600 A0.800,0.800 0 0 1 11.350,15.800 L11.350,15.000 A6.650,6.650 0 0 1 18.000,8.350 Z" class="box-bg"/>
 <path d="M68.10,8.35 L69.30,8.35 L69.30,9.55 M11.35,15.40 L11.35,16.60 L12.55,16.60 M68.10,16.60 L69.30,16.60 L69.30,15.40" fill="none" class="sc-rule-hi" stroke-width="0.18"/>
 <line x1="11.90" y1="12.55" x2="69.30" y2="12.55" class="sc-rule" stroke-width="0.13"/>
-<g class="non-tro"><text x="15.30" y="11.37" class="ink" font-size="2.22" font-weight="700" letter-spacing="0.14">SEC-01 // ENCODER ARRAY</text><text x="68.10" y="11.33" class="f-cond pat-c" font-size="1.78" font-weight="700" text-anchor="end">AN/SMC-925</text></g>
-<g class="tro-only"><defs><mask id="mls1tp-sec1-slit" maskUnits="userSpaceOnUse" x="13.20" y="7.77" width="44.50" height="5.50"><rect x="13.20" y="7.77" width="44.50" height="5.50" fill="#ffffff"/><line x1="15.20" y1="10.65" x2="55.70" y2="10.65" stroke="#000000" stroke-width="0.30"/></mask></defs><text x="15.20" y="11.57" mask="url(#mls1tp-sec1-slit)" class="tro-fill f-cond" font-size="2.62" font-weight="900" letter-spacing="0.28" text-anchor="start">TECH READOUT: SMC-925</text><text x="68.20" y="11.37" class="f-cond tro-fill" font-size="1.65" font-weight="700" text-anchor="end">WHM-925</text></g>
+<text x="15.30" y="11.37" class="ink" font-size="2.22" font-weight="700" letter-spacing="0.14">ENCODERS K1–K8</text><text x="68.10" y="11.33" class="f-cond pat-c" font-size="1.78" font-weight="700" text-anchor="end">SMC-PAD</text>
 <circle cx="13.85" cy="14.65" r="0.88" class="ink"/>
 <text x="15.35" y="15.37" class="ink" font-size="1.92" font-weight="700">TRACK</text>
 <rect x="28.25" y="13.77" width="1.75" height="1.75" rx="0.25" class="step-bg"/>
@@ -207,18 +178,6 @@
 <line x1="73.02" y1="10.40" x2="200.90" y2="10.40" class="sc-rule" stroke-width="0.12"/>
 <text x="136.96" y="9.73" class="ink" font-size="1.95" font-weight="700" text-anchor="middle"><tspan class="step-c">HOLD STEP + LATER PAD = NOTE LEN [1–32S]</tspan>  ·  HOLD STEP + RPT = RATCHET  ·  <tspan class="pat-c">REC + STEP = CHORD</tspan></text>
 <text x="136.96" y="12.39" class="ink" font-size="1.90" font-weight="700" text-anchor="middle"><tspan class="warn-c">HOLD RPT = TIMING</tspan>  ·  HOLD BANK = TRACKS [<tspan class="pat-c">SRC+DST = COPY</tspan> · +STOP = MUTE]  ·  <tspan class="step-c">⇧+REC SAVE</tspan> / <tspan class="ok-c">⇧+PLAY LOAD</tspan></text>
-<g class="non-tro">
-<g class="sc-rule-hi" fill="none" stroke-width="0.13"><circle cx="136.97" cy="77.06" r="1.43"/><line x1="134.66" y1="77.06" x2="139.27" y2="77.06"/><line x1="136.97" y1="74.77" x2="136.97" y2="79.36"/></g>
-<circle cx="136.97" cy="77.06" r="2.75" class="sc-trace" stroke-dasharray="0.8 0.6"/>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="103.94" cy="44.20" r="0.71"/><line x1="102.78" y1="44.20" x2="105.09" y2="44.20"/><line x1="103.94" y1="43.05" x2="103.94" y2="45.34"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="136.97" cy="44.20" r="0.71"/><line x1="135.81" y1="44.20" x2="138.12" y2="44.20"/><line x1="136.97" y1="43.05" x2="136.97" y2="45.34"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="169.99" cy="44.20" r="0.71"/><line x1="168.84" y1="44.20" x2="171.14" y2="44.20"/><line x1="169.99" y1="43.05" x2="169.99" y2="45.34"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="103.94" cy="77.06" r="0.71"/><line x1="102.78" y1="77.06" x2="105.09" y2="77.06"/><line x1="103.94" y1="75.91" x2="103.94" y2="78.22"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="169.99" cy="77.06" r="0.71"/><line x1="168.84" y1="77.06" x2="171.14" y2="77.06"/><line x1="169.99" y1="75.91" x2="169.99" y2="78.22"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="103.94" cy="109.94" r="0.71"/><line x1="102.78" y1="109.94" x2="105.09" y2="109.94"/><line x1="103.94" y1="108.79" x2="103.94" y2="111.09"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="136.97" cy="109.94" r="0.71"/><line x1="135.81" y1="109.94" x2="138.12" y2="109.94"/><line x1="136.97" y1="108.79" x2="136.97" y2="111.09"/></g>
-<g class="sc-trace" fill="none" stroke-width="0.13"><circle cx="169.99" cy="109.94" r="0.71"/><line x1="168.84" y1="109.94" x2="171.14" y2="109.94"/><line x1="169.99" y1="108.79" x2="169.99" y2="111.09"/></g>
-</g>
 <rect x="73.22" y="42.33" width="28.40" height="3.68" rx="0.65" class="box-bg"/>
 <rect x="73.44" y="42.55" width="6.70" height="3.24" rx="0.45" class="step-bg"/>
 <text x="76.79" y="44.97" class="f-cond step-fg" font-size="2.30" font-weight="700" text-anchor="middle">S01</text>
@@ -319,7 +278,7 @@
 <rect x="73.02" y="144.82" width="127.88" height="2.55" rx="0.55" class="box-alt"/>
 <text x="136.96" y="146.70" class="f-cond muted" font-size="1.75" font-weight="700" text-anchor="middle">960 PPQN ENGINE  ·  16 TRACKS × 64 STEPS  ·  USB-C + BLE + 3.5MM TRS MIDI OUT  ·  AUTO-SAVE ON STOP  ·  FW ≥ 925</text>
 <path d="M203.850,8.350 L222.000,8.350 A6.650,6.650 0 0 1 228.360,13.050 L203.850,13.050 A0.700,0.700 0 0 1 203.150,12.350 L203.150,9.050 A0.700,0.700 0 0 1 203.850,8.350 Z" class="box-bg"/>
-<text x="214.60" y="10.42" class="ink" font-size="1.85" font-weight="700" text-anchor="middle">SEC-03 // TRANSPORT</text><text x="215.50" y="12.38" class="f-cond muted" font-size="1.52" font-weight="700" text-anchor="middle">MODE &amp; SEQ CONTROLS</text>
+<text x="214.60" y="10.42" class="ink" font-size="1.85" font-weight="700" text-anchor="middle">TRANSPORT</text><text x="215.50" y="12.38" class="f-cond muted" font-size="1.52" font-weight="700" text-anchor="middle">MODE &amp; SEQ CONTROLS</text>
 <line x1="208.05" y1="19.05" x2="208.78" y2="19.05" class="sc-rule-hi" stroke-width="0.20"/>
 <text x="207.85" y="19.83" class="f-cond ink" font-size="2.22" font-weight="700" text-anchor="end">BT</text>
 <rect x="222.15" y="16.30" width="6.60" height="5.50" rx="0.55" class="box-alt"/>
