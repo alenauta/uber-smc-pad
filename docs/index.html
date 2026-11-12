@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Uber SMC-PAD — Browser Firmware Builder &amp; Flashing Guide</title>
+    <meta
+      name="description"
+      content="Client-side browser firmware builder and SincoOTA flashing guide for the M-VAVE SMC-PAD clean-room 16-track step sequencer OS."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600;700&amp;family=Space+Grotesk:wght@600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("smcpad-theme");
+          var dark = saved
+            ? saved === "dark"
+            : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+        } catch (_) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <div>
+          <div class="hw-kicker">
+            <span class="hw-led" aria-hidden="true"></span>
+            <span>UBER SMC-PAD · CLEAN-ROOM SEQUENCER OS · BUILD 925</span>
+          </div>
+          <h1>SMC-PAD Browser Firmware Patcher</h1>
+          <p class="lead">
+            Drop your own official <code>SMC-PAD_005.fwsc</code> firmware file below to assemble the
+            custom 16-track × 64-step sequencer firmware (<code>SMC-PAD_925.fwsc</code>) locally in
+            your browser — no compiler setup and zero server uploads.
+          </p>
+        </div>
+        <div class="topbar-actions">
+          <button
+            type="button"
+            id="theme-toggle-btn"
+            class="btn-ghost"
+            aria-label="Toggle color theme"
+          >
+            Theme
+          </button>
+          <a
+            id="repo-link-btn"
+            class="btn-ghost"
+            href="https://github.com/alenauta/uber-smc-pad"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub Source ↗
+          </a>
+        </div>
+      </header>
+
+      <main>
+        <!-- Strong Liability & Own-Risk Warning -->
+        <section class="disclaimer-card" id="disclaimer-banner" aria-labelledby="disclaimer-heading">
+          <h2 class="disclaimer-title" id="disclaimer-heading">
+            ⚠ Read First — Use Entirely at Your Own Risk (No Warranty / No Liability)
+          </h2>
+          <p>
+            <strong>Unofficial &amp; independent hobby software:</strong> This project is not
+            affiliated with, endorsed by, or supported by M-VAVE (Sinco Audio / Cuvave) or JieLi.
+            It is provided <strong>"AS IS" without warranty of any kind</strong>.
+          </p>
+          <p>
+            <strong>Zero responsibility for damages:</strong> Flashing third-party firmware voids
+            your manufacturer warranty and carries inherent risk (interrupted Bluetooth transfers,
+            unresponsive/bricked hardware, or lost presets and settings).
+            <strong>
+              By building or flashing this file, you accept 100% of the risk — the author takes no
+              responsibility or liability whatsoever for bricked devices, lost data, or any damages.
+            </strong>
+          </p>
+          <p>
+            <strong>Before you flash:</strong> Charge the SMC-PAD battery, unplug USB, close Midi
+            Suite / CubeSuite, and keep your original <code>SMC-PAD_005.fwsc</code> saved on your
+            phone so you can flash back to stock at any time.
+          </p>
+        </section>
+
+        <!-- Client-Side Firmware Patcher -->
+        <section class="card" id="patcher-section" aria-labelledby="patcher-heading">
+          <div class="card-header">
+            <h2 id="patcher-heading">Build Custom Firmware in Browser</h2>
+            <div class="status-pill" id="payload-status-pill" role="status" aria-live="polite">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span id="payload-status-text">Loading custom payload…</span>
+            </div>
+          </div>
+
+          <div class="dropzone" id="stock-dropzone">
+            <input
+              type="file"
+              id="stock-file-input"
+              accept=".fwsc,.ufw,.bin,application/octet-stream"
+              aria-label="Select your official SMC-PAD_005.fwsc file"
+            />
+            <p class="dropzone-title" id="dropzone-title">
+              Drop your official <code>SMC-PAD_005.fwsc</code> here, or click to browse
+            </p>
+            <p class="dropzone-sub" id="dropzone-sub">
+              Obtained from M-VAVE's official SMC-PAD firmware package. Processed 100% in browser
+              memory — your file never leaves your device.
+            </p>
+          </div>
+
+          <div class="spec-strip" aria-label="Required official stock firmware specification">
+            <span>Required input: <strong>SMC-PAD_005.fwsc</strong></span>
+            <span>Exact size: <strong>517,940 bytes</strong></span>
+            <span>SHA-256: <strong>e185d8e516ab7ca6…80dca3</strong></span>
+          </div>
+
+          <div class="verify-box" id="verification-panel" role="region" aria-live="polite" hidden>
+            <p class="verify-title" id="verification-title"></p>
+            <div class="verify-grid" id="verification-details"></div>
+          </div>
+
+          <div class="patch-footer">
+            <label class="ack-label" for="risk-ack-checkbox">
+              <input type="checkbox" id="risk-ack-checkbox" />
+              <span>
+                I understand this firmware is unofficial and provided "AS IS", flashing is entirely
+                at my own risk, and the author assumes <strong>no responsibility</strong> for
+                bricked units, lost data, or any damages.
+              </span>
+            </label>
+
+            <div class="action-row">
+              <button type="button" class="btn-primary" id="download-fw-btn" disabled>
+                Download SMC-PAD_925.fwsc
+              </button>
+              <p class="privacy-note">
+                100% client-side WebCrypto SHA-256 &amp; CRC-16 verified · Preserves stock
+                bootloader, presets (<code>0x77000</code>), and pad calibration
+                (<code>0x7E000</code>).
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- How to Flash Guide -->
+        <section class="card" id="flashing-guide" aria-labelledby="flashing-heading">
+          <div class="card-header">
+            <h2 id="flashing-heading">How to Flash with SincoOTA (iOS / Android)</h2>
+          </div>
+
+          <div class="two-pass-callout">
+            <strong>Important — SincoOTA always takes 2 passes:</strong> Just like the official
+            firmware update, the first attempt reboots the SMC-PAD into recovery/updater mode, and
+            the second attempt (after unselecting and scanning again) writes the firmware.
+          </div>
+
+          <ol class="steps-list">
+            <li class="step-item">
+              <span class="step-badge">Prep</span>
+              <div class="step-body">
+                <h3>Remove SMC-PAD from Paired Bluetooth Devices First</h3>
+                <p>
+                  Unplug the USB cable, close Midi Suite / CubeSuite, and switch the SMC-PAD
+                  <strong>ON</strong>. Open your phone's OS <strong>Settings → Bluetooth</strong>
+                  and <strong>Remove / "Forget This Device"</strong> if <code>SMC-PAD</code> is
+                  paired (if the OS keeps a background BLE-MIDI connection open, SincoOTA cannot
+                  complete the handoff). Copy <code>SMC-PAD_925.fwsc</code> to your phone.
+                </p>
+              </div>
+            </li>
+
+            <li class="step-item">
+              <span class="step-badge">Pass 1</span>
+              <div class="step-body">
+                <h3>Select Device → Select Firmware → Start Flash (Enters Recovery Mode)</h3>
+                <p>
+                  Open the <strong>SincoOTA</strong> app, scan and <strong>select SMC-PAD</strong>,
+                  choose <code>SMC-PAD_925.fwsc</code>, and tap <strong>Start / Upgrade</strong>. At
+                  this point the pad reboots into <strong>recovery / updater mode</strong> (pad RGBs
+                  turn off or freeze, BT LED goes off) and the first transfer stops or stalls.
+                  <strong>This is expected — nothing has been overwritten yet.</strong>
+                </p>
+              </div>
+            </li>
+
+            <li class="step-item highlight">
+              <span class="step-badge">Pass 2 · Key Step</span>
+              <div class="step-body">
+                <h3>Unselect Device → Search &amp; Select Again → Flash to 100%</h3>
+                <p>
+                  In SincoOTA, <strong>unselect / disconnect the device</strong>, then
+                  <strong>search / scan again and select the newly found device</strong>
+                  <em>(do not skip unselecting and re-scanning!)</em>. Select
+                  <code>SMC-PAD_925.fwsc</code> again and tap <strong>Start / Upgrade</strong> a
+                  second time — it will flash smoothly to <strong>100%</strong> and reboot into the
+                  custom firmware.
+                </p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Secondary Reference Grid -->
+        <div class="info-grid" id="extras-grid">
+          <section class="card" aria-labelledby="revert-heading">
+            <div class="card-header">
+              <h2 id="revert-heading">Return to Stock &amp; Safe Mode</h2>
+            </div>
+            <ul class="compact-list">
+              <li>
+                <strong>Revert to stock anytime:</strong> Custom builds keep the stock bootloader
+                and report version <code>000</code>, so SincoOTA always accepts the official
+                <code>SMC-PAD_005.fwsc</code> back using the exact same 2-pass procedure above.
+              </li>
+              <li>
+                <strong>Updating custom → custom:</strong> If Pass 1 reports
+                <em>"OTA failed"</em> while already running custom firmware, run Pass 1 selecting
+                <code>SMC-PAD_005.fwsc</code> (to enter recovery mode), then unselect, scan &amp;
+                re-select, and choose the new <code>SMC-PAD_925.fwsc</code> on Pass 2.
+              </li>
+              <li>
+                <strong>Boot-loop Safe Mode:</strong> Switching power
+                <strong>ON → OFF within 5 s → ON → OFF within 5 s → ON</strong> boots on the 3rd
+                start with custom drivers bypassed while keeping Bluetooth SincoOTA active.
+              </li>
+            </ul>
+          </section>
+
+          <section class="card" aria-labelledby="overlays-heading">
+            <div class="card-header">
+              <h2 id="overlays-heading">Sequencer Quick Start &amp; 1:1 Overlays</h2>
+            </div>
+            <ul class="compact-list">
+              <li>
+                Press <strong>Shift + Note Repeat</strong> to toggle between normal stock-compatible
+                pad controller mode and the standalone <strong>16-track × 64-step sequencer</strong>.
+              </li>
+              <li>
+                Print a 1:1 hardware overlay or customize your own vinyl cut sheet right in the
+                browser:
+              </li>
+            </ul>
+            <div class="overlay-links">
+              <a
+                id="overlay-milspec-link"
+                class="overlay-link-card"
+                href="./overlay/smcpad_milspec_overlay.html"
+              >
+                <span>360° MIL-SPEC &amp; BattleTech Print-and-Cut Customizer</span>
+                <span aria-hidden="true">→</span>
+              </a>
+              <a
+                id="overlay-seq-link"
+                class="overlay-link-card"
+                href="./overlay/smcpad_seq_overlay.html"
+              >
+                <span>Printable 1:1 Top Panel Sequencer Cheat-Sheet</span>
+                <span aria-hidden="true">→</span>
+              </a>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <span>
+          MIT License · Clean-room custom firmware built on JieLi's public
+          <code>fw-AC63_BT_SDK</code>. Zero vendor binaries or keys hosted on this site.
+        </span>
+        <span>
+          SMC-PAD, M-VAVE, Sinco, Midi Suite, and SincoOTA are trademarks of their respective
+          owners.
+        </span>
+      </footer>
+    </div>
+
+    <script src="./patcher.js"></script>
+    <script>
+      (function () {
+        "use strict";
+
+        const PAYLOAD_URL = "./payload/smcpad_925.bin";
+
+        const themeBtn = document.getElementById("theme-toggle-btn");
+        const statusPill = document.getElementById("payload-status-pill");
+        const statusText = document.getElementById("payload-status-text");
+        const dropzone = document.getElementById("stock-dropzone");
+        const dropTitle = document.getElementById("dropzone-title");
+        const dropSub = document.getElementById("dropzone-sub");
+        const fileInput = document.getElementById("stock-file-input");
+        const verifyPanel = document.getElementById("verification-panel");
+        const verifyTitle = document.getElementById("verification-title");
+        const verifyDetails = document.getElementById("verification-details");
+        const ackCheckbox = document.getElementById("risk-ack-checkbox");
+        const downloadBtn = document.getElementById("download-fw-btn");
+
+        let payloadBytes = null;
+        let patchedResult = null;
+        let pendingFile = null;
+
+        function updateThemeLabel() {
+          const cur = document.documentElement.getAttribute("data-theme") || "light";
+          themeBtn.textContent = cur === "dark" ? "☀ Light" : "☾ Dark";
+        }
+        updateThemeLabel();
+
+        themeBtn.addEventListener("click", function () {
+          const cur = document.documentElement.getAttribute("data-theme") || "light";
+          const next = cur === "dark" ? "light" : "dark";
+          document.documentElement.setAttribute("data-theme", next);
+          try {
+            localStorage.setItem("smcpad-theme", next);
+          } catch (_) {}
+          updateThemeLabel();
+        });
+
+        function refreshDownloadButton() {
+          const ready = Boolean(patchedResult && ackCheckbox.checked);
+          downloadBtn.disabled = !ready;
+          if (patchedResult) {
+            downloadBtn.textContent =
+              "Download " +
+              patchedResult.fileName +
+              " (" +
+              patchedResult.bytes.length.toLocaleString() +
+              " B)";
+          } else {
+            downloadBtn.textContent = "Download SMC-PAD_925.fwsc";
+          }
+        }
+
+        ackCheckbox.addEventListener("change", refreshDownloadButton);
+
+        function showVerificationError(msg) {
+          patchedResult = null;
+          dropzone.classList.remove("verified");
+          verifyPanel.hidden = false;
+          verifyPanel.className = "verify-box err";
+          verifyTitle.textContent = "✕ Verification failed: " + msg;
+          verifyDetails.innerHTML = "";
+          refreshDownloadButton();
+        }
+
+        function showVerificationSuccess(fileName, res, elapsedMs) {
+          patchedResult = res;
+          dropzone.classList.add("verified");
+          dropTitle.innerHTML =
+            "✓ Verified <code>" +
+            fileName.replace(/[<>&]/g, "") +
+            "</code> → Ready to download <code>" +
+            res.fileName +
+            "</code>";
+          dropSub.textContent =
+            "Assembled & verified locally in " +
+            elapsedMs +
+            " ms. Click or drop again to re-select.";
+          verifyPanel.hidden = false;
+          verifyPanel.className = "verify-box ok";
+          verifyTitle.textContent =
+            "✓ Stock SMC-PAD_005 verified & custom image " + res.fileName + " assembled in RAM";
+          verifyDetails.innerHTML =
+            "<div>Input SHA-256: <strong>" +
+            res.stockSha256.slice(0, 16) +
+            "…" +
+            res.stockSha256.slice(-6) +
+            "</strong></div>" +
+            "<div>OTA flash2 SHA-256: <strong>" +
+            res.flash2Sha256.slice(0, 16) +
+            "…" +
+            res.flash2Sha256.slice(-6) +
+            "</strong></div>" +
+            "<div>Output .fwsc SHA-256: <strong>" +
+            res.outputSha256.slice(0, 16) +
+            "…" +
+            res.outputSha256.slice(-6) +
+            "</strong></div>" +
+            "<div>Output size: <strong>" +
+            res.bytes.length.toLocaleString() +
+            " bytes</strong></div>";
+          refreshDownloadButton();
+        }
+
+        async function processSelectedFile(file) {
+          if (!file) return;
+          if (!payloadBytes) {
+            pendingFile = file;
+            return;
+          }
+          try {
+            const buf = await file.arrayBuffer();
+            const stockBytes = new Uint8Array(buf);
+            const t0 = performance.now();
+            const res = await window.SmcPadPatcher.patchFirmware(stockBytes, payloadBytes);
+            const elapsed = (performance.now() - t0).toFixed(1);
+            showVerificationSuccess(file.name, res, elapsed);
+          } catch (err) {
+            showVerificationError(err && err.message ? err.message : String(err));
+          }
+        }
+
+        fileInput.addEventListener("change", function () {
+          if (fileInput.files && fileInput.files[0]) {
+            processSelectedFile(fileInput.files[0]);
+          }
+        });
+
+        ["dragenter", "dragover"].forEach(function (evName) {
+          dropzone.addEventListener(evName, function (e) {
+            e.preventDefault();
+            dropzone.classList.add("dragover");
+          });
+        });
+
+        ["dragleave", "drop"].forEach(function (evName) {
+          dropzone.addEventListener(evName, function (e) {
+            e.preventDefault();
+            dropzone.classList.remove("dragover");
+          });
+        });
+
+        dropzone.addEventListener("drop", function (e) {
+          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+            processSelectedFile(e.dataTransfer.files[0]);
+          }
+        });
+
+        downloadBtn.addEventListener("click", function () {
+          if (!patchedResult || !ackCheckbox.checked) return;
+          const blob = new Blob([patchedResult.bytes], { type: "application/octet-stream" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = patchedResult.fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function () {
+            URL.revokeObjectURL(url);
+          }, 2000);
+        });
+
+        async function loadPayload() {
+          try {
+            const resp = await fetch(PAYLOAD_URL, { cache: "no-cache" });
+            if (!resp.ok) {
+              throw new Error("HTTP " + resp.status);
+            }
+            const ab = await resp.arrayBuffer();
+            payloadBytes = new Uint8Array(ab);
+            const parsed = window.SmcPadPatcher.parsePayloadBundle(payloadBytes);
+            statusPill.className = "status-pill ready";
+            statusText.textContent =
+              parsed.manifest.build_name +
+              " payload ready (" +
+              Math.round(payloadBytes.length / 1024) +
+              " KB · 100% local)";
+            if (pendingFile) {
+              const f = pendingFile;
+              pendingFile = null;
+              processSelectedFile(f);
+            }
+          } catch (err) {
+            statusPill.className = "status-pill error";
+            statusText.textContent =
+              "Payload load error (" +
+              (err && err.message ? err.message : "serve docs/ via HTTP/GitHub Pages") +
+              ")";
+          }
+        }
+
+        loadPayload();
+      })();
+    </script>
+  </body>
+</html>
